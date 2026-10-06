@@ -97,7 +97,7 @@ Add to your MCP client configuration file (e.g., `claude_desktop_config.json` or
 {
   "mcpServers": {
     "artcraft": {
-      "command": "C:\\Users\\richk\\CascadeProjects\\artcraft-mcp\\bin\\artcraft-mcp-server.exe",
+      "command": "C:\\path\\to\\artcraft-mcp\\bin\\artcraft-mcp-server.exe",
       "args": [],
       "description": "ArtCraft AI generative media platform"
     }
