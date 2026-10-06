@@ -17,14 +17,17 @@ def find_mcp_executable():
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = [
-        os.path.join(script_dir, "..", "bin", "artcraft-mcp-server.exe"),
         os.path.join(script_dir, "..", "bin", "artcraft-mcp.exe"),
-        os.path.join(script_dir, "artcraft-mcp-server.exe"),
-        os.path.join(script_dir, "..", "artcraft-mcp-server.exe"),
+        os.path.join(script_dir, "..", "bin", "artcraft-mcp-server.exe"),
         os.path.join(script_dir, "artcraft-mcp.exe"),
+        os.path.join(script_dir, "artcraft-mcp-server.exe"),
         os.path.join(script_dir, "..", "artcraft-mcp.exe"),
+        os.path.join(script_dir, "..", "artcraft-mcp-server.exe"),
+        os.path.join(script_dir, "..", "bin", "artcraft-mcp"),
         os.path.join(script_dir, "..", "bin", "artcraft-mcp-server"),
+        os.path.join(script_dir, "artcraft-mcp"),
         os.path.join(script_dir, "artcraft-mcp-server"),
+        os.path.join(script_dir, "..", "artcraft-mcp"),
         os.path.join(script_dir, "..", "artcraft-mcp-server"),
     ]
     for c in candidates:
@@ -54,12 +57,15 @@ class ArtCraftCostClient:
         if params is not None:
             msg["params"] = params
         self.req_id += 1
-        self.proc.stdin.write(json.dumps(msg) + "\n")
-        self.proc.stdin.flush()
-        line = self.proc.stdout.readline()
-        if not line:
+        try:
+            self.proc.stdin.write(json.dumps(msg) + "\n")
+            self.proc.stdin.flush()
+            line = self.proc.stdout.readline()
+            if not line:
+                return None
+            return json.loads(line.strip())
+        except (BrokenPipeError, OSError, json.JSONDecodeError):
             return None
-        return json.loads(line.strip())
 
     def _initialize(self):
         self.send_request("initialize", {
@@ -67,38 +73,69 @@ class ArtCraftCostClient:
             "capabilities": {},
             "clientInfo": {"name": "artcraft-cost-estimator", "version": "1.0.0"}
         })
-        self.proc.stdin.write(json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}) + "\n")
-        self.proc.stdin.flush()
+        try:
+            self.proc.stdin.write(json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}) + "\n")
+            self.proc.stdin.flush()
+        except (BrokenPipeError, OSError):
+            pass
 
     def get_credits(self):
-        return self.send_request("tools/call", {"name": "get_credits", "arguments": {}})
+        res = self.send_request("tools/call", {"name": "artcraft_get_credits", "arguments": {}})
+        if not res or "error" in res:
+            res = self.send_request("tools/call", {"name": "get_credits", "arguments": {}})
+        return res
 
     def get_subscription(self):
-        return self.send_request("tools/call", {"name": "get_subscription", "arguments": {}})
+        res = self.send_request("tools/call", {"name": "artcraft_get_subscription", "arguments": {}})
+        if not res or "error" in res:
+            res = self.send_request("tools/call", {"name": "get_subscription", "arguments": {}})
+        return res
 
     def estimate_image_cost(self, model="flux_1_dev", count=1, aspect_ratio="wide_sixteen_by_nine"):
-        return self.send_request("tools/call", {
-            "name": "estimate_image_cost",
+        res = self.send_request("tools/call", {
+            "name": "artcraft_estimate_cost",
             "arguments": {
+                "media_type": "image",
                 "model": model,
-                "provider": "artcraft",
                 "generation_mode": "text_to_image",
                 "aspect_ratio": aspect_ratio,
-                "image_batch_count": count
+                "batch_count": count
             }
         })
+        if not res or "error" in res:
+            res = self.send_request("tools/call", {
+                "name": "estimate_image_cost",
+                "arguments": {
+                    "model": model,
+                    "provider": "artcraft",
+                    "generation_mode": "text_to_image",
+                    "aspect_ratio": aspect_ratio,
+                    "image_batch_count": count
+                }
+            })
+        return res
 
     def estimate_video_cost(self, model="seedance_2p0", duration=5, aspect_ratio="wide_sixteen_by_nine"):
-        return self.send_request("tools/call", {
-            "name": "estimate_video_cost",
+        res = self.send_request("tools/call", {
+            "name": "artcraft_estimate_cost",
             "arguments": {
+                "media_type": "video",
                 "model": model,
-                "provider": "artcraft",
-                "generation_mode": "reference_image_to_video",
-                "aspect_ratio": aspect_ratio,
-                "duration_seconds": duration
+                "aspect_ratio": aspect_ratio
             }
         })
+        if not res or "error" in res:
+            res = self.send_request("tools/call", {
+                "name": "estimate_video_cost",
+                "arguments": {
+                    "model": model,
+                    "provider": "artcraft",
+                    "generation_mode": "reference_image_to_video",
+                    "aspect_ratio": aspect_ratio,
+                    "duration_seconds": duration
+                }
+            })
+        return res
 
     def close(self):
         try:

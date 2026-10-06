@@ -57,12 +57,15 @@ class ArtCraftAngleClient:
         if params is not None:
             msg["params"] = params
         self.req_id += 1
-        self.proc.stdin.write(json.dumps(msg) + "\n")
-        self.proc.stdin.flush()
-        line = self.proc.stdout.readline()
-        if not line:
+        try:
+            self.proc.stdin.write(json.dumps(msg) + "\n")
+            self.proc.stdin.flush()
+            line = self.proc.stdout.readline()
+            if not line:
+                return None
+            return json.loads(line.strip())
+        except (BrokenPipeError, OSError, json.JSONDecodeError):
             return None
-        return json.loads(line.strip())
 
     def _initialize(self):
         self.send_request("initialize", {
@@ -90,15 +93,20 @@ class ArtCraftAngleClient:
         args = {
             "prompt": prompt,
             "model": model,
-            "image_media_tokens": media_token,
+            "image_media_tokens": [media_token] if isinstance(media_token, str) else media_token,
             "adjust_horizontal_angle": float(h_angle),
             "adjust_vertical_angle": float(v_angle),
             "adjust_zoom": float(zoom)
         }
         res = self.send_request("tools/call", {
-            "name": "generate_image",
+            "name": "artcraft_generate_image",
             "arguments": args
         })
+        if not res or "error" in res:
+            res = self.send_request("tools/call", {
+                "name": "generate_image",
+                "arguments": args
+            })
         if res and "result" in res:
             for c in res["result"].get("content", []):
                 text = c.get("text", "")
@@ -171,6 +179,11 @@ def main():
             print(f"[+] Enqueued Job Token: {jtoken}", flush=True)
             job_tokens[jtoken] = p["name"]
 
+    if not job_tokens:
+        print("[-] No jobs were successfully enqueued. Exiting.", flush=True)
+        client.close()
+        return
+
     print(f"[*] Monitoring {len(job_tokens)} camera angle shift jobs...", flush=True)
     completed = set()
 
@@ -186,7 +199,7 @@ def main():
                 if "completed" in text.lower() or "finished" in text.lower():
                     print(f"[+] {label} Job {jtoken} completed!", flush=True)
                     completed.add(jtoken)
-                    m = re.search(r"med_[a-zA-Z0-9_-]+", text)
+                    m = re.search(r"(?:m_|med_)[a-zA-Z0-9_-]+", text)
                     if m:
                         dl_token = m.group(0)
                         print(f"[*] Downloading {label} ({dl_token}) to {args.out_dir}...", flush=True)

@@ -20,12 +20,12 @@ def find_mcp_executable():
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = [
-        os.path.join(script_dir, "..", "bin", "artcraft-mcp-server.exe"),
         os.path.join(script_dir, "..", "bin", "artcraft-mcp.exe"),
-        os.path.join(script_dir, "artcraft-mcp-server.exe"),
-        os.path.join(script_dir, "..", "artcraft-mcp-server.exe"),
+        os.path.join(script_dir, "..", "bin", "artcraft-mcp-server.exe"),
         os.path.join(script_dir, "artcraft-mcp.exe"),
         os.path.join(script_dir, "..", "artcraft-mcp.exe"),
+        os.path.join(script_dir, "artcraft-mcp-server.exe"),
+        os.path.join(script_dir, "..", "artcraft-mcp-server.exe"),
         os.path.join(script_dir, "..", "bin", "artcraft-mcp-server"),
         os.path.join(script_dir, "artcraft-mcp-server"),
         os.path.join(script_dir, "..", "artcraft-mcp-server"),
@@ -33,7 +33,7 @@ def find_mcp_executable():
     for c in candidates:
         if os.path.exists(c):
             return os.path.abspath(c)
-    return "artcraft-mcp-server.exe"
+    return "artcraft-mcp.exe"
 
 DEFAULT_3D_OUT = os.environ.get("ARTCRAFT_3D_OUT") or os.path.expanduser("~/ArtCraft/3D_Assets")
 
@@ -59,12 +59,15 @@ class ArtCraft3DClient:
         if params is not None:
             msg["params"] = params
         self.req_id += 1
-        self.proc.stdin.write(json.dumps(msg) + "\n")
-        self.proc.stdin.flush()
-        line = self.proc.stdout.readline()
-        if not line:
+        try:
+            self.proc.stdin.write(json.dumps(msg) + "\n")
+            self.proc.stdin.flush()
+            line = self.proc.stdout.readline()
+            if not line:
+                return None
+            return json.loads(line.strip())
+        except (BrokenPipeError, OSError, json.JSONDecodeError):
             return None
-        return json.loads(line.strip())
 
     def _initialize(self):
         self.send_request("initialize", {
@@ -90,9 +93,18 @@ class ArtCraft3DClient:
 
     def generate_object_3d(self, media_file_token, version="2.0"):
         res = self.send_request("tools/call", {
-            "name": "generate_object_3d",
-            "arguments": {"media_file_token": media_file_token, "version": version}
+            "name": "artcraft_generate_3d_object",
+            "arguments": {
+                "image_media_token": media_file_token,
+                "prompt": f"Generate 3D object from image (Hunyuan 3D {version})",
+                "mode": "image_to_3d"
+            }
         })
+        if not res or "error" in res:
+            res = self.send_request("tools/call", {
+                "name": "generate_object_3d",
+                "arguments": {"media_file_token": media_file_token, "version": version}
+            })
         if res and "result" in res:
             for c in res["result"].get("content", []):
                 text = c.get("text", "")
@@ -102,16 +114,23 @@ class ArtCraft3DClient:
         return None
 
     def generate_splat_3d(self, media_file_token=None, prompt=None, version="mini"):
-        args = {"version": version}
+        args = {"prompt": prompt or "Generate 3D Gaussian Splat scene"}
         if media_file_token:
-            args["image_media_file_token"] = media_file_token
-        if prompt:
-            args["prompt"] = prompt
-
+            args["image_media_token"] = media_file_token
         res = self.send_request("tools/call", {
-            "name": "generate_splat_3d",
+            "name": "artcraft_generate_splat",
             "arguments": args
         })
+        if not res or "error" in res:
+            fallback_args = {"version": version}
+            if media_file_token:
+                fallback_args["image_media_file_token"] = media_file_token
+            if prompt:
+                fallback_args["prompt"] = prompt
+            res = self.send_request("tools/call", {
+                "name": "generate_splat_3d",
+                "arguments": fallback_args
+            })
         if res and "result" in res:
             for c in res["result"].get("content", []):
                 text = c.get("text", "")
@@ -200,7 +219,7 @@ def main():
                 if "completed" in text.lower() or "finished" in text.lower():
                     print(f"[+] {label} Job {jtoken} completed!", flush=True)
                     completed.add(jtoken)
-                    m = re.search(r"med_[a-zA-Z0-9_-]+", text)
+                    m = re.search(r"(?:m_|med_)[a-zA-Z0-9_-]+", text)
                     if m:
                         dl_token = m.group(0)
                         print(f"[*] Downloading {label} ({dl_token}) to {args.out_dir}...", flush=True)

@@ -50,10 +50,15 @@ def register_mcp(config_path, client_name, exe_path):
             with open(config_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except Exception as e:
-            print(f"[-] Warning: Failed to read {config_path}: {e}")
-            data = {}
+            print(f"[-] Warning: Failed to parse existing {config_path}: {e}")
+            print(f"[-] Aborting update for {client_name} to preserve existing configuration.")
+            return False
 
-    if "mcpServers" not in data:
+    if not isinstance(data, dict):
+        print(f"[-] Warning: Config at {config_path} is not a valid JSON object. Aborting.")
+        return False
+
+    if "mcpServers" not in data or not isinstance(data["mcpServers"], dict):
         data["mcpServers"] = {}
 
     data["mcpServers"]["artcraft"] = {
@@ -64,6 +69,11 @@ def register_mcp(config_path, client_name, exe_path):
     }
 
     try:
+        # Create a backup of the existing config if it exists
+        if os.path.exists(config_path):
+            import shutil
+            shutil.copy2(config_path, config_path + ".bak")
+
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
         print(f"[+] Successfully registered ArtCraft MCP in {client_name} ({config_path})")

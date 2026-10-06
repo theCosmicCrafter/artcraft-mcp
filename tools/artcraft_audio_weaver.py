@@ -57,12 +57,15 @@ class ArtCraftAudioClient:
         if params is not None:
             msg["params"] = params
         self.req_id += 1
-        self.proc.stdin.write(json.dumps(msg) + "\n")
-        self.proc.stdin.flush()
-        line = self.proc.stdout.readline()
-        if not line:
+        try:
+            self.proc.stdin.write(json.dumps(msg) + "\n")
+            self.proc.stdin.flush()
+            line = self.proc.stdout.readline()
+            if not line:
+                return None
+            return json.loads(line.strip())
+        except (BrokenPipeError, OSError, json.JSONDecodeError):
             return None
-        return json.loads(line.strip())
 
     def _initialize(self):
         self.send_request("initialize", {

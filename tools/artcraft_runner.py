@@ -62,13 +62,15 @@ class ArtCraftMCPClient:
         if params is not None:
             msg["params"] = params
         self.req_id += 1
-        self.proc.stdin.write(json.dumps(msg) + "\n")
-        self.proc.stdin.flush()
-        
-        line = self.proc.stdout.readline()
-        if not line:
+        try:
+            self.proc.stdin.write(json.dumps(msg) + "\n")
+            self.proc.stdin.flush()
+            line = self.proc.stdout.readline()
+            if not line:
+                return None
+            return json.loads(line.strip())
+        except (BrokenPipeError, OSError, json.JSONDecodeError):
             return None
-        return json.loads(line.strip())
 
     def _initialize(self):
         self.send_request("initialize", {
@@ -168,6 +170,11 @@ def main():
         else:
             print(f"[-] Failed to enqueue Job #{i+1}", flush=True)
 
+    if not job_tokens:
+        print("[-] No jobs were successfully enqueued. Exiting.", flush=True)
+        client.close()
+        return
+
     print(f"[*] Monitoring {len(job_tokens)} jobs...", flush=True)
     completed = set()
 
@@ -183,7 +190,7 @@ def main():
                 if "completed" in text.lower() or "finished" in text.lower():
                     print(f"[+] Job {jtoken} completed!", flush=True)
                     completed.add(jtoken)
-                    m = re.search(r"med_[a-zA-Z0-9_-]+", text)
+                    m = re.search(r"(?:m_|med_)[a-zA-Z0-9_-]+", text)
                     if m:
                         dl_token = m.group(0)
                         print(f"[*] Downloading media {dl_token} to {args.out_dir}...", flush=True)
