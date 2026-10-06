@@ -36,6 +36,23 @@ Google's Veo models are exceptional for cinematic realism, accurate lighting, an
 - **`grok_imagine_video`**: Standard Grok video model.
 - **`grok_imagine_video_1p5`**: Updated Grok video model for better motion and clarity.
 
+## Wan (Alibaba)
+- **`wan_3p0`**: Alibaba's Wan 3.0 high-fidelity video generation model.
+- **`wan_3p0_prime`**: Enhanced quality Wan 3.0 variant for complex motion dynamics.
+
+## MiniMax (Hailuo)
+- **`minimax_h3`**: MiniMax H3 cinematic video generation.
+- **`minimax_h3_turbo`**: High-speed MiniMax H3 model.
+- **`minimax_h3_ultra`**: Maximum resolution and detail MiniMax H3 model.
+
+## Beeble
+- **`switch_x`**: Beeble SwitchX model specialized in relighting, scene location change, and subject replacement.
+
+## Video Output Format Options
+ArtCraft supports specifying output video containers:
+- **`mp4`**: Default high-compatibility H.264 container.
+- **`mov`**: Apple QuickTime ProRes/Alpha-compatible format.
+
 ## Experimental / Others
 - **`happy_horse_1p0`**: Experimental/specialized model.
 - **`preview_model` / `preview_model_fast`**: Temporary model rollout slots used for beta testing new models.

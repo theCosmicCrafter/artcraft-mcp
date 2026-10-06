@@ -34,6 +34,13 @@ Midjourney models require a linked `midjourney.web_login.toml` credential.
 
 ## GPT / DALL-E
 - **`gpt_image_1` / `gpt_image_1p5` / `gpt_image_2`**: GPT-powered image generation models. Excellent for highly specific semantic adherence and text rendering.
+- **`gpt_image_2p5_flare`**: High-speed GPT Image 2.5 model supporting up to 4K resolutions (`1k`, `2k`, `3k`, `4k`).
+- **`gpt_image_2p5_sunburst`**: Premium high-detail GPT Image 2.5 model for complex artistic composition.
+
+## Quality & Resolution Enhancements
+ArtCraft supports extended quality and resolution selectors:
+- **`resolution`**: `1k`, `2k`, `3k`, `4k`
+- **`quality`**: `auto`, `max`, `x_high`, `high`, `medium`, `low`
 
 ## Grok
 - **`grok_imagine_image`**: Standard Grok image model. Good for stylized and dynamic scenes.
