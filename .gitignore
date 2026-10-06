@@ -18,6 +18,8 @@ outputs_3d/
 downloads/
 logs/
 *.log
+dist/
+*.zip
 
 # Sensitive credentials
 .env
