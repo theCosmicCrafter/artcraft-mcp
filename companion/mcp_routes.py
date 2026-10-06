@@ -43,10 +43,10 @@ class McpTokenResponse(BaseModel):
 
 
 def _find_default_mcp_binary() -> Optional[Path]:
-    """Locate the bundled artcraft-mcp-server binary relative to this file."""
+    """Locate the bundled artcraft-mcp binary relative to this file."""
     # companion/backend/routes/mcp.py -> repo root
     repo_root = Path(__file__).resolve().parents[3]
-    binary_name = "artcraft-mcp-server.exe" if platform.system() == "Windows" else "artcraft-mcp-server"
+    binary_name = "artcraft-mcp.exe" if platform.system() == "Windows" else "artcraft-mcp"
 
     for profile in ("release", "debug"):
         candidate = repo_root / "target" / profile / binary_name
@@ -78,7 +78,7 @@ def _resolve_mcp_binary(override: Optional[str] = None) -> str:
         return str(default)
 
     raise FileNotFoundError(
-        "Could not find artcraft-mcp-server binary. Set ARTCRAFT_MCP_SERVER_PATH or build it."
+        "Could not find artcraft-mcp binary. Set ARTCRAFT_MCP_SERVER_PATH or place artcraft-mcp.exe in bin/."
     )
 
 

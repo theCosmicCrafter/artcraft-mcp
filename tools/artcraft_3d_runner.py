@@ -13,7 +13,7 @@ import argparse
 import subprocess
 
 def find_mcp_executable():
-    """Dynamically locate artcraft-mcp-server executable across OS environments."""
+    """Dynamically locate artcraft-mcp executable across OS environments."""
     env_path = os.environ.get("ARTCRAFT_MCP_PATH")
     if env_path and os.path.exists(env_path):
         return env_path
@@ -21,14 +21,11 @@ def find_mcp_executable():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = [
         os.path.join(script_dir, "..", "bin", "artcraft-mcp.exe"),
-        os.path.join(script_dir, "..", "bin", "artcraft-mcp-server.exe"),
         os.path.join(script_dir, "artcraft-mcp.exe"),
         os.path.join(script_dir, "..", "artcraft-mcp.exe"),
-        os.path.join(script_dir, "artcraft-mcp-server.exe"),
-        os.path.join(script_dir, "..", "artcraft-mcp-server.exe"),
-        os.path.join(script_dir, "..", "bin", "artcraft-mcp-server"),
-        os.path.join(script_dir, "artcraft-mcp-server"),
-        os.path.join(script_dir, "..", "artcraft-mcp-server"),
+        os.path.join(script_dir, "..", "bin", "artcraft-mcp"),
+        os.path.join(script_dir, "artcraft-mcp"),
+        os.path.join(script_dir, "..", "artcraft-mcp"),
     ]
     for c in candidates:
         if os.path.exists(c):

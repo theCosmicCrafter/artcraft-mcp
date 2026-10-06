@@ -15,22 +15,12 @@ This project enables AI coding assistants (Claude Desktop, Windsurf, Cursor, Ant
 
 ```
 artcraft-mcp/
-├── bin/                                # Standalone, ready-to-run 64-bit Windows binaries
-│   ├── artcraft-mcp-server.exe         # Core official MCP server (mcp_sessions + direct API)
-│   └── artcraft-mcp.exe                # Extended 55-tool community edition MCP server
+├── bin/                                # Standalone, ready-to-run 64-bit Windows binary
+│   └── artcraft-mcp.exe                # Full 55-tool ArtCraft MCP server
 │
-├── rust/                               # Rust Source Implementations
+├── rust/                               # Rust Source Implementation
 │   ├── README.md                       # Architecture & crate guide
-│   ├── artcraft_mcp_server/            # Modern core workspace server crate
-│   │   ├── Cargo.toml
-│   │   ├── README.md
-│   │   └── src/
-│   │       ├── main.rs                 # JSON-RPC loop over stdio
-│   │       ├── credentials.rs          # Multi-tier auth resolution & mcp_sessions exchange
-│   │       ├── handlers.rs             # Generation, media, and account handlers
-│   │       ├── mcp_protocol.rs         # Protocol type definitions
-│   │       └── tests/                  # MCP protocol unit tests
-│   └── artcraft_mcp_cli/               # Comprehensive 55-tool MCP server crate
+│   └── artcraft_mcp_cli/               # Full 55-tool MCP server crate
 │       ├── Cargo.toml
 │       ├── README.md
 │       └── src/
@@ -83,7 +73,7 @@ artcraft-mcp/
 
 ### 1. One-Click Setup (Automatic)
 
-Run the included configuration script to auto-detect and register `artcraft-mcp-server` in Claude Desktop, Windsurf, or Cursor:
+Run the included configuration script to auto-detect and register `artcraft-mcp` across Claude Desktop, Windsurf, or Cursor:
 
 ```powershell
 python setup_mcp.py
@@ -97,9 +87,9 @@ Add to your MCP client configuration file (e.g., `claude_desktop_config.json` or
 {
   "mcpServers": {
     "artcraft": {
-      "command": "C:\\path\\to\\artcraft-mcp\\bin\\artcraft-mcp-server.exe",
+      "command": "C:\\path\\to\\artcraft-mcp\\bin\\artcraft-mcp.exe",
       "args": [],
-      "description": "ArtCraft AI generative media platform"
+      "description": "ArtCraft AI generative media platform (Full 55-tool engine)"
     }
   }
 }

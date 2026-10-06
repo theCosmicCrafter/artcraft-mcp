@@ -1,9 +1,9 @@
 # ArtCraft MCP CLI Tools Suite (Community Release Edition)
 
-A suite of standalone, cross-platform Python CLI tools that interface directly with `artcraft-mcp-server` over stdio Model Context Protocol (JSON-RPC).
+A suite of standalone, cross-platform Python CLI tools that interface directly with the full 55-tool `artcraft-mcp` engine over stdio Model Context Protocol (JSON-RPC).
 
 ### 🚀 Portability Features
-- **Dynamic Binary Discovery**: Automatically locates `artcraft-mcp.exe` or `artcraft-mcp-server` relative to script paths.
+- **Dynamic Binary Discovery**: Automatically locates `artcraft-mcp.exe` (or `artcraft-mcp`) relative to script paths.
 - **Environment Overrides**: Set `ARTCRAFT_MCP_PATH` to specify a custom binary location or `ARTCRAFT_3D_OUT` for custom output directories.
 - **Cross-Platform**: Runs on Windows, macOS, and Linux without hardcoded user paths.
 

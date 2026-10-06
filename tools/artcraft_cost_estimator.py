@@ -18,22 +18,16 @@ def find_mcp_executable():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = [
         os.path.join(script_dir, "..", "bin", "artcraft-mcp.exe"),
-        os.path.join(script_dir, "..", "bin", "artcraft-mcp-server.exe"),
         os.path.join(script_dir, "artcraft-mcp.exe"),
-        os.path.join(script_dir, "artcraft-mcp-server.exe"),
         os.path.join(script_dir, "..", "artcraft-mcp.exe"),
-        os.path.join(script_dir, "..", "artcraft-mcp-server.exe"),
         os.path.join(script_dir, "..", "bin", "artcraft-mcp"),
-        os.path.join(script_dir, "..", "bin", "artcraft-mcp-server"),
         os.path.join(script_dir, "artcraft-mcp"),
-        os.path.join(script_dir, "artcraft-mcp-server"),
         os.path.join(script_dir, "..", "artcraft-mcp"),
-        os.path.join(script_dir, "..", "artcraft-mcp-server"),
     ]
     for c in candidates:
         if os.path.exists(c):
             return os.path.abspath(c)
-    return "artcraft-mcp-server.exe"
+    return "artcraft-mcp.exe"
 
 class ArtCraftCostClient:
     def __init__(self, exe_path=None):

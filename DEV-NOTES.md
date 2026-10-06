@@ -5,9 +5,9 @@
 This package contains the ArtCraft MCP Server ready for development and testing.
 
 ### Files Included:
-- `artcraft-mcp-server.exe` - The main MCP server executable (Rust, release build)
+- `artcraft-mcp.exe` - The full 55-tool MCP server executable (Rust, release build)
 - `ArtCraft-MCP-Setup-Guide.md` - Complete setup and configuration guide
-- `README.md` - Original ArtCraft project README
+- `README.md` - ArtCraft MCP project README
 - `LICENSE.md` - License information
 - `skills/` - Agent skill files for AI assistants
   - `SKILL.md` - Main skill documentation
@@ -20,7 +20,7 @@ This package contains the ArtCraft MCP Server ready for development and testing.
 ## Quick Start for Dev Team
 
 ### 1. Place the Executable
-Copy `artcraft-mcp-server.exe` to any location on your system (e.g., `C:\Tools\artcraft-mcp-server.exe`)
+Copy `artcraft-mcp.exe` to any location on your system (e.g., `C:\Tools\artcraft-mcp.exe` or use `bin/artcraft-mcp.exe`)
 
 ### 2. Set Up Credentials
 Create credential files at `C:\Users\YourUsername\Artcraft\credentials\`:
@@ -35,9 +35,9 @@ Add to your MCP config (e.g., `~/.windsurf/mcp_config.json`):
 {
   "mcpServers": {
     "artcraft": {
-      "command": "C:\\path\\to\\artcraft-mcp-server.exe",
+      "command": "C:\\path\\to\\artcraft-mcp.exe",
       "args": [],
-      "description": "ArtCraft AI generation platform",
+      "description": "ArtCraft AI generation platform (Full 55-Tool Engine)",
       "enabled": true
     }
   }
@@ -53,12 +53,10 @@ Copy the `skills/` folder to your skills directory for AI assistant guidance.
 - **Build**: Release mode (optimized)
 - **Version**: 0.1.0
 - **Protocol**: Model Context Protocol (MCP) over stdio
-- **Tools**: 40+ tools for image/video generation, 3D, voice, TTS, characters
+- **Tools**: 55 tools for image/video generation, 3D, voice, TTS, characters, LoRAs, and community features
 
 ## Known Issues
 
-- Some compiler warnings about unused imports (non-critical)
-- Beta dependencies in Cargo.toml (documented in setup guide)
 - Requires active ArtCraft account and credentials
 
 ## Development Notes
@@ -68,7 +66,7 @@ Source code is in the main ArtCraft repository root.
 To rebuild from source:
 ```bash
 cd <path-to-artcraft-repo>
-cargo build --release --bin artcraft-mcp-server
+cargo build --release -p artcraft-mcp
 ```
 
 ## Support

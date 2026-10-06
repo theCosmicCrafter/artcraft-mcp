@@ -17,8 +17,8 @@ def find_binary(preferred="artcraft-mcp.exe"):
         script_dir.parent / "bin" / preferred,
         script_dir.parent / preferred,
         script_dir / preferred,
-        script_dir.parent / "bin" / "artcraft-mcp-server.exe",
-        script_dir.parent / "artcraft-mcp-server.exe",
+        script_dir.parent / "bin" / "artcraft-mcp",
+        script_dir.parent / "artcraft-mcp",
     ]
     for c in candidates:
         if c.exists():
