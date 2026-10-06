@@ -1,0 +1,44 @@
+# Rust build artifacts
+target/
+**/*.rs.bk
+*.pdb
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Outputs and logs
+outputs/
+output/
+outputs_3d/
+downloads/
+logs/
+*.log
+
+# Sensitive credentials
+.env
+.env.*
+!*.example
+credentials/
+*.cookies
+
+# OS artifacts
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.sublime-workspace
+
+# Make sure precompiled binaries are tracked
+!bin/*.exe
