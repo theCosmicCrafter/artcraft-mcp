@@ -9,17 +9,28 @@ import sys
 import json
 import argparse
 
-def find_mcp_binary():
+def find_mcp_binary(use_core=False):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    candidates = [
-        os.path.join(script_dir, "bin", "artcraft-mcp-server.exe"),
-        os.path.join(script_dir, "bin", "artcraft-mcp.exe"),
-        os.path.join(script_dir, "artcraft-mcp-server.exe"),
-        os.path.join(script_dir, "artcraft-mcp.exe"),
-        os.path.join(script_dir, "bin", "artcraft-mcp-server"),
-        os.path.join(script_dir, "artcraft-mcp-server"),
-        os.path.join(script_dir, "tools", "artcraft-mcp-server.exe"),
-    ]
+    if use_core:
+        candidates = [
+            os.path.join(script_dir, "bin", "artcraft-mcp-server.exe"),
+            os.path.join(script_dir, "artcraft-mcp-server.exe"),
+            os.path.join(script_dir, "bin", "artcraft-mcp-server"),
+            os.path.join(script_dir, "artcraft-mcp-server"),
+            os.path.join(script_dir, "bin", "artcraft-mcp.exe"),
+            os.path.join(script_dir, "artcraft-mcp.exe"),
+        ]
+    else:
+        candidates = [
+            os.path.join(script_dir, "bin", "artcraft-mcp.exe"),
+            os.path.join(script_dir, "bin", "artcraft-mcp-server.exe"),
+            os.path.join(script_dir, "artcraft-mcp.exe"),
+            os.path.join(script_dir, "artcraft-mcp-server.exe"),
+            os.path.join(script_dir, "bin", "artcraft-mcp"),
+            os.path.join(script_dir, "bin", "artcraft-mcp-server"),
+            os.path.join(script_dir, "artcraft-mcp"),
+            os.path.join(script_dir, "artcraft-mcp-server"),
+        ]
     for c in candidates:
         if os.path.exists(c):
             return os.path.abspath(c)
@@ -83,10 +94,14 @@ def register_mcp(config_path, client_name, exe_path):
         return False
 
 def main():
+    parser = argparse.ArgumentParser(description="ArtCraft MCP One-Click Setup Utility")
+    parser.add_argument("--core", action="store_true", help="Use lightweight core server (artcraft-mcp-server.exe) instead of full 55-tool community binary")
+    args = parser.parse_args()
+
     print("=== ArtCraft MCP One-Click Setup Utility ===")
-    exe_path = find_mcp_binary()
+    exe_path = find_mcp_binary(use_core=args.core)
     if not exe_path:
-        print("[-] Could not find artcraft-mcp-server executable in setup directory.")
+        print("[-] Could not find artcraft-mcp executable in setup directory.")
         sys.exit(1)
 
     print(f"[*] Found ArtCraft MCP Binary: {exe_path}")
