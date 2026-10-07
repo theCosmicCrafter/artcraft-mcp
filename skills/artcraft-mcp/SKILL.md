@@ -34,9 +34,9 @@ For detailed lists of available models and settings, please consult the followin
 - [Image Models](references/image-models.md): Complete list of supported image models (Flux, Midjourney, Nano Banana, Seedream, etc.)
 - [Video Models](references/video-models.md): Complete list of supported video models (Seedance, Kling, Sora, Veo, etc.)
 - [3D and Splat Models](references/three_d_and_splat_models.md): Complete list of supported 3D object and Gaussian Splat models (Hunyuan 3D, WorldLabs Marble)
+- [Audio & Voice Models](references/audio-models.md): Suno audio generation, TTS speech synthesis, and voice conversion
+- [Billing & Credits](references/billing-and-credits.md): Credit top-ups, Stripe subscriptions, customer portal, and cost estimations
 - [Aspect Ratios](references/aspect-ratios.md): Supported aspect ratios (Square, Widescreen, Tall, etc.)
-
-## Available Tools
 
 ## Available Tools (61-Tool Suite)
 
