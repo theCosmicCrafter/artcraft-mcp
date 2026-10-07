@@ -15,6 +15,7 @@ When generating images, the agent MUST adhere to these rules:
 - **`flux_1_schnell`**: Fast variant of Flux 1. Use when speed is preferred over ultra-fine details.
 - **`flux_pro_1p1` / `flux_pro_1p1_ultra`**: Professional and ultra-high-quality variants. Use for cinematic or highly polished commercial outputs.
 - **`flux_2_lora_angles`**: LoRA fine-tuned variant. Use when specific camera angles or character poses are requested.
+- **`flux_3` / `flux_3_pro`**: Next-generation Flux 3 architectures with advanced lighting and detail rendition.
 
 ## Nano Banana (Gemini)
 Nano Banana models are unique in their support for advanced composition and editing.
@@ -25,7 +26,8 @@ Nano Banana models are unique in their support for advanced composition and edit
 
 ## Seedream
 - **`seedream_4` / `seedream_4p5`**: Highly aesthetic, anime, and illustration-friendly generation models. Best used with anime-style prompts.
-- **`seedream_5_lite`**: Lightweight variant of the newer Seedream 5 model.
+- **`seedream_5` / `seedream_5_lite`**: Core Seedream 5 releases for high-fidelity stylized generation.
+- **`seedream_5_pro` / `seedream_5_ultra`**: Pro and Ultra Seedream 5 models with fine-grained color dynamic range and composition control.
 
 ## Midjourney
 Midjourney models require a linked `midjourney.web_login.toml` credential.

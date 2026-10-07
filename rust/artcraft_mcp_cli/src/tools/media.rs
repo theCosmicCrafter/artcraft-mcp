@@ -57,6 +57,28 @@ pub fn tools() -> Vec<Tool> {
             })),
         },
         Tool {
+            name: "artcraft_download_media_file".to_string(),
+            description: "Download a generated media file (image, video, audio, 3D mesh, or splat) directly to local disk.".to_string(),
+            input_schema: Some(json!({
+                "type": "object",
+                "properties": {
+                    "media_token": {
+                        "type": "string",
+                        "description": "Media file token to download"
+                    },
+                    "download_dir": {
+                        "type": "string",
+                        "description": "Optional local directory path to save the file into. Defaults to ~/Artcraft/downloads or user downloads folder."
+                    },
+                    "filename": {
+                        "type": "string",
+                        "description": "Optional custom filename with extension (e.g., 'render.png')"
+                    }
+                },
+                "required": ["media_token"]
+            })),
+        },
+        Tool {
             name: "artcraft_list_media_files".to_string(),
             description: "List all session media files with pagination.".to_string(),
             input_schema: Some(json!({
@@ -305,6 +327,65 @@ pub async fn delete_media_file(arguments: Value, client: &ArtCraftClient) -> Res
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
         text: format!("Media file {} deleted successfully.", token_str),
+    }])
+}
+
+pub async fn download_media_file(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+    let token_str = arguments["media_token"].as_str()
+        .ok_or_else(|| anyhow!("media_token is required"))?;
+    let token = MediaFileToken::new_from_str(token_str);
+
+    let response = client_get_media_file(&client.api_host, &token).await?;
+    let info = response.media_file;
+    let cdn_url = info.media_links.cdn_url;
+
+    let download_dir = if let Some(dir) = arguments["download_dir"].as_str() {
+        std::path::PathBuf::from(dir)
+    } else {
+        let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+        let artcraft_downloads = home.join("Artcraft").join("downloads");
+        if artcraft_downloads.exists() {
+            artcraft_downloads
+        } else {
+            dirs::download_dir().unwrap_or(home)
+        }
+    };
+
+    std::fs::create_dir_all(&download_dir)?;
+
+    let extension = {
+        let path = cdn_url.path();
+        if let Some(ext) = std::path::Path::new(path).extension().and_then(|s| s.to_str()) {
+            ext.to_string()
+        } else {
+            "bin".to_string()
+        }
+    };
+
+    let filename = if let Some(name) = arguments["filename"].as_str() {
+        name.to_string()
+    } else {
+        let base_name = info.maybe_title.as_deref().unwrap_or(token.as_str());
+        let safe_name: String = base_name.chars().map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' }).collect();
+        format!("{}.{}", safe_name, extension)
+    };
+
+    let target_file_path = download_dir.join(&filename);
+
+    let resp = reqwest::get(cdn_url.as_str()).await?;
+    let bytes = resp.bytes().await?;
+    std::fs::write(&target_file_path, &bytes)?;
+
+    Ok(vec![ToolContent {
+        content_type: "text".to_string(),
+        text: format!(
+            "Media file downloaded successfully.\nToken: {}\nSaved to: {}\nSize: {} bytes ({:.2} MB)\nCDN URL: {}",
+            token.as_str(),
+            target_file_path.display(),
+            bytes.len(),
+            bytes.len() as f64 / 1_048_576.0,
+            cdn_url.as_str()
+        ),
     }])
 }
 

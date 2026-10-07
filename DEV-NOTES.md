@@ -5,7 +5,7 @@
 This package contains the ArtCraft MCP Server ready for development and testing.
 
 ### Files Included:
-- `artcraft-mcp.exe` - The full 55-tool MCP server executable (Rust, release build)
+- `artcraft-mcp.exe` - The full 61-tool MCP server executable (Rust, release build)
 - `ArtCraft-MCP-Setup-Guide.md` - Complete setup and configuration guide
 - `README.md` - ArtCraft MCP project README
 - `LICENSE.md` - License information
@@ -37,7 +37,7 @@ Add to your MCP config (e.g., `~/.windsurf/mcp_config.json`):
     "artcraft": {
       "command": "C:\\path\\to\\artcraft-mcp.exe",
       "args": [],
-      "description": "ArtCraft AI generation platform (Full 55-Tool Engine)",
+      "description": "ArtCraft AI generation platform (Full 61-Tool Engine)",
       "enabled": true
     }
   }
@@ -51,9 +51,9 @@ Copy the `skills/` folder to your skills directory for AI assistant guidance.
 
 - **Language**: Rust
 - **Build**: Release mode (optimized)
-- **Version**: 0.1.0
+- **Version**: 1.1.0
 - **Protocol**: Model Context Protocol (MCP) over stdio
-- **Tools**: 55 tools for image/video generation, 3D, voice, TTS, characters, LoRAs, and community features
+- **Tools**: 61 tools for image/video generation, 3D, splats, audio/Suno, voice, TTS, characters, LoRAs, and community features
 
 ## Known Issues
 

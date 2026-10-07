@@ -38,84 +38,78 @@ For detailed lists of available models and settings, please consult the followin
 
 ## Available Tools
 
-### 1. generate_image
+## Available Tools (61-Tool Suite)
+
+### 1. `artcraft_generate_image`
 Enqueues an image generation request using ArtCraft's omni-gen image endpoint.
 - **Required parameter**: `prompt` (The text describing the desired image).
 - **Optional parameters**:
-  - `model`: e.g., `flux_1_dev` (default), `nano_banana_pro`, `seedream_4`, `midjourney_8`.
+  - `model`: e.g., `flux_1_dev` (default), `nano_banana_pro`, `seedream_4`, `seedream_5`, `midjourney_8`, `flux_3`.
   - `aspect_ratio`: e.g., `square`, `wide_sixteen_by_nine`, `tall_nine_by_sixteen`.
   - `quality`: `standard` or `high`.
   - `image_batch_count`: Number of images to generate (integer, default is 1).
 
-### 2. generate_video
+### 2. `artcraft_generate_video`
 Enqueues a video generation request using ArtCraft's omni-gen video endpoint.
 - **Required parameter**: `prompt` (Text describing the video action/scene).
 - **Optional parameters**:
-  - `model`: e.g., `seedance_2p0` (default), `sora_2`, `veo_3`.
+  - `model`: e.g., `seedance_2p0` (default), `seedance_2p5`, `sora_2`, `veo_3`, `kling_3p0_pro`, `minimax_h3`.
   - `duration`: Duration in seconds (integer, default is 5).
   - `start_frame_media_token` & `end_frame_media_token`: MediaFileToken strings for the first/last frames.
   - `image_reference_tokens`, `video_reference_tokens`, `audio_reference_tokens`: Comma-separated strings of MediaFileTokens.
 
-### 3. generate_object_3d
-Enqueues an Image-to-3D generation request using Hunyuan 3D.
+### 3. `artcraft_generate_3d_object`
+Enqueues an Image-to-3D generation request using Hunyuan 3D or Tripo3D.
 - **Required parameter**: `media_file_token` (The uploaded image token to convert to 3D).
-- **Optional parameter**: `version` (`2.0` or `2.1`, default is `2.0`).
+- **Optional parameters**: `model` (`tripo_h3_1`), `version` (`2.0` or `2.1`), `face_count`, `enable_pbr`, `enable_texture`, `texture_quality`, `geometry_quality`.
 
-### 4. generate_splat_3d
+### 4. `artcraft_generate_splat`
 Enqueues a Gaussian Splat generation request using WorldLabs Marble.
 - **Optional parameters**:
-  - `image_media_file_token` (Optional input image token to seed world generation).
-  - `prompt` (Optional text description of the world/scene).
-  - `version` (`mini` or `plus`, default is `mini`).
+  - `image_media_file_token` (Input image token to seed world generation).
+  - `prompt` (Text description of the world/scene).
+  - `version` (`marble_0p1_mini`, `marble_0p1_plus`, `marble_1p0`, `marble_1p1`).
+  - `is_panoramic` (boolean for 360° environment).
   *(Note: Either `prompt` or `image_media_file_token` must be provided).*
 
-### 5. upload_media
-Uploads a local image or video file from the filesystem to ArtCraft to get a `MediaFileToken`.
-- **Required parameter**: `file_path` (Absolute path to the local media file like PNG, JPG, MP4).
+### 5. `artcraft_generate_audio`
+Generates ambient audio, soundscapes, or full musical compositions via Suno.
+- **Required parameter**: `prompt` (Audio / musical scene description).
+- **Optional parameters**: `duration_seconds` (integer), `is_custom` (boolean), `tags` (genre/instrument styling).
 
-### 6. list_jobs
-Lists the recent ArtCraft generation jobs, showing status, progress, and CDN links to results.
-- **Optional parameters**: `include_states`, `exclude_states` (comma-separated state names like `pending,started`).
+### 6. `artcraft_upload_image` / `artcraft_upload_video` / `artcraft_upload_audio`
+Uploads local media files from the filesystem to ArtCraft to obtain a `MediaFileToken`.
+- **Required parameter**: `file_path` (Absolute path to the local media file).
 
-### 7. get_job_status
-Retrieves detailed status for a specific generation job using its job token.
-- **Required parameter**: `job_token` (The unique token of the job, e.g., `job_xxx`).
+### 7. `artcraft_download_media_file`
+Downloads generated or hosted media assets directly from ArtCraft CDN to the local filesystem.
+- **Required parameters**: `media_token` (The unique token of the media file), `download_directory` (Target local folder path).
 
-### 8. get_credits
-Retrieves the user's current credit balance, including free, monthly, and banked credits, as well as the sum total.
+### 8. `artcraft_list_jobs` / `artcraft_get_job_status` / `artcraft_terminate_job`
+Tracks and controls asynchronous generation jobs.
+- `artcraft_list_jobs`: Lists recent jobs, progress percentages, and state filters.
+- `artcraft_get_job_status`: Polls status, error output, and CDN links for a specific `job_token`.
+- `artcraft_terminate_job`: Cancels an in-flight job by `job_token`.
 
-### 9. get_subscription
-Retrieves details about the user's active ArtCraft subscription, including plan slug, status, and billing dates.
+### 9. `artcraft_estimate_cost` / `artcraft_estimate_splat_cost`
+Inspects credit costs prior to launching heavy workloads.
+- `artcraft_estimate_cost`: Estimates credit quote for image, video, 3D, and voice pipelines.
+- `artcraft_estimate_splat_cost`: Pre-calculates exact credit usage for WorldLabs Marble splatting.
 
-### 10. create_checkout_session
-Generates a Stripe checkout URL.
-- **Required parameters**: `type` ('credits' or 'subscription').
-- **Optional parameters**: `quantity` (for credits), `plan_id` (for subscriptions).
+### 10. `artcraft_get_credits` / `artcraft_get_subscription`
+Retrieves live credit balance breakdowns (free, monthly, banked) and current active subscription details.
 
-### 11. get_billing_portal_url
-Generates a Stripe portal URL for the user to securely manage their payment methods and subscription.
+### 11. `artcraft_create_checkout_session` / `artcraft_create_subscription_checkout` / `artcraft_get_billing_portal_url`
+Direct Stripe billing and subscription management.
+- `artcraft_create_checkout_session`: Purchases credit top-up packages.
+- `artcraft_create_subscription_checkout`: Sets up recurring tier subscriptions.
+- `artcraft_get_billing_portal_url`: Generates a Stripe customer portal redirect URL.
 
-### 12. estimate_image_cost / estimate_video_cost
-Estimates the cost in credits for generating media.
-- **Required parameters**: `model`, `provider`, `generation_mode` ('text_to_image', 'image_edit', etc.).
-- **Optional parameters**: `aspect_ratio`, `image_batch_count`, `duration_seconds`.
-
-### 13. get_media_file / download_media_file / delete_media_file
-Tools to interact with uploaded or generated media files.
-- **get_media_file**: Retrieves rich metadata for a given `media_token`.
-- **download_media_file**: Downloads the media file to the local disk. Requires `media_token` and `download_directory`.
-- **delete_media_file**: Deletes a media file from the user's account using its `media_token`.
-
-### 14. create_prompt
-Saves a text prompt to the backend and returns a `PromptToken`.
-- **Required parameter**: `prompt`.
-- **Optional parameter**: `is_negative` (boolean).
-
-### 15. list_models
-Returns a list of supported image and video models, along with their capabilities and required provider credentials.
-
-### 16. check_provider_credentials
-Lists the configured 3rd-party API keys (e.g., FAL API Key, Midjourney Login) by checking local settings securely without exposing the key contents.
+### 12. Voice, TTS & Character Customization Tools
+- `artcraft_tts_generate`: Synthesizes spoken audio from text.
+- `artcraft_voice_convert`: Applies neural voice conversion to audio samples.
+- `artcraft_create_character`: Creates reusable character definitions with LoRAs and traits.
+- `artcraft_search_weights` / `artcraft_get_weight`: Discovers and inspects community LoRAs.
 
 ## Workflow Examples
 

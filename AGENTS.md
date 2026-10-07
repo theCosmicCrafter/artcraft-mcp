@@ -5,10 +5,10 @@ Standalone project bundling all ArtCraft Model Context Protocol (MCP) server mat
 ## Quick Facts
 - **Binary Locations**:
   - `.\bin\artcraft-mcp-server.exe` — Modern core server (MCP 2024-11-05, mcp_sessions auth)
-  - `.\bin\artcraft-mcp.exe` — Comprehensive 55-tool community edition
+  - `.\bin\artcraft-mcp.exe` — Comprehensive 61-tool community edition
 - **CLI Suite**: `.\tools\*.py` (requires Python 3.10+, `$env:PYTHONUTF8="1"`)
 - **Agent Skill**: `.\skills\artcraft-mcp\SKILL.md`
-- **Schemas**: `.\schemas\*.json` (55 tool definitions)
+- **Schemas**: `.\schemas\*.json` (61 tool definitions)
 - **Rust Source**: `.\rust\artcraft_mcp_server\` and `.\rust\artcraft_mcp_cli\`
 
 ## Machine & Workspace Rules

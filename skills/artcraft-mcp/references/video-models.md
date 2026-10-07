@@ -15,6 +15,8 @@ When generating video, the agent MUST adhere to these rules:
 - **`seedance_2p0_bp` / `seedance_2p0_bp_fast`**: BytePlus variants for different backend infrastructure.
 - **`seedance_2p0_u` / `seedance_2p0_u_fast`**: Ultra high quality variants for final renders.
 - **`seedance_2p0_bpu` / `seedance_2p0_bpu_fast`**: BytePlus Ultra variants.
+- **`seedance_2p5` / `seedance_2p5_fast`**: Next-generation Seedance 2.5 with enhanced temporal consistency.
+- **`seedance_2p5_bp` / `seedance_2p5_u`**: Seedance 2.5 BytePlus and Ultra quality variants.
 
 ## Kling
 Kling models excel at realistic physics, fluid motion, and adherence to complex prompts.

@@ -51,6 +51,7 @@ pub async fn execute_tool(
         // Generate
         "artcraft_generate_image" => generate::generate_image(arguments, client).await,
         "artcraft_generate_video" => generate::generate_video(arguments, client).await,
+        "artcraft_generate_audio" => generate::generate_audio(arguments, client).await,
         "artcraft_generate_3d_object" => generate::generate_3d_object(arguments, client).await,
         "artcraft_generate_splat" => generate::generate_splat(arguments, client).await,
 
@@ -63,6 +64,7 @@ pub async fn execute_tool(
 
         // Cost & Models
         "artcraft_estimate_cost" => cost::estimate_cost(arguments, client).await,
+        "artcraft_estimate_splat_cost" => cost::estimate_splat_cost(arguments, client).await,
         "artcraft_list_image_models" => cost::list_image_models(arguments, client).await,
         "artcraft_list_video_models" => cost::list_video_models(arguments, client).await,
 
@@ -71,6 +73,7 @@ pub async fn execute_tool(
         "artcraft_upload_video" => media::upload_video(arguments, client).await,
         "artcraft_upload_audio" => media::upload_audio(arguments, client).await,
         "artcraft_get_media_file" => media::get_media_file(arguments, client).await,
+        "artcraft_download_media_file" => media::download_media_file(arguments, client).await,
         "artcraft_list_media_files" => media::list_media_files(arguments, client).await,
         "artcraft_search_media" => media::search_media(arguments, client).await,
         "artcraft_delete_media_file" => media::delete_media_file(arguments, client).await,
@@ -113,10 +116,13 @@ pub async fn execute_tool(
         // Studio
         "artcraft_studio_gen2" => studio::studio_gen2(arguments, client).await,
 
-        // Account
+        // Account & Billing
         "artcraft_get_session_info" => account::get_session_info(arguments, client).await,
         "artcraft_get_credits" => account::get_credits(arguments, client).await,
         "artcraft_get_subscription" => account::get_subscription(arguments, client).await,
+        "artcraft_create_checkout_session" => account::create_checkout_session(arguments, client).await,
+        "artcraft_create_subscription_checkout" => account::create_subscription_checkout(arguments, client).await,
+        "artcraft_get_billing_portal_url" => account::get_billing_portal_url(arguments, client).await,
 
         // Social
         "artcraft_create_bookmark" => social::create_bookmark(arguments, client).await,

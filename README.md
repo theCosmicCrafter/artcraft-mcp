@@ -16,11 +16,11 @@ This project enables AI coding assistants (Claude Desktop, Windsurf, Cursor, Ant
 ```
 artcraft-mcp/
 ├── bin/                                # Standalone, ready-to-run 64-bit Windows binary
-│   └── artcraft-mcp.exe                # Full 55-tool ArtCraft MCP server
+│   └── artcraft-mcp.exe                # Full 61-tool ArtCraft MCP server
 │
 ├── rust/                               # Rust Source Implementation
 │   ├── README.md                       # Architecture & crate guide
-│   └── artcraft_mcp_cli/               # Full 55-tool MCP server crate
+│   └── artcraft_mcp_cli/               # Full 61-tool MCP server crate
 │       ├── Cargo.toml
 │       ├── README.md
 │       └── src/
@@ -49,11 +49,14 @@ artcraft-mcp/
 │   ├── mcp_routes.py                   # FastAPI / FastMCP lifecycle routes (start, stop, health, token)
 │   └── docs_mcp_server.md              # Architecture & companion integration guide
 │
-├── schemas/                            # Complete JSON-RPC tool definitions (55 tools)
+├── schemas/                            # Complete JSON-RPC tool definitions (61 tools)
 │   ├── artcraft_generate_image.json
 │   ├── artcraft_generate_video.json
 │   ├── artcraft_generate_3d_object.json
-│   └── ... (52 more schemas)
+│   ├── artcraft_generate_audio.json
+│   ├── artcraft_download_media_file.json
+│   ├── artcraft_estimate_splat_cost.json
+│   └── ... (55 more schemas)
 │
 ├── ArtCraft-MCP-Setup-Guide.md         # Full client setup guide (Claude, Windsurf, Cursor)
 ├── TOOLS.md                            # Comprehensive CLI documentation
@@ -89,7 +92,7 @@ Add to your MCP client configuration file (e.g., `claude_desktop_config.json` or
     "artcraft": {
       "command": "C:\\path\\to\\artcraft-mcp\\bin\\artcraft-mcp.exe",
       "args": [],
-      "description": "ArtCraft AI generative media platform (Full 55-tool engine)"
+      "description": "ArtCraft AI generative media platform (Full 61-tool engine)"
     }
   }
 }

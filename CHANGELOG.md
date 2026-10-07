@@ -6,7 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [1.0.0] - 2026-07-29
+## [1.1.0] - 2026-10-07
+
+### Added
+- **Full 61-Tool Engine Expansion**:
+  - `artcraft_generate_audio`: Native audio and music generation powered by Suno.
+  - `artcraft_download_media_file`: Direct downloading of generated or hosted media assets to local filesystem.
+  - `artcraft_estimate_splat_cost`: Pre-generation exact credit estimation for WorldLabs Marble Gaussian splats.
+  - `artcraft_create_checkout_session`: Instant Stripe credit package top-up checkout session generator.
+  - `artcraft_create_subscription_checkout`: Direct Stripe subscription checkout session setup.
+  - `artcraft_get_billing_portal_url`: Stripe customer billing and subscription portal access.
+- **Enhanced 3D Mesh & Radiance Splatting**:
+  - Added Tripo3D H3.1 (`tripo_h3_1`) model support to `artcraft_generate_3d_object`.
+  - Added multi-view camera references (`back_media_file_token`, `left_media_file_token`, `right_media_file_token`).
+  - Added retopology and PBR material synthesis controls (`enable_pbr`, `enable_texture`, `texture_quality`, `face_count`).
+  - Added WorldLabs Marble 1.0 & 1.1 support with 360° panoramic mode (`is_panoramic`).
+- **Extended Model Coverage**:
+  - Video: MiniMax H3 / Turbo / Ultra, Seedance 2.5 / Fast / Ultra, Wan 3.0 / Prime, Kling 3.0 Pro, Sora 2, Beeble SwitchX.
+  - Image: Flux 3 / Pro, Seedream 5 Pro / Ultra, GPT Image 2.5 (Flare / Sunburst), Midjourney 8.
+- **Updated Schemas & Tool Definitions**:
+  - 61 complete JSON-RPC tool schemas in `schemas/`.
+  - Updated AI agent guidance in `skills/artcraft-mcp/SKILL.md` and reference tables.
+
+---
+
+## [1.0.0] - 2026-10-06
 
 ### Added
 - **Native Rust MCP Server (`artcraft-mcp-server`)**:
