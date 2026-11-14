@@ -11,7 +11,6 @@ path = "src/main.rs"
 
 [dependencies]
 # Workspace hack (faster compile times)
-workspace-build-acceleration.workspace = true
 
 # Internal
 artcraft_api_defs.workspace = true
@@ -27,7 +26,7 @@ log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_derive.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "io-std"] }
 
 # Logging
 env_logger = "0.11"
