@@ -67,6 +67,7 @@ pub struct ToolsListResult {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ToolCallRequest {
     pub name: String,
+    #[serde(default)]
     pub arguments: Value,
 }
 

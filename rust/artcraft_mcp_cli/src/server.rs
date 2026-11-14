@@ -43,6 +43,8 @@ impl McpServer {
                 info!("MCP client initialized");
                 None
             }
+            "ping" => Some(JsonRpcResponse::success(request.id, serde_json::json!({}))),
+            m if m.starts_with("notifications/") => None,
             "tools/list" => Some(self.handle_tools_list(request)),
             "tools/call" => Some(self.handle_tool_call(request).await),
             _ => Some(JsonRpcResponse::error(
@@ -54,8 +56,13 @@ impl McpServer {
     }
 
     fn handle_initialize(&self, request: JsonRpcRequest) -> JsonRpcResponse {
+        let protocol_version = request.params.as_ref()
+            .and_then(|p| p.get("protocolVersion"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("2025-03-26")
+            .to_string();
         let result = InitializeResult {
-            protocol_version: "2025-03-26".to_string(),
+            protocol_version,
             capabilities: ServerCapabilities {
                 tools: ToolCapabilities { list_changed: false },
             },
