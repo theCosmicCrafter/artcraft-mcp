@@ -5,6 +5,10 @@ use crate::client::ArtCraftClient;
 use crate::tools;
 use crate::types::*;
 
+/// MCP protocol versions this server implements, oldest first.
+const SUPPORTED_PROTOCOL_VERSIONS: &[&str] = &["2024-11-05", "2025-03-26"];
+const LATEST_PROTOCOL_VERSION: &str = "2025-03-26";
+
 pub struct McpServer {
     client: ArtCraftClient,
     initialized: bool,
@@ -56,10 +60,13 @@ impl McpServer {
     }
 
     fn handle_initialize(&self, request: JsonRpcRequest) -> JsonRpcResponse {
+        // Agree to the client's version only if we support it; otherwise offer
+        // our latest and let the client decide whether to continue.
         let protocol_version = request.params.as_ref()
             .and_then(|p| p.get("protocolVersion"))
             .and_then(|v| v.as_str())
-            .unwrap_or("2025-03-26")
+            .filter(|v| SUPPORTED_PROTOCOL_VERSIONS.contains(v))
+            .unwrap_or(LATEST_PROTOCOL_VERSION)
             .to_string();
         let result = InitializeResult {
             protocol_version,
