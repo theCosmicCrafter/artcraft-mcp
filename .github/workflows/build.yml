@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14
+          - os: macos-latest # Apple Silicon
             artifact: artcraft-mcp-macos-arm64
             bin: artcraft-mcp
           - os: ubuntu-latest
