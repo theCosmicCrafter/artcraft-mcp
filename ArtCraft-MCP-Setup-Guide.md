@@ -59,7 +59,7 @@ If you have the **ArtCraft Desktop App** installed and have logged in at least o
 C:\Users\YourUsername\AppData\Local\ai.artcraft.app\.cookies
 ```
 
-On macOS it is `~/Library/Application Support/ai.artcraft.app/.cookies`; on Linux, `~/.local/share/ai.artcraft.app/.cookies`.
+On macOS it is `~/Library/Application Support/ai.artcraft.app/.cookies`; on Linux, `$XDG_DATA_HOME/ai.artcraft.app/.cookies`, where `$XDG_DATA_HOME` defaults to `~/.local/share`.
 
 If this file exists, you don't need to create the credential files manually.
 

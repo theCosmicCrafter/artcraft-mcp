@@ -113,7 +113,7 @@ Add to your MCP client configuration file (e.g., `claude_desktop_config.json` or
    |---|---|
    | Windows | `%LOCALAPPDATA%\ai.artcraft.app\.cookies` |
    | macOS | `~/Library/Application Support/ai.artcraft.app/.cookies` |
-   | Linux | `~/.local/share/ai.artcraft.app/.cookies` |
+   | Linux | `$XDG_DATA_HOME/ai.artcraft.app/.cookies` (default `~/.local/share/ai.artcraft.app/.cookies`) |
 
 Without credentials the server still starts and lists its tools, but account calls return `401 Unauthorized`.
 
