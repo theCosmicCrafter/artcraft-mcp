@@ -3,7 +3,7 @@
 [![Protocol: MCP](https://img.shields.io/badge/MCP-2024--11--05-blue.svg)](https://modelcontextprotocol.io)
 [![Language: Rust](https://img.shields.io/badge/Language-Rust%202021-orange.svg)](https://www.rust-lang.org)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-green.svg)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](./LICENSE.md)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE.md)
 
 Standalone repository bundling all **Model Context Protocol (MCP)** server implementations, automation CLI tools, agent skills, JSON-RPC schemas, and companion bridge routes from the **ArtCraft** generative media platform.
 

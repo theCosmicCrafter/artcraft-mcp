@@ -1,86 +1,202 @@
-ArtCraft License (WIP)
-======================
 
-(**Warning**: This isn't a real lawyery license full of legitimate legalese yet, but we'll take care of that ASAP.)
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
 
-ArtCraft is a form of "fair source" software. It's like [free beer](https://en.wiktionary.org/wiki/free_as_in_beer) 
-in that we give you the code, but there are a few small limitations on what you can do with it.
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
-First, what you *can* do with ArtCraft:
+   1. Definitions.
 
->  1. You do not have to pay us to use ArtCraft. It's free.
-> 
->  2. You can back up, copy, modify, compile, and use the code for your own private personal purposes.
->  
->  3. You can do anything you want with the media you create with ArtCraft. Generated assets are yours.
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
 
-What you *can't do* with ArtCraft:
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
 
-> 1. You cannot sell the ArtCraft software commercially (eg. as your own software).
->  
-> 2. You cannot use the ArtCraft code to develop a competing business or product (eg. selling AI image and video tools).
->
-> 3. You cannot fork ArtCraft and remove ArtCraft community, donation links, or paid model services. We intend to 
->    make money to improve ArtCraft for everyone.
-> 
-> 4. You cannot use the ArtCraft name, logo, or mascot characters to promote your business without permission.
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
 
-This license means you can see what we're doing and not be at risk of having the rug pulled out from under 
-you (eg. if our founders die, if our business collapses, if zombies or space aliens invade). It also gives 
-you a really great way to customize the software or lend a hand in reporting (or even fixing) bugs.
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
 
-Our desire is to support artists, designers, and filmmakers. We want to help you build your own creative studios
-and businesses. We want to give you creative software you can use forever.
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
 
-ArtCraft is free. We do offer models available through us where you can pay us and support our development, but we also 
-offer the ability for you to use other providers - and we'll keep adding more options so you have maximum flexibility.
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
 
-## Our Promise
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
 
-- All development and business plans will be communicated openly with the community.
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
 
-- Except for minor test scripts or a few small places where we might need to use licensed 3rd party code, all of 
-  our engineering efforts will live in a single publicly available monorepo. You can see everything we do and even 
-  benefit from using it for personal use. We plan on building a lot more than what you see today, and you'll get 
-  all of it.
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
 
-- We will not "rug pull" our users. If our business shuts down, gets acquired, or otherwise changes, the tools 
-  we create will always continue to function in the same way.
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
 
-- If the business ends and our founders quit working in this space, we'll make it so the software transitions 
-  to an OSI-approved open source license. (We don't intend to quit!)
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
 
-## Why not OSI Open Source?
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
 
-Philosophical answer: The OSI is an industry body led by hyperscalers. They poach from open source all the time, yet 
-hyperscaler systems and code (AWS, GCP, YouTube, etc.) remain closed source. The tiniest nuggets are open, but the vast 
-machinery surrounding it - systems, user behaviors, funnels, at-scale moneymakers - is totally closed.
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
 
-Practical answer: OSI licenses make it exceptionally challenging to grow big things commercially. And many of 
-the licenses leave room for hyperscalers to reach in and cherry-pick pieces for themselves that they can better 
-commercialize than the original authors.
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
 
-Then there's completely open source software that doesn't even attempt to be a business. 
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
 
-We love software like Blender, but (1) developing ArtCraft is our full-time job, (2) we want to build something at scale
-that is much bigger than what you presently see, and (3) this will eventually become much more capital intensive than 
-just writing code - we want to train novel models that work directly in conjunction with the user interface. 
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
 
-If and when we do get to scale, we intend to keep every bit of our work in the open, including the models. Available 
-for use, inspection, learning, fitting onto consumer GPU hardware, and more. 
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
 
-Not having a way to make money is unfortunately what killed Stability.ai. Stability.ai walked so that others could 
-eventually run. (Black Forest Labs, et al.) We're not egotistical enough to count ourselves in that party yet, but we 
-believe in the original Stability.ai ethos and that their model can work with a few tweaks. 
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
 
-We want to build big and incredible tools the world hasn't seen before. We want to keep them free and entirely source 
-available. You don't have to pay us, but if you do, all of your investment goes right back into the engineering 
-and the tools. We're writing code you can clone and keep.
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
 
-## Inspiration
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
 
-We took inspiration for this from [Fair Source](https://fair.io/), [Fair Code](https://faircode.io/), 
-the [Defold License](https://defold.com/license/), and Hacker News discussions. The folks at Obsidian 
-have some pretty good thoughts on this as well.
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
 
-~ Brandon Thomas
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
