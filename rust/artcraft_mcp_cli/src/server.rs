@@ -5,6 +5,10 @@ use crate::client::ArtCraftClient;
 use crate::tools;
 use crate::types::*;
 
+/// MCP protocol versions this server implements, oldest first.
+const SUPPORTED_PROTOCOL_VERSIONS: &[&str] = &["2024-11-05", "2025-03-26"];
+const LATEST_PROTOCOL_VERSION: &str = "2025-03-26";
+
 pub struct McpServer {
     client: ArtCraftClient,
     initialized: bool,
@@ -43,6 +47,8 @@ impl McpServer {
                 info!("MCP client initialized");
                 None
             }
+            "ping" => Some(JsonRpcResponse::success(request.id, serde_json::json!({}))),
+            m if m.starts_with("notifications/") => None,
             "tools/list" => Some(self.handle_tools_list(request)),
             "tools/call" => Some(self.handle_tool_call(request).await),
             _ => Some(JsonRpcResponse::error(
@@ -54,8 +60,16 @@ impl McpServer {
     }
 
     fn handle_initialize(&self, request: JsonRpcRequest) -> JsonRpcResponse {
+        // Agree to the client's version only if we support it; otherwise offer
+        // our latest and let the client decide whether to continue.
+        let protocol_version = request.params.as_ref()
+            .and_then(|p| p.get("protocolVersion"))
+            .and_then(|v| v.as_str())
+            .filter(|v| SUPPORTED_PROTOCOL_VERSIONS.contains(v))
+            .unwrap_or(LATEST_PROTOCOL_VERSION)
+            .to_string();
         let result = InitializeResult {
-            protocol_version: "2025-03-26".to_string(),
+            protocol_version,
             capabilities: ServerCapabilities {
                 tools: ToolCapabilities { list_changed: false },
             },

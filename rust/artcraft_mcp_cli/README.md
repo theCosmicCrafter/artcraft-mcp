@@ -18,6 +18,8 @@ The MCP server reads credentials from the ArtCraft desktop app credential files:
 - `~/Artcraft/credentials/artcraft_session.txt` — Session cookie
 - `~/Artcraft/credentials/artcraft_avt.txt` — AVT cookie
 
+If either file is missing, the server falls back to the ArtCraft desktop app's cookie store (`<data-local-dir>/ai.artcraft.app/.cookies`: `%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on macOS, `$XDG_DATA_HOME` (default `~/.local/share`) on Linux).
+
 If no credentials are found, the server runs in unauthenticated mode.
 
 ## Building

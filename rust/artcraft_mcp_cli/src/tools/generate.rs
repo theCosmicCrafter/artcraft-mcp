@@ -351,6 +351,7 @@ pub async fn generate_video(arguments: Value, client: &ArtCraftClient) -> Result
         video_batch_count: arguments["video_batch_count"].as_u64().map(|v| v as u16),
         generate_audio: arguments["generate_audio"].as_bool(),
         estimate_only: None,
+        maybe_output_format: None,
     };
 
     let response = omni_gen_video_generate(

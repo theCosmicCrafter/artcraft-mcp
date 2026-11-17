@@ -102,15 +102,42 @@ Add to your MCP client configuration file (e.g., `claude_desktop_config.json` or
 
 ## 🔑 Authentication
 
-The server resolves credentials in the following order:
+`artcraft-mcp` (the 61-tool server in `rust/artcraft_mcp_cli`) reads credentials from files only — it does not read environment variables. It checks, in order:
 
-1. **`ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN`**: Dedicated MCP session Bearer token (`mcp_session_private_...`).
-2. **`ARTCRAFT_API_KEY`**: Automatically exchanged with `POST /v1/mcp/session/create` for an active session.
-3. **`ARTCRAFT_SESSION` and `ARTCRAFT_AVT`**: Session cookie environment variables.
-4. **Credential Files**: Auto-detected from `~/Artcraft/credentials/`:
+1. **Credential Files** in `~/Artcraft/credentials/` (`%USERPROFILE%\Artcraft\credentials\` on Windows):
    - `artcraft_session.txt` — Your session cookie
    - `artcraft_avt.txt` — Your visitor cookie
-5. **ArtCraft Desktop App Store**: Auto-detected from `%LOCALAPPDATA%\ai.artcraft.app\.cookies`.
+2. **ArtCraft Desktop App cookie store**, used for whichever cookie is still missing:
+
+   | OS | Path |
+   |---|---|
+   | Windows | `%LOCALAPPDATA%\ai.artcraft.app\.cookies` |
+   | macOS | `~/Library/Application Support/ai.artcraft.app/.cookies` |
+   | Linux | `$XDG_DATA_HOME/ai.artcraft.app/.cookies` (default `~/.local/share/ai.artcraft.app/.cookies`) |
+
+Without credentials the server still starts and lists its tools, but account calls return `401 Unauthorized`.
+
+> The `ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN` / `ARTCRAFT_API_KEY` / `ARTCRAFT_SESSION` + `ARTCRAFT_AVT` environment variables apply to the separate `artcraft-mcp-server` core server, not to `artcraft-mcp`.
+
+---
+
+## 🍎 macOS & Linux
+
+There is no prebuilt macOS or Linux binary in `bin/` yet. Build one from the ArtCraft monorepo (the crate shares typed tokens and API definitions with it):
+
+```bash
+git clone https://github.com/storytold/artcraft.git && cd artcraft
+cp -R /path/to/artcraft-mcp/rust/artcraft_mcp_cli crates/artcraft_mcp_cli
+# add "crates/artcraft_mcp_cli" to [workspace] members in Cargo.toml, then:
+cargo build --release -p artcraft-mcp
+# binary: target/release/artcraft-mcp
+```
+
+The `Build binaries` GitHub Actions workflow does the same for macOS (Apple Silicon), Linux and Windows and uploads the binaries as artifacts. Register the binary with your client, e.g. Claude Code:
+
+```bash
+claude mcp add artcraft -- /path/to/artcraft-mcp
+```
 
 ---
 
