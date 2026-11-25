@@ -47,6 +47,8 @@ C:\Users\YourUsername\Artcraft\credentials\
     └── artcraft_avt.txt        ← Your visitor cookie token
 ```
 
+On macOS and Linux the same files go in `~/Artcraft/credentials/`.
+
 Each file should contain only the raw cookie token value (no quotes, no formatting, just the token string).
 
 ### Method B: ArtCraft Desktop App (Automatic)
@@ -56,6 +58,8 @@ If you have the **ArtCraft Desktop App** installed and have logged in at least o
 ```
 C:\Users\YourUsername\AppData\Local\ai.artcraft.app\.cookies
 ```
+
+On macOS it is `~/Library/Application Support/ai.artcraft.app/.cookies`; on Linux, `$XDG_DATA_HOME/ai.artcraft.app/.cookies`, where `$XDG_DATA_HOME` defaults to `~/.local/share`.
 
 If this file exists, you don't need to create the credential files manually.
 

@@ -1,0 +1,92 @@
+name: Build binaries
+
+# Builds artcraft-mcp for macOS (Apple Silicon), Linux and Windows inside the
+# ArtCraft monorepo, which the crate depends on for its API definitions.
+
+on:
+  push:
+    branches: [main]
+    paths: ["rust/**", ".github/workflows/build.yml"]
+  pull_request:
+    paths: ["rust/**", ".github/workflows/build.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Monorepo commit the crate is known to build against. Bump deliberately.
+  ARTCRAFT_REF: 84a6a7dcf5ccd5f8f577e5dafe84494532cc14fb
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest # Apple Silicon
+            artifact: artcraft-mcp-macos-arm64
+            bin: artcraft-mcp
+          - os: ubuntu-latest
+            artifact: artcraft-mcp-linux-x86_64
+            bin: artcraft-mcp
+          - os: windows-latest
+            artifact: artcraft-mcp-windows-x86_64
+            bin: artcraft-mcp.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: artcraft-mcp
+
+      - uses: actions/checkout@v4
+        with:
+          repository: storytold/artcraft
+          ref: ${{ env.ARTCRAFT_REF }}
+          path: artcraft
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: artcraft
+
+      - name: Add the crate to the monorepo workspace
+        shell: bash
+        run: |
+          cp -R artcraft-mcp/rust/artcraft_mcp_cli artcraft/crates/artcraft_mcp_cli
+          python3 - <<'EOF'
+          import re, pathlib
+          p = pathlib.Path("artcraft/Cargo.toml")
+          s = p.read_text()
+          s, n = re.subn(r"members\s*=\s*\[", 'members = [ "crates/artcraft_mcp_cli",', s, count=1)
+          assert n == 1, "workspace members list not found"
+          p.write_text(s)
+          EOF
+
+      - name: Build
+        working-directory: artcraft
+        run: cargo build --release -p artcraft-mcp
+
+      - name: Smoke test (initialize + tools/list)
+        shell: bash
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+            | artcraft/target/release/${{ matrix.bin }} \
+            | python3 -c '
+          import sys, json
+          r = {m.get("id"): m for m in map(json.loads, sys.stdin)}
+          assert r[1]["result"]["protocolVersion"] == "2024-11-05", r.get(1)
+          tools = r[2]["result"]["tools"]
+          assert tools, "tools/list returned no tools"
+          print(len(tools), "tools")
+          '
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: artcraft/target/release/${{ matrix.bin }}
+          if-no-files-found: error
