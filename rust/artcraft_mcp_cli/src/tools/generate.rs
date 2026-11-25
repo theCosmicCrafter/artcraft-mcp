@@ -235,23 +235,31 @@ pub fn tools() -> Vec<Tool> {
         },
         Tool {
             name: "artcraft_generate_3d_object".to_string(),
-            description: "Generate 3D meshes using ArtCraft's OmniGen Mesh API. Supports Hunyuan 3D v2/v3/v3.1 (Pro, Rapid, Part, Topology) and Tripo3D H3.1 with multi-view camera inputs.".to_string(),
+            description: "Generate 3D meshes using ArtCraft's OmniGen Mesh API. Supports Hunyuan 3D v2/v3/v3.1 (Pro, Rapid, Part, Topology), Tripo3D H3.1, Meshy 6 and Rodin 2.5 Fast, with multi-view camera inputs.".to_string(),
             input_schema: Some(json!({
                 "type": "object",
                 "properties": {
                     "model": {
                         "type": "string",
-                        "description": "Model to use: 'hunyuan_3d_3', 'hunyuan_3d_3p1_pro', 'hunyuan_3d_3p1_rapid', 'hunyuan_3d_3_sketch', 'hunyuan_3d_3p1_part', 'hunyuan_3d_3p1_topology', 'tripo_3d_h3p1' (default: hunyuan_3d_3)"
+                        "description": "Model to use: 'hunyuan_3d_3', 'hunyuan_3d_3p1_pro', 'hunyuan_3d_3p1_rapid', 'hunyuan_3d_3_sketch', 'hunyuan_3d_3p1_part', 'hunyuan_3d_3p1_topology', 'hunyuan_3d_2p0', 'hunyuan_3d_2p1', 'tripo3d_h3p1', 'meshy_v6', 'rodin_2p5_fast' (default: hunyuan_3d_3)"
                     },
                     "prompt": { "type": "string", "description": "Text prompt for text-to-3D" },
                     "image_media_token": { "type": "string", "description": "Primary input image (image-to-3D or sketch-to-3D)" },
+                    "reference_image_media_tokens": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "Additional reference images (Rodin accepts several)"
+                    },
                     "front_image_media_token": { "type": "string", "description": "Front camera view for multi-view input" },
                     "back_image_media_token": { "type": "string", "description": "Back camera view for multi-view input" },
                     "left_image_media_token": { "type": "string", "description": "Left camera view for multi-view input" },
                     "right_image_media_token": { "type": "string", "description": "Right camera view for multi-view input" },
                     "input_mesh_media_file_token": { "type": "string", "description": "Input mesh for retopology (Topology) or semantic part splitting (Part)" },
                     "output_type": { "type": "string", "enum": ["normal", "low_poly", "geometry"], "description": "Mesh output type" },
-                    "quality": { "type": "string", "enum": ["standard", "detailed"], "description": "Quality level" },
+                    "texture_quality": { "type": "string", "enum": ["standard", "detailed"], "description": "Texture quality (detailed costs extra on Tripo3D)" },
+                    "geometry_quality": { "type": "string", "enum": ["standard", "detailed"], "description": "Geometry quality (detailed costs extra on Tripo3D)" },
+                    "enable_pbr": { "type": "boolean", "description": "Generate PBR materials" },
+                    "enable_texture": { "type": "boolean", "description": "Generate textures (Tripo3D can skip texturing for a cheaper run)" },
                     "polygon_type": { "type": "string", "enum": ["triangle", "quad"], "description": "Polygon type" },
                     "target_face_count": { "type": "integer", "description": "Target face/polygon count" }
                 }
@@ -519,6 +527,8 @@ pub fn parse_image_model(model_str: &str) -> Result<CommonImageModel> {
         "gpt_image_1" | "gpt-image-1" | "gpt_image1" => CommonImageModel::GptImage1,
         "gpt_image_1p5" | "gpt-image-1.5" => CommonImageModel::GptImage1p5,
         "gpt_image_2" | "gpt-image-2" => CommonImageModel::GptImage2,
+        "gpt_image_2p5_flare" | "gpt-image-2.5-flare" => CommonImageModel::GptImage2p5Flare,
+        "gpt_image_2p5_sunburst" | "gpt-image-2.5-sunburst" => CommonImageModel::GptImage2p5Sunburst,
         "grok_imagine_image" | "grok-imagine-image" | "grok_imagine" => CommonImageModel::GrokImagineImage,
         "grok_imagine_image_q" | "grok_imagine_image_quality" => CommonImageModel::GrokImagineImageQuality,
         "midjourney_7" | "midjourney-7" | "mj7" => CommonImageModel::Midjourney7,
@@ -554,6 +564,8 @@ pub fn parse_video_model(model_str: &str) -> Result<CommonVideoModel> {
         "kling_3p0_standard" | "kling-3.0-standard" => CommonVideoModel::Kling3p0Standard,
         "kling_3p0_pro" | "kling-3.0-pro" => CommonVideoModel::Kling3p0Pro,
         "happy_horse_1p0" | "happy-horse-1.0" => CommonVideoModel::HappyHorse1p0,
+        "wan_3p0" | "wan-3.0" | "wan" => CommonVideoModel::Wan3p0,
+        "wan_3p0_prime" | "wan-3.0-prime" => CommonVideoModel::Wan3p0Prime,
         "minimax_h3" | "minimax-h3" | "hailuo_h3" => CommonVideoModel::MinimaxH3,
         "minimax_h3_turbo" | "minimax-h3-turbo" => CommonVideoModel::MinimaxH3Turbo,
         "minimax_h3_ultra" | "minimax-h3-ultra" => CommonVideoModel::MinimaxH3Ultra,
@@ -610,7 +622,9 @@ pub fn parse_mesh_model(model_str: &str) -> Result<CommonMeshModel> {
         "hunyuan_3d_3p1_rapid" | "hunyuan-3d-3.1-rapid" => CommonMeshModel::Hunyuan3d3p1Rapid,
         "hunyuan_3d_3p1_part" | "hunyuan-3d-3.1-part" => CommonMeshModel::Hunyuan3d3p1Part,
         "hunyuan_3d_3p1_topology" | "hunyuan-3d-3.1-topology" => CommonMeshModel::Hunyuan3d3p1SmartTopology,
-        "tripo_3d_h3p1" | "tripo" | "tripo_3d" => CommonMeshModel::Tripo3dH3p1,
+        "tripo3d_h3p1" | "tripo_3d_h3p1" | "tripo_h3_1" | "tripo" | "tripo_3d" => CommonMeshModel::Tripo3dH3p1,
+        "meshy_v6" | "meshy-6" | "meshy" => CommonMeshModel::MeshyV6,
+        "rodin_2p5_fast" | "rodin-2.5-fast" | "rodin" => CommonMeshModel::Rodin2p5Fast,
         _ => return Err(anyhow!("Unknown 3D mesh model: {}", model_str)),
     };
 

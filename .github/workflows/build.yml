@@ -16,7 +16,7 @@ permissions:
 
 env:
   # Monorepo commit the crate is known to build against. Bump deliberately.
-  ARTCRAFT_REF: 84a6a7dcf5ccd5f8f577e5dafe84494532cc14fb
+  ARTCRAFT_REF: 9a1cc6b701e9dbec38af820507c9b33b668f54f0
 
 jobs:
   build:

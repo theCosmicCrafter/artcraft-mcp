@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [Unreleased]
+
+### Added
+- `artcraft_generate_image` accepts `gpt_image_2p5_flare` and `gpt_image_2p5_sunburst`, and `artcraft_generate_video` accepts `wan_3p0` and `wan_3p0_prime`; the skill docs already listed them but the server rejected them.
+- `artcraft_generate_3d_object` accepts the upstream `meshy_v6` (Meshy 6) and `rodin_2p5_fast` (Hyper3D Rodin 2.5 Fast) mesh models.
+
+### Changed
+- Tripo3D H3.1 now uses the upstream id `tripo3d_h3p1`; `tripo_3d_h3p1`, `tripo_h3_1`, and `tripo` remain accepted aliases.
+- The `artcraft_generate_3d_object` input schema now lists the parameters the handler reads (`reference_image_media_tokens`, `enable_pbr`, `enable_texture`, `texture_quality`, `geometry_quality`) and drops the unused `quality`.
+- `schemas/*.json` regenerated from the Rust tool definitions (11 files were stale).
+- CI builds against upstream `storytold/artcraft` at `9a1cc6b`.
+
+### Fixed
+- Skill references listed model ids that do not exist upstream (`flux_3_pro`, `seedream_5_pro`, `seedream_5_ultra`, `seedance_2p5_fast`, `seedance_2p5_bp`, `tripo_h3_1`), the never-launched `seedance_2p0_u` variants, and 3D/splat parameter names the server does not accept.
+
 ## [1.1.0] - 2026-10-07
 
 ### Added
