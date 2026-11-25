@@ -11,13 +11,13 @@ Converts static 2D images or multi-view captures into fully realized 3D mesh ass
 * **Hunyuan 3D**: `hunyuan_3d_3` (Default), `hunyuan_3d_3_sketch`, `hunyuan_3d_3p1_pro`, `hunyuan_3d_3p1_rapid`, `hunyuan_3d_3p1_part` (FBX input mesh), `hunyuan_3d_3p1_topology` (GLB/OBJ input mesh), and legacy `hunyuan_3d_2p0` / `hunyuan_3d_2p1`.
 * **Tripo3D**: `tripo3d_h3p1` (text, single-image, or multi-view image input).
 * **Meshy**: `meshy_v6` (text or single-image input).
-* **Hyper3D Rodin**: `rodin_2p5_fast` (text or one or more images).
+* **Hyper3D Rodin**: `rodin_2p5_fast` (text, or one or more images via `image_media_token` / `reference_image_media_tokens`; the back/left/right view fields are not supported).
 
 ### Parameters:
 * **`model`** (Optional): One of the model ids above. Defaults to `hunyuan_3d_3`.
 * **`prompt`**: Text prompt for text-to-3D.
 * **`image_media_token`**: Primary input image (upload via `artcraft_upload_image`). Extra images go in `reference_image_media_tokens`.
-* **Multi-View Reference Tokens** (Optional): `front_image_media_token`, `back_image_media_token`, `left_image_media_token`, `right_image_media_token` for full 360° geometry consistency.
+* **Multi-View Reference Tokens** (Optional): `front_image_media_token`, `back_image_media_token`, `left_image_media_token`, `right_image_media_token` for full 360° geometry consistency (Hunyuan 3D and Tripo3D).
 * **`input_mesh_media_file_token`**: Input mesh for `hunyuan_3d_3p1_part` and `hunyuan_3d_3p1_topology`.
 * **Retopology & Materials** (Optional):
   * `output_type`: `normal`, `low_poly`, or `geometry`.
@@ -37,7 +37,7 @@ Generates high-fidelity interactive 3D radiance fields (Gaussian Splats) from te
 * **`marble_0p1_plus` / `plus`**: Standard production-grade radiance fields.
 * **`marble_1p0` / `marble_1p0_draft`**: WorldLabs Marble 1.0 and its cheaper draft tier.
 * **`marble_1p1` / `marble_1p1_plus`**: Next-gen WorldLabs Marble splatting models with high spatial depth and complex lighting (`marble_1p1_plus` is the default).
-* **`triposplat`**: Tripo's Gaussian splat model.
+* **`triposplat`**: Tripo's single-image-to-splat model. Requires exactly one `image_media_token`; prompts, videos, panorama and recaption flags are not supported.
 
 ### Parameters:
 * **`image_media_token`**: Reference image to seed scene layout; extra views go in `reference_image_media_tokens`.

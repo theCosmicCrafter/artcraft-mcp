@@ -6,7 +6,7 @@ The ArtCraft MCP server supports a wide variety of image models via the `model` 
 When generating images, the agent MUST adhere to these rules:
 - **`prompt`**: Mandatory. Detail the subject, style, lighting, and composition.
 - **`aspect_ratio`**: Optional but highly recommended. Valid options: `square`, `wide_three_by_two`, `wide_sixteen_by_nine`, `wide_twenty_one_by_nine`, `tall_two_by_three`, `tall_nine_by_sixteen`. Defaults to `square` if omitted.
-- **`quality`**: Optional. Valid options: `standard`, `high`. 
+- **`quality`**: Optional. Valid options: `auto`, `low`, `medium`, `high`, `xhigh`, `max` (model-dependent). 
 - **`image_batch_count`**: Number of images to generate (1 to 4).
 - **`generation_mode`** (Used mainly in cost estimation): `text_to_image` or `image_edit`.
 

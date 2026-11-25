@@ -70,7 +70,7 @@ Enqueues a Gaussian Splat generation request using WorldLabs Marble or TripoSpla
   - `prompt` (Text description of the world/scene).
   - `model` (`marble_1p1_plus` default, `marble_1p1`, `marble_1p0`, `marble_1p0_draft`, `marble_0p1_plus`, `marble_0p1_mini`, `triposplat`).
   - `is_panoramic` (boolean for 360° environment), `reference_video_media_token`, `disable_recaption`.
-  *(Note: Either `prompt` or `image_media_token` must be provided).*
+  *(Note: Either `prompt` or `image_media_token` must be provided. `triposplat` takes exactly one `image_media_token`; prompts, videos, panorama and recaption flags are not supported).*
 
 ### 5. `artcraft_generate_audio`
 Generates ambient audio, soundscapes, or full musical compositions via Suno.
