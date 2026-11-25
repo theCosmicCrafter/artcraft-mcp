@@ -43,7 +43,7 @@ pub fn tools() -> Vec<Tool> {
                 "properties": {
                     "model": {
                         "type": "string",
-                        "description": "Model to use (e.g., 'flux_1_dev', 'flux_1_schnell', 'gpt_image_1', 'seedream_5p0_pro', 'grok_imagine_image', 'midjourney_8', 'nano_banana_pro')"
+                        "description": "Model to use (e.g., 'flux_1_dev', 'flux_1_schnell', 'gpt_image_1', 'gpt_image_2p5_flare', 'seedream_5p0_pro', 'grok_imagine_image', 'midjourney_8', 'nano_banana_pro')"
                     },
                     "prompt": {
                         "type": "string",
@@ -64,7 +64,7 @@ pub fn tools() -> Vec<Tool> {
                     },
                     "quality": {
                         "type": "string",
-                        "description": "Quality: 'low', 'medium', 'high', 'ultra'"
+                        "description": "Quality: 'auto', 'low', 'medium', 'high', 'xhigh', 'max' (model-dependent)"
                     },
                     "image_batch_count": {
                         "type": "integer",
@@ -94,7 +94,7 @@ pub fn tools() -> Vec<Tool> {
                 "properties": {
                     "model": {
                         "type": "string",
-                        "description": "Model to use (e.g., 'minimax_h3', 'seedance_2p5', 'kling_3p0_pro', 'sora_2_pro', 'veo_3p1', 'vidu_q3', 'flux_3', 'grok_imagine_video')"
+                        "description": "Model to use (e.g., 'minimax_h3', 'seedance_2p5', 'kling_3p0_pro', 'sora_2_pro', 'veo_3p1', 'vidu_q3', 'wan_3p0', 'flux_3', 'grok_imagine_video')"
                     },
                     "prompt": {
                         "type": "string",
@@ -138,7 +138,7 @@ pub fn tools() -> Vec<Tool> {
                     },
                     "resolution": {
                         "type": "string",
-                        "description": "Resolution preset ('1k', '2k', '720p', '1080p')"
+                        "description": "Resolution preset ('480p', '720p', '1080p', '1k', '2k', '4k')"
                     },
                     "bitrate": {
                         "type": "string",
@@ -147,7 +147,7 @@ pub fn tools() -> Vec<Tool> {
                     },
                     "quality": {
                         "type": "string",
-                        "description": "Quality: 'low', 'medium', 'high', 'ultra'"
+                        "description": "Quality: 'auto', 'low', 'medium', 'high', 'xhigh', 'max' (model-dependent)"
                     },
                     "duration_seconds": {
                         "type": "integer",
@@ -663,22 +663,42 @@ pub fn parse_aspect_ratio(ratio: Option<&str>) -> Option<CommonAspectRatio> {
         "wide" => Some(CommonAspectRatio::Wide),
         "tall" => Some(CommonAspectRatio::Tall),
         "square_hd" | "squarehd" => Some(CommonAspectRatio::SquareHd),
+        "wide_three_by_two" => Some(CommonAspectRatio::WideThreeByTwo),
+        "wide_four_by_three" => Some(CommonAspectRatio::WideFourByThree),
+        "wide_five_by_four" => Some(CommonAspectRatio::WideFiveByFour),
+        "wide_sixteen_by_nine" => Some(CommonAspectRatio::WideSixteenByNine),
+        "wide_twenty_one_by_nine" => Some(CommonAspectRatio::WideTwentyOneByNine),
+        "tall_two_by_three" => Some(CommonAspectRatio::TallTwoByThree),
+        "tall_three_by_four" => Some(CommonAspectRatio::TallThreeByFour),
+        "tall_four_by_five" => Some(CommonAspectRatio::TallFourByFive),
+        "tall_nine_by_sixteen" => Some(CommonAspectRatio::TallNineBySixteen),
+        "tall_nine_by_twenty_one" => Some(CommonAspectRatio::TallNineByTwentyOne),
+        "auto_2k" => Some(CommonAspectRatio::Auto2k),
+        "auto_3k" => Some(CommonAspectRatio::Auto3k),
+        "auto_4k" => Some(CommonAspectRatio::Auto4k),
         _ => None,
     })
 }
 
 pub fn parse_resolution(res: Option<&str>) -> Option<CommonResolution> {
     res.and_then(|r| match r.to_lowercase().as_str() {
-        "low" | "half_k" | "halfk" | "480p" => Some(CommonResolution::HalfK),
-        "medium" | "one_k" | "1k" | "720p" => Some(CommonResolution::OneK),
-        "high" | "two_k" | "2k" | "1080p" => Some(CommonResolution::TwoK),
-        "ultra" | "three_k" | "3k" | "4k" | "four_k" => Some(CommonResolution::FourK),
+        "low" | "half_k" | "halfk" => Some(CommonResolution::HalfK),
+        "medium" | "one_k" | "1k" => Some(CommonResolution::OneK),
+        "high" | "two_k" | "2k" => Some(CommonResolution::TwoK),
+        "three_k" | "3k" => Some(CommonResolution::ThreeK),
+        "ultra" | "4k" | "four_k" => Some(CommonResolution::FourK),
+        "480p" | "four_eighty_p" => Some(CommonResolution::FourEightyP),
+        "720p" | "seven_twenty_p" => Some(CommonResolution::SevenTwentyP),
+        "1080p" | "ten_eighty_p" => Some(CommonResolution::TenEightyP),
         _ => None,
     })
 }
 
 pub fn parse_quality(quality: Option<&str>) -> Option<CommonQuality> {
     quality.and_then(|q| match q.to_lowercase().as_str() {
+        "auto" => Some(CommonQuality::Auto),
+        "max" => Some(CommonQuality::Max),
+        "xhigh" | "x_high" => Some(CommonQuality::XHigh),
         "low" => Some(CommonQuality::Low),
         "medium" => Some(CommonQuality::Medium),
         "high" => Some(CommonQuality::High),

@@ -238,7 +238,9 @@ pub async fn list_image_models(_arguments: Value, _client: &ArtCraftClient) -> R
         "flux_pro_1p1_ultra - Highest quality Flux",
         "gpt_image_1 - OpenAI image generation",
         "gpt_image_1p5 - OpenAI 1.5",
-        "gpt_image_2 - OpenAI latest",
+        "gpt_image_2 - OpenAI GPT Image 2",
+        "gpt_image_2p5_flare - OpenAI GPT Image 2.5 Flare",
+        "gpt_image_2p5_sunburst - OpenAI GPT Image 2.5 Sunburst",
         "grok_imagine_image - xAI Grok Imagine",
         "grok_imagine_image_q - xAI Grok Imagine (Quality tier)",
         "midjourney_7 - Midjourney v7 Router",
@@ -298,6 +300,8 @@ pub async fn list_video_models(_arguments: Value, _client: &ArtCraftClient) -> R
         "flux_3_draft - Flux 3 Draft preview",
         "grok_imagine_video - xAI Grok Imagine Video",
         "grok_imagine_video_1p5 - xAI Grok Imagine Video 1.5",
+        "wan_3p0 - Alibaba Wan 3.0",
+        "wan_3p0_prime - Alibaba Wan 3.0 Prime",
     ];
 
     let mut lines = vec!["Available video models:".to_string()];
