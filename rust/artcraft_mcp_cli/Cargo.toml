@@ -1,7 +1,7 @@
 [package]
 name = "artcraft-mcp"
 edition = "2021"
-version = "0.1.0"
+version = "2.0.0"
 authors = ["ArtCraft MCP Team"]
 publish = false
 
@@ -10,38 +10,74 @@ name = "artcraft-mcp"
 path = "src/main.rs"
 
 [dependencies]
-# Workspace hack (faster compile times)
+log = "0.4"
+# Upstream ArtCraft wire types and API client.
+# storytold/artcraft is public and dual-licensed MIT/Apache; pinned deliberately.
+# Bump ARTCRAFT_REV in lockstep with upstream releases (see README).
+artcraft_api_defs = { git = "https://github.com/storytold/artcraft", rev = "9a1cc6b701e9dbec38af820507c9b33b668f54f0" }
+artcraft_client = { git = "https://github.com/storytold/artcraft", rev = "9a1cc6b701e9dbec38af820507c9b33b668f54f0" }
+enums = { git = "https://github.com/storytold/artcraft", rev = "9a1cc6b701e9dbec38af820507c9b33b668f54f0" }
+tokens = { git = "https://github.com/storytold/artcraft", rev = "9a1cc6b701e9dbec38af820507c9b33b668f54f0" }
 
-# Internal
-artcraft_api_defs.workspace = true
-artcraft_client.workspace = true
-enums.workspace = true
-errors.workspace = true
-tokens.workspace = true
-uuid_utils.workspace = true
+# MCP protocol (2026-07-28 stateless core + legacy fallback)
+rmcp = { version = "3.11", features = [
+  "server",
+  "macros",
+  "transport-io",
+  "transport-streamable-http-server",
+  "request-state",
+  "schemars",
+] }
 
-# External
-anyhow.workspace = true
-log.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-serde_derive.workspace = true
-tokio = { workspace = true, features = ["rt-multi-thread", "io-std"] }
+# Async runtime and HTTP transport
+tokio = { version = "1", features = ["rt-multi-thread", "io-std", "macros", "net", "signal", "fs", "sync", "time"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+axum = "0.8"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+hyper = { version = "1", features = ["server"] }
+http = "1"
 
-# Logging
-env_logger = "0.11"
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_derive = "1"
+schemars = { version = "1.0", features = ["chrono04"] }
+
+# Logging (always to stderr; stdout is protocol)
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+anyhow = "1"
+thiserror = "2"
+
+# Crypto (requestState codec keys, task handle hashing)
+hmac = "0.12"
+sha2 = "0.10"
+rand = "0.8"
+base64 = "0.22"
 
 # System dirs
-dirs = "5.0"
+dirs = "5"
 
 # Token generation
-uuid.workspace = true
+uuid = { version = "1", features = ["v4"] }
 
 # URL encoding for query params
 urlencoding = "2.1"
 
-# HTTP client for raw requests
-reqwest = { version = "0.12", features = ["json"] }
+# HTTP client for raw ArtCraft API requests
+reqwest = { version = "0.12", features = ["json", "multipart", "stream"] }
 
-# MCP / JSON-RPC
-# Using manual JSON-RPC implementation over stdio for minimal dependencies
+# Durable task store (Phase 3)
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# Embedded MCP apps (Phase 5)
+rust-embed = { version = "8", features = ["compression"] }
+
+# Environment file loading for local dev
+dotenvy = "0.15"

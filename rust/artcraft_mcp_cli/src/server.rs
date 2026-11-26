@@ -1,152 +1,277 @@
-use log::{debug, error, info, warn};
+//! MCP server core: an rmcp `ServerHandler` over the 61-tool registry, with
+//! dual transport entry points (stdio and stateless Streamable HTTP).
 
-use crate::auth::load_credentials;
+use std::borrow::Cow;
+use std::net::SocketAddr;
+use std::sync::Arc;
+
+use axum::http::{HeaderMap, Request, StatusCode};
+use axum::middleware::Next;
+use axum::response::Response;
+use rmcp::model::*;
+use rmcp::service::{RequestContext, RoleServer};
+use rmcp::transport::streamable_http_server::{
+    StreamableHttpServerConfig, StreamableHttpService, session::local::LocalSessionManager,
+};
+use rmcp::{ErrorData as McpError, ServerHandler, ServiceExt};
+use serde_json::{Map, Value};
+use tracing::{info, warn};
+
 use crate::client::ArtCraftClient;
-use crate::tools;
-use crate::types::*;
+use crate::types::ToolContent;
+use crate::{Cli, ToolMode, auth, telemetry, tools};
 
-/// MCP protocol versions this server implements, oldest first.
-const SUPPORTED_PROTOCOL_VERSIONS: &[&str] = &["2024-11-05", "2025-03-26"];
-const LATEST_PROTOCOL_VERSION: &str = "2025-03-26";
-
-pub struct McpServer {
-    client: ArtCraftClient,
-    initialized: bool,
+/// Shared, cheaply cloneable server state. The HTTP service factory builds a
+/// fresh handler per request, so anything persistent lives behind this Arc.
+#[derive(Clone)]
+pub struct ArtCraftMcp {
+    pub shared: Arc<SharedState>,
 }
 
-impl McpServer {
-    pub fn new() -> Self {
-        let credentials = load_credentials();
-        let client = ArtCraftClient::new(credentials);
+pub struct SharedState {
+    pub tool_mode: ToolMode,
+    pub confirm_over_credits: u64,
+    pub auto_approve_under: u64,
+    pub no_confirm: bool,
+    /// HMAC codec sealing MRTR/upload `requestState` continuations.
+    pub state_codec: RequestStateCodec,
+    /// Server-level credentials resolved once at startup (env/files/cookies).
+    pub startup_credentials: Option<
+        artcraft_client::credentials::storyteller_credential_set::StorytellerCredentialSet,
+    >,
+}
 
+impl ArtCraftMcp {
+    pub fn new(cli: &Cli) -> Self {
+        let key = state_signing_key();
+        let state_codec = RequestStateCodec::try_new(key)
+            .expect("request-state codec key must be valid HMAC key material");
         Self {
-            client,
-            initialized: false,
+            shared: Arc::new(SharedState {
+                tool_mode: cli.tool_mode,
+                confirm_over_credits: cli.confirm_over_credits,
+                auto_approve_under: cli.auto_approve_under,
+                no_confirm: cli.no_confirm,
+                state_codec,
+                startup_credentials: auth::load_credentials(),
+            }),
         }
     }
 
-    pub async fn handle_request(&mut self, json_line: &str) -> Option<JsonRpcResponse> {
-        let request: JsonRpcRequest = match serde_json::from_str(json_line) {
-            Ok(req) => req,
-            Err(e) => {
-                error!("Failed to parse JSON-RPC request: {}", e);
-                return Some(JsonRpcResponse::error(
-                    None,
-                    -32700,
-                    format!("Parse error: {}", e),
-                ));
-            }
-        };
+    /// Build the API client for one request. Bearer-carried credential override
+    /// arrives in a later phase; today every request uses the startup chain.
+    fn client_for(&self, _context: &RequestContext<RoleServer>) -> ArtCraftClient {
+        ArtCraftClient::new(self.shared.startup_credentials.clone())
+    }
+}
 
-        debug!("Received method: {}", request.method);
-
-        match request.method.as_str() {
-            "initialize" => Some(self.handle_initialize(request)),
-            "notifications/initialized" => {
-                self.initialized = true;
-                info!("MCP client initialized");
-                None
-            }
-            "ping" => Some(JsonRpcResponse::success(request.id, serde_json::json!({}))),
-            m if m.starts_with("notifications/") => None,
-            "tools/list" => Some(self.handle_tools_list(request)),
-            "tools/call" => Some(self.handle_tool_call(request).await),
-            _ => Some(JsonRpcResponse::error(
-                request.id,
-                -32601,
-                format!("Method not found: {}", request.method),
-            )),
+/// Load the request-state signing key: `ARTCRAFT_MCP_STATE_SECRET` when set
+/// (required for multi-instance HTTP deployments), else an ephemeral random
+/// key for this single-process run.
+fn state_signing_key() -> Vec<u8> {
+    if let Ok(secret) = std::env::var("ARTCRAFT_MCP_STATE_SECRET") {
+        let trimmed = secret.trim();
+        if !trimmed.is_empty() {
+            return trimmed.as_bytes().to_vec();
         }
     }
+    use rand::RngCore;
+    let mut key = vec![0u8; 32];
+    rand::thread_rng().fill_bytes(&mut key);
+    key
+}
 
-    fn handle_initialize(&self, request: JsonRpcRequest) -> JsonRpcResponse {
-        // Agree to the client's version only if we support it; otherwise offer
-        // our latest and let the client decide whether to continue.
-        let protocol_version = request.params.as_ref()
-            .and_then(|p| p.get("protocolVersion"))
-            .and_then(|v| v.as_str())
-            .filter(|v| SUPPORTED_PROTOCOL_VERSIONS.contains(v))
-            .unwrap_or(LATEST_PROTOCOL_VERSION)
-            .to_string();
-        let result = InitializeResult {
-            protocol_version,
-            capabilities: ServerCapabilities {
-                tools: ToolCapabilities { list_changed: false },
-            },
-            server_info: ServerInfo {
-                name: "artcraft-mcp".to_string(),
-                version: "0.1.0".to_string(),
-            },
-        };
+/// Extension capabilities this server advertises in server/discover.
+/// Populated as each extension phase lands (tasks in Phase 3, files in
+/// Phase 4, apps in Phase 5); advertising an unimplemented extension would
+/// violate the extensions lifecycle.
+pub fn extension_capabilities() -> ExtensionCapabilities {
+    ExtensionCapabilities::new()
+}
 
-        JsonRpcResponse::success(
-            request.id,
-            serde_json::to_value(result).unwrap(),
-        )
+/// Read a W3C trace context out of request `_meta` into the current span.
+fn trace_meta(meta: Option<&MetaObject>) {
+    if let Some(meta) = meta {
+        let value = serde_json::to_value(&meta.0).unwrap_or(Value::Null);
+        telemetry::extract_trace_context(Some(&value));
+    }
+}
+
+impl ServerHandler for ArtCraftMcp {
+    fn get_info(&self) -> ServerConfig {
+        let mut capabilities = ServerCapabilities::builder().enable_tools().build();
+        let extensions = extension_capabilities();
+        if !extensions.is_empty() {
+            capabilities.extensions = Some(extensions);
+        }
+        let mut info = ServerConfig::new(capabilities);
+        info.protocol_version = ProtocolVersion::V_2026_07_28;
+        info.server_info = Implementation::new("artcraft-mcp", env!("CARGO_PKG_VERSION"));
+        info.instructions = Some(
+            "ArtCraft generative media: image, video, audio, 3D and splat generation. \
+             Use artcraft_estimate_cost before expensive generations."
+                .to_string(),
+        );
+        info
     }
 
-    fn handle_tools_list(&self, request: JsonRpcRequest) -> JsonRpcResponse {
-        let tools = tools::get_all_tools();
-        let result = ToolsListResult { tools };
-
-        JsonRpcResponse::success(
-            request.id,
-            serde_json::to_value(result).unwrap(),
-        )
+    async fn list_tools(
+        &self,
+        request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ListToolsResult, McpError> {
+        trace_meta(request.as_ref().and_then(|r| r.meta.as_ref().map(|m| &m.0)));
+        let defs = tools::get_all_tools();
+        let mut converted: Vec<Tool> = defs.into_iter().map(convert_tool).collect();
+        // Canonical deterministic ordering keeps client KV caches stable.
+        converted.sort_by(|a, b| a.name.cmp(&b.name));
+        Ok(ListToolsResult {
+            tools: converted,
+            ..Default::default()
+        })
     }
 
-    async fn handle_tool_call(&self, request: JsonRpcRequest) -> JsonRpcResponse {
-        let params = match request.params {
-            Some(p) => p,
-            None => {
-                return JsonRpcResponse::error(
-                    request.id,
-                    -32602,
-                    "Missing params".to_string(),
-                );
-            }
-        };
+    async fn call_tool(
+        &self,
+        request: CallToolRequestParams,
+        context: RequestContext<RoleServer>,
+    ) -> Result<CallToolResponse, McpError> {
+        trace_meta(request.meta.as_ref().map(|m| &m.0));
 
-        let tool_request: ToolCallRequest = match serde_json::from_value(params) {
-            Ok(req) => req,
+        let name = request.name.to_string();
+        let arguments = Value::Object(request.arguments.clone().unwrap_or_default());
+        let client = self.client_for(&context);
+
+        info!("Tool call: {}", name);
+        match tools::execute_tool(&name, arguments, &client).await {
+            Ok(contents) => Ok(CallToolResult::success(
+                contents.into_iter().map(content_block).collect(),
+            )
+            .into()),
             Err(e) => {
-                return JsonRpcResponse::error(
-                    request.id,
-                    -32602,
-                    format!("Invalid params: {}", e),
-                );
-            }
-        };
-
-        info!("Tool call: {}", tool_request.name);
-
-        let result = tools::execute_tool(&tool_request.name, tool_request.arguments, &self.client).await;
-
-        match result {
-            Ok(content) => {
-                let tool_result = ToolCallResult {
-                    content,
-                    is_error: Some(false),
-                };
-                JsonRpcResponse::success(
-                    request.id,
-                    serde_json::to_value(tool_result).unwrap(),
-                )
-            }
-            Err(e) => {
-                warn!("Tool {} failed: {}", tool_request.name, e);
-                let tool_result = ToolCallResult {
-                    content: vec![ToolContent {
-                        content_type: "text".to_string(),
-                        text: format!("Error: {}", e),
-                    }],
-                    is_error: Some(true),
-                };
-                JsonRpcResponse::success(
-                    request.id,
-                    serde_json::to_value(tool_result).unwrap(),
-                )
+                warn!("Tool {} failed: {}", name, e);
+                Ok(CallToolResult::error(vec![rmcp::model::ContentBlock::text(format!(
+                    "Error: {}",
+                    e
+                ))])
+                .into())
             }
         }
     }
+}
+
+fn convert_tool(def: crate::types::Tool) -> Tool {
+    let schema_value = def.input_schema.unwrap_or_else(|| {
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        })
+    });
+    let schema_object: Map<String, Value> = match schema_value {
+        Value::Object(map) => map,
+        _ => Map::new(),
+    };
+    Tool::new(
+        Cow::<'static, str>::Owned(def.name),
+        Cow::<'static, str>::Owned(def.description),
+        std::sync::Arc::new(schema_object),
+    )
+}
+
+fn content_block(content: ToolContent) -> rmcp::model::ContentBlock {
+    rmcp::model::ContentBlock::text(content.text)
+}
+
+// ---------------------------------------------------------------------------
+// Transports
+// ---------------------------------------------------------------------------
+
+pub async fn serve_stdio(cli: Cli) -> anyhow::Result<()> {
+    let service = ArtCraftMcp::new(&cli);
+    let server = service.serve(rmcp::transport::stdio()).await?;
+    server.waiting().await?;
+    Ok(())
+}
+
+pub async fn serve_http(cli: Cli) -> anyhow::Result<()> {
+    let addr: SocketAddr = cli
+        .bind
+        .parse()
+        .map_err(|e| anyhow::anyhow!("invalid --bind address '{}': {}", cli.bind, e))?;
+
+    if !addr.ip().is_loopback() && !cli.allow_remote {
+        anyhow::bail!(
+            "refusing to bind non-loopback address {} without --allow-remote",
+            addr
+        );
+    }
+    if !addr.ip().is_loopback() && std::env::var("ARTCRAFT_MCP_BEARER_TOKEN").is_err() {
+        anyhow::bail!("remote binds require bearer auth: set ARTCRAFT_MCP_BEARER_TOKEN");
+    }
+
+    let handler = ArtCraftMcp::new(&cli);
+    let ct = tokio_util::sync::CancellationToken::new();
+
+    let config = StreamableHttpServerConfig::default()
+        .with_legacy_session_mode(true)
+        .with_json_response(true)
+        .with_cancellation_token(ct.child_token());
+
+    let factory_handler = handler.clone();
+    let service = StreamableHttpService::new(
+        move || Ok(factory_handler.clone()),
+        LocalSessionManager::default().into(),
+        config,
+    );
+
+    let router = axum::Router::new()
+        .nest_service("/mcp", service)
+        .route("/health", axum::routing::get(|| async { "OK" }))
+        .layer(axum::middleware::from_fn(origin_and_auth_middleware));
+
+    info!("artcraft-mcp listening on http://{}/mcp", addr);
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, router)
+        .with_graceful_shutdown(async move {
+            let _ = tokio::signal::ctrl_c().await;
+            ct.cancel();
+        })
+        .await?;
+    Ok(())
+}
+
+/// Security middleware for the HTTP transport:
+/// - Validate `Origin` (DNS-rebinding protection): absent (non-browser
+///   clients), loopback hosts, or localhost are accepted; anything else is 403.
+/// - When ARTCRAFT_MCP_BEARER_TOKEN is configured, require a matching bearer.
+async fn origin_and_auth_middleware(
+    request: Request<axum::body::Body>,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    let headers: &HeaderMap = request.headers();
+
+    if let Some(origin) = headers.get("origin").and_then(|v| v.to_str().ok()) {
+        let allowed = origin.is_empty()
+            || origin.starts_with("http://localhost")
+            || origin.starts_with("http://127.0.0.1")
+            || origin.starts_with("https://localhost")
+            || origin.starts_with("http://[::1]")
+            || origin == "null";
+        if !allowed {
+            warn!(origin, "rejecting disallowed Origin");
+            return Err(StatusCode::FORBIDDEN);
+        }
+    }
+
+    if let Ok(expected) = std::env::var("ARTCRAFT_MCP_BEARER_TOKEN") {
+        let presented = headers
+            .get("authorization")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| v.strip_prefix("Bearer "));
+        if !auth::bearer_access_allowed(Some(expected.trim()), presented) {
+            return Err(StatusCode::UNAUTHORIZED);
+        }
+    }
+
+    Ok(next.run(request).await)
 }
