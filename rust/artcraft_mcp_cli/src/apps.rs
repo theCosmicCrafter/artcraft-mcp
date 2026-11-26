@@ -69,7 +69,7 @@ pub fn list_resources() -> ListResourcesResult {
             let mut r = Resource::new(app.uri, app.name);
             r.title = Some(app.description.to_string());
             r.description = Some(app.description.to_string());
-            r.mime_type = Some("text/html".to_string());
+            r.mime_type = Some("text/html;profile=mcp-app".to_string());
             let mut meta = MetaObject::default();
             // Strict CSP: no network egress from the view except media embeds.
             meta.insert(

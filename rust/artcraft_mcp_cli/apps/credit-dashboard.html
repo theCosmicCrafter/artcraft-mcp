@@ -28,7 +28,7 @@ window.addEventListener('message',(ev)=>{
 (function(){
   function ready(){
     if(!window.parent||window.parent===window)return;
-    window.parent.postMessage({jsonrpc:'2.0',id:'ui-init',method:'ui/initialize',params:{protocolVersion:'2026-01-26',capabilities:{}}},'*');
+    window.parent.postMessage({jsonrpc:'2.0',id:'ui-init',method:'ui/initialize',params:{protocolVersion:'2026-01-26',appInfo:{name:'artcraft-mcp-app',version:'2.0.0'},appCapabilities:{availableDisplayModes:['inline']}}},'*');
   }
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',ready)}else{ready()}
   window.addEventListener('message',function(ev){
