@@ -175,6 +175,7 @@ fn mrtr_cost_confirmation_decline_path() {
         reader.read_line(&mut line2).unwrap();
         drop(stdin);
         let _ = child.kill();
+        let _ = child.wait();
         (r1, serde_json::from_str::<serde_json::Value>(&line2).unwrap())
     };
     assert_eq!(r1["result"]["resultType"], serde_json::json!("input_required"));
