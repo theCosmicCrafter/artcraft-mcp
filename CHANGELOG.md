@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - README authentication and protocol-version documentation now match the v2.0 server behavior.
 - Rebuilt the checked-in Windows `bin/artcraft-mcp.exe` from the v2.0 Rust crate; the previous binary still reported v0.1.0 and the pre-camelCase initialize wire shape.
 - `tools/artcraft_healthcheck.py` now fails on legacy initialize wire shapes and tool-level `isError` responses instead of reporting them as passes.
+- CI now smoke-tests the checked-in Windows executable and fails when the MCP conformance baseline reports an unexpected result.
 
 ## [1.1.0] - 2026-10-07
 
