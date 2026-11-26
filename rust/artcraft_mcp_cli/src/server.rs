@@ -64,6 +64,11 @@ pub struct SharedState {
     /// Absolute loopback base URL of the ephemeral relay (stdio mode only).
     /// None in HTTP mode, where upload targets use relative paths.
     pub relay_base_url: std::sync::RwLock<Option<String>>,
+    /// True when serving non-loopback HTTP clients (--allow-remote).
+    pub remote_exposed: bool,
+    /// Consumed MRTR confirmation keys: a retried approval for an already
+    /// executed confirmation must not spend credits twice.
+    pub consumed_confirmations: std::sync::Mutex<std::collections::HashSet<String>>,
 }
 
 impl ArtCraftMcp {
@@ -82,6 +87,8 @@ impl ArtCraftMcp {
                 tasks: TaskManager::new(),
                 spool: std::sync::Arc::new(files_ext::UploadSpool::default()),
                 relay_base_url: std::sync::RwLock::new(None),
+                remote_exposed: cli.allow_remote,
+                consumed_confirmations: std::sync::Mutex::new(std::collections::HashSet::new()),
             }),
         }
     }
@@ -224,6 +231,23 @@ impl ServerHandler for ArtCraftMcp {
         Ok(result)
     }
 
+    async fn get_task(
+        &self,
+        request: GetTaskParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<GetTaskResult, McpError> {
+        let detailed = self.shared.tasks.get_task(&request.task_id)?;
+        Ok(GetTaskResult::new(detailed))
+    }
+
+    async fn cancel_task(
+        &self,
+        request: CancelTaskParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<(), McpError> {
+        self.shared.tasks.cancel_task(&request.task_id)
+    }
+
     async fn list_resources(
         &self,
         _request: Option<PaginatedRequestParams>,
@@ -254,10 +278,26 @@ impl ServerHandler for ArtCraftMcp {
         if name == "artcraft_app_refresh_credits" {
             name = "artcraft_get_credits".to_string();
         }
-        let arguments = Value::Object(request.arguments.clone().unwrap_or_default());
+        let mut arguments = Value::Object(request.arguments.clone().unwrap_or_default());
         let client = self.client_for(&context);
 
         info!("Tool call: {}", name);
+
+        // --- Deferred dispatch transparency --------------------------------
+        // A deferred call to a billable/async tool must pass through the same
+        // cost gate, file handling, and task promotion as a direct call, so
+        // unwrap it here and fall through. Free synchronous deferred tools
+        // still execute inside artcraft_call_deferred_tool below.
+        if name == "artcraft_call_deferred_tool" {
+            if let Some(inner) = arguments.get("name").and_then(|n| n.as_str()) {
+                let inner_needs_pipeline = registry::meta_for(inner)
+                    .is_some_and(|m| m.cost != registry::CostTier::Free || m.async_job);
+                if inner_needs_pipeline && !META_TOOLS.contains(&inner) {
+                    name = inner.to_string();
+                    arguments = arguments.get("arguments").cloned().unwrap_or(json!({}));
+                }
+            }
+        }
 
         // --- Meta-tools (progressive discovery) ---------------------------
         if META_TOOLS.contains(&name.as_str()) {
@@ -299,6 +339,19 @@ impl ServerHandler for ArtCraftMcp {
             arguments
         };
 
+        // --- Host path restriction for remote serving ----------------------
+        if self.shared.remote_exposed
+            && std::env::var("ARTCRAFT_MCP_ALLOW_HOST_PATHS").is_err()
+        {
+            if let Some(fp) = arguments.get("file_path").and_then(|v| v.as_str()) {
+                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                    "host file paths are disabled while serving remote clients ({}); use io.modelcontextprotocol/files transfers or set ARTCRAFT_MCP_ALLOW_HOST_PATHS=1",
+                    fp
+                ))])
+                .into());
+            }
+        }
+
         // --- Files extension: inline data and out-of-band uploads ----------
         let client_files_caps = context
             .client_capabilities()
@@ -334,13 +387,29 @@ impl ServerHandler for ArtCraftMcp {
                     if let Some(map) = rewritten.as_object_mut() {
                         let keys: Vec<String> = map.keys().cloned().collect();
                         for k in keys {
-                            if let Some(saved) = map[&k].get("inline_saved").and_then(|v| v.as_str()) {
+                            let saved = map[&k]
+                                .get("inline_saved")
+                                .and_then(|v| v.as_str())
+                                .map(|v| v.to_string());
+                            if let Some(saved) = saved {
+                                if k != "file_path" {
+                                    map.remove(&k);
+                                }
                                 map.insert("file_path".to_string(), json!(saved));
-                                map.remove(&k);
                             }
                         }
                     }
-                    return Ok(tool_outcome(tools::execute_tool(&name, rewritten, &client).await));
+                    let mut cleanup_paths: Vec<String> = Vec::new();
+                    if let Some(fp) = rewritten.get("file_path").and_then(|v| v.as_str()) {
+                        if fp.contains("artcraft-mcp-inline-") {
+                            cleanup_paths.push(fp.to_string());
+                        }
+                    }
+                    let outcome = tool_outcome(tools::execute_tool(&name, rewritten, &client).await);
+                    for path in cleanup_paths {
+                        let _ = tokio::fs::remove_file(&path).await;
+                    }
+                    return Ok(outcome);
                 }
                 if client_files_upload {
                     return self.issue_upload_request(&name, arguments, inputs).await;
@@ -515,6 +584,23 @@ impl ArtCraftMcp {
             .into());
         }
 
+        // Idempotency: one confirmation executes at most once per process,
+        // even if the client retries after losing the reply.
+        {
+            let mut consumed = self
+                .shared
+                .consumed_confirmations
+                .lock()
+                .map_err(|_| McpError::internal_error("confirmation lock poisoned", None))?;
+            if consumed.contains(&state.idempotency_key) {
+                return Ok(CallToolResult::error(vec![ContentBlock::text(
+                    "this confirmation was already executed; re-issue the original request if the result was lost",
+                )])
+                .into());
+            }
+            consumed.insert(state.idempotency_key.clone());
+        }
+
         // Confirmed: execute with the original arguments. Task promotion is
         // applied on this round as well so confirmations don't lose tracking.
         let meta = registry::meta_for(&state.tool);
@@ -576,7 +662,9 @@ async fn run_and_track_job(
                         contents.extend(status_contents);
                         return Ok(contents);
                     }
-                    if lower.contains("fail") || lower.contains("error") || lower.contains("cancel") {
+                    if (lower.contains("fail") && !lower.contains("attempt_failed"))
+                        || lower.contains("cancel")
+                    {
                         contents.extend(status_contents);
                         return Ok(contents);
                     }
@@ -810,9 +898,17 @@ impl ArtCraftMcp {
             }
         }
 
-        Ok(tool_outcome(
-            tools::execute_tool(&state.tool, args, client).await,
-        ))
+        let mut cleanup_paths: Vec<String> = Vec::new();
+        if let Some(fp) = args.get("file_path").and_then(|v| v.as_str()) {
+            if fp.contains("artcraft-mcp-upload-") {
+                cleanup_paths.push(fp.to_string());
+            }
+        }
+        let outcome = tool_outcome(tools::execute_tool(&state.tool, args, client).await);
+        for path in cleanup_paths {
+            let _ = tokio::fs::remove_file(&path).await;
+        }
+        Ok(outcome)
     }
 }
 
@@ -925,10 +1021,17 @@ pub async fn serve_http(cli: Cli) -> anyhow::Result<()> {
     let handler = ArtCraftMcp::new(&cli);
     let ct = tokio_util::sync::CancellationToken::new();
 
-    let config = StreamableHttpServerConfig::default()
+    let mut config = StreamableHttpServerConfig::default()
         .with_legacy_session_mode(true)
         .with_json_response(true)
         .with_cancellation_token(ct.child_token());
+    if cli.allow_remote {
+        // rmcp's default Host allowlist is loopback-only, which would reject
+        // every genuine remote client. Browser DNS-rebinding protection still
+        // applies through the Origin middleware below.
+        config = config.disable_allowed_hosts();
+        warn!("remote bind enabled: serve behind a TLS-terminating proxy or VPN; the bearer token is visible to on-path observers over cleartext HTTP");
+    }
 
     let factory_handler = handler.clone();
     let service = StreamableHttpService::new(
