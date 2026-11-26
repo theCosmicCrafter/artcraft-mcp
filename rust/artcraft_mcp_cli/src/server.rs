@@ -1,5 +1,7 @@
 //! MCP server core: an rmcp `ServerHandler` over the 61-tool registry, with
-//! dual transport entry points (stdio and stateless Streamable HTTP).
+//! dual transport entry points (stdio and stateless Streamable HTTP),
+//! progressive tool discovery, MRTR cost confirmation, and the tasks
+//! extension for long-running generation jobs.
 
 use std::borrow::Cow;
 use std::net::SocketAddr;
@@ -10,16 +12,30 @@ use axum::middleware::Next;
 use axum::response::Response;
 use rmcp::model::*;
 use rmcp::service::{RequestContext, RoleServer};
+use rmcp::task_manager::TaskManager;
 use rmcp::transport::streamable_http_server::{
     StreamableHttpServerConfig, StreamableHttpService, session::local::LocalSessionManager,
 };
 use rmcp::{ErrorData as McpError, ServerHandler, ServiceExt};
-use serde_json::{Map, Value};
+use serde_json::{Map, Value, json};
 use tracing::{info, warn};
 
 use crate::client::ArtCraftClient;
+use crate::registry::{self, CostTier, HOT_TOOLS, META_TOOLS};
 use crate::types::ToolContent;
-use crate::{Cli, ToolMode, auth, telemetry, tools};
+use crate::{Cli, ToolMode, auth, discovery, telemetry, tools};
+
+/// Static per-tier credit estimates used for the MRTR confirmation gate.
+/// Real per-argument quotes come from artcraft_estimate_cost; the gate only
+/// needs a conservative magnitude to decide whether to confirm.
+fn tier_estimate(tier: CostTier) -> u64 {
+    match tier {
+        CostTier::Free => 0,
+        CostTier::Low => 10,
+        CostTier::Medium => 40,
+        CostTier::High => 120,
+    }
+}
 
 /// Shared, cheaply cloneable server state. The HTTP service factory builds a
 /// fresh handler per request, so anything persistent lives behind this Arc.
@@ -39,6 +55,10 @@ pub struct SharedState {
     pub startup_credentials: Option<
         artcraft_client::credentials::storyteller_credential_set::StorytellerCredentialSet,
     >,
+    /// In-memory task manager backing io.modelcontextprotocol/tasks.
+    /// Handles are unguessable UUIDs; durable cross-restart persistence is
+    /// tracked in the SQLite task store (see tasks_store.rs).
+    pub tasks: TaskManager,
 }
 
 impl ArtCraftMcp {
@@ -54,12 +74,11 @@ impl ArtCraftMcp {
                 no_confirm: cli.no_confirm,
                 state_codec,
                 startup_credentials: auth::load_credentials(),
+                tasks: TaskManager::new(),
             }),
         }
     }
 
-    /// Build the API client for one request. Bearer-carried credential override
-    /// arrives in a later phase; today every request uses the startup chain.
     fn client_for(&self, _context: &RequestContext<RoleServer>) -> ArtCraftClient {
         ArtCraftClient::new(self.shared.startup_credentials.clone())
     }
@@ -81,20 +100,32 @@ fn state_signing_key() -> Vec<u8> {
     key
 }
 
-/// Extension capabilities this server advertises in server/discover.
-/// Populated as each extension phase lands (tasks in Phase 3, files in
-/// Phase 4, apps in Phase 5); advertising an unimplemented extension would
-/// violate the extensions lifecycle.
+/// Extension capabilities advertised in server/discover and initialize.
 pub fn extension_capabilities() -> ExtensionCapabilities {
-    ExtensionCapabilities::new()
+    let mut ext = ExtensionCapabilities::new();
+    ext.insert(
+        "io.modelcontextprotocol/tasks".to_string(),
+        json!({ "supported": true }).as_object().cloned().unwrap_or_default(),
+    );
+    ext
 }
 
-/// Read a W3C trace context out of request `_meta` into the current span.
 fn trace_meta(meta: Option<&MetaObject>) {
     if let Some(meta) = meta {
         let value = serde_json::to_value(&meta.0).unwrap_or(Value::Null);
         telemetry::extract_trace_context(Some(&value));
     }
+}
+
+/// MRTR state carried in the sealed requestState for cost confirmation.
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct ConfirmState {
+    tool: String,
+    args: Value,
+    quote_credits: u64,
+    idempotency_key: String,
+    #[serde(default)]
+    expires_unix: i64,
 }
 
 impl ServerHandler for ArtCraftMcp {
@@ -109,7 +140,9 @@ impl ServerHandler for ArtCraftMcp {
         info.server_info = Implementation::new("artcraft-mcp", env!("CARGO_PKG_VERSION"));
         info.instructions = Some(
             "ArtCraft generative media: image, video, audio, 3D and splat generation. \
-             Use artcraft_estimate_cost before expensive generations."
+             Use artcraft_estimate_cost before expensive generations. In progressive \
+             mode, use artcraft_search_tools / artcraft_describe_tool / \
+             artcraft_call_deferred_tool to reach the full catalog."
                 .to_string(),
         );
         info
@@ -118,17 +151,54 @@ impl ServerHandler for ArtCraftMcp {
     async fn list_tools(
         &self,
         request: Option<PaginatedRequestParams>,
-        _context: RequestContext<RoleServer>,
+        context: RequestContext<RoleServer>,
     ) -> Result<ListToolsResult, McpError> {
         trace_meta(request.as_ref().and_then(|r| r.meta.as_ref().map(|m| &m.0)));
-        let defs = tools::get_all_tools();
-        let mut converted: Vec<Tool> = defs.into_iter().map(convert_tool).collect();
+
+        let client_caps = context.client_capabilities();
+        let supports_tasks = client_caps.is_some_and(|c| c.supports_tasks());
+        let modern = context
+            .protocol_version()
+            .is_some_and(|v| v >= ProtocolVersion::V_2026_07_28);
+
+        // Progressive mode only applies to 2026-07-28 clients unless forced.
+        let progressive = matches!(self.shared.tool_mode, ToolMode::Progressive | ToolMode::Codemode) && modern;
+
+        let mut converted: Vec<Tool> = if progressive {
+            let mut out: Vec<Tool> = Vec::new();
+            for def in tools::get_all_tools() {
+                if !HOT_TOOLS.contains(&def.name.as_str()) {
+                    continue;
+                }
+                // Hide redundant hot tools when the client has the extensions.
+                if supports_tasks
+                    && matches!(def.name.as_str(), "artcraft_get_job_status" | "artcraft_list_jobs")
+                {
+                    continue;
+                }
+                out.push(convert_tool(def));
+            }
+            for meta in discovery::meta_tool_defs() {
+                out.push(convert_tool(meta));
+            }
+            out
+        } else {
+            tools::get_all_tools().into_iter().map(convert_tool).collect()
+        };
+
         // Canonical deterministic ordering keeps client KV caches stable.
         converted.sort_by(|a, b| a.name.cmp(&b.name));
-        Ok(ListToolsResult {
+        let mut result = ListToolsResult {
             tools: converted,
             ..Default::default()
-        })
+        };
+        // SEP-2549 caching hints: private because the list adapts to the
+        // client's negotiated capabilities.
+        let mut meta = MetaObject::default();
+        meta.insert("ttlMs".to_string(), json!(300_000));
+        meta.insert("cacheScope".to_string(), json!("private"));
+        result.meta = Some(meta);
+        Ok(result)
     }
 
     async fn call_tool(
@@ -143,19 +213,304 @@ impl ServerHandler for ArtCraftMcp {
         let client = self.client_for(&context);
 
         info!("Tool call: {}", name);
-        match tools::execute_tool(&name, arguments, &client).await {
-            Ok(contents) => Ok(CallToolResult::success(
-                contents.into_iter().map(content_block).collect(),
-            )
-            .into()),
-            Err(e) => {
-                warn!("Tool {} failed: {}", name, e);
-                Ok(CallToolResult::error(vec![rmcp::model::ContentBlock::text(format!(
-                    "Error: {}",
-                    e
-                ))])
-                .into())
+
+        // --- Meta-tools (progressive discovery) ---------------------------
+        if META_TOOLS.contains(&name.as_str()) {
+            let result = match name.as_str() {
+                "artcraft_search_tools" => discovery::search_tools(arguments).await,
+                "artcraft_describe_tool" => discovery::describe_tool(arguments).await,
+                _ => discovery::call_deferred_tool(arguments, &client).await,
+            };
+            return Ok(tool_outcome(result));
+        }
+
+        // --- MRTR retry round: sealed state present ------------------------
+        if let Some(sealed) = request.request_state.clone() {
+            return self
+                .handle_confirm_retry(&sealed, request.input_responses.as_ref(), &client, &context)
+                .await;
+        }
+
+        // --- Schema-guided coercion for direct calls too -------------------
+        let arguments = if let Some(def) = tools::get_all_tools().into_iter().find(|t| t.name == name) {
+            match def.input_schema {
+                Some(schema) => match arguments {
+                    Value::Object(map) => Value::Object(crate::coercion::coerce_object(map, &schema)),
+                    other => other,
+                },
+                None => arguments,
             }
+        } else {
+            arguments
+        };
+
+        // --- Cost confirmation gate (MRTR) ---------------------------------
+        let meta = registry::meta_for(&name);
+        let billable = meta.is_some_and(|m| m.cost != CostTier::Free);
+        let supports_elicitation = context
+            .client_capabilities()
+            .is_some_and(|c| c.elicitation.is_some());
+        let modern = context
+            .protocol_version()
+            .is_some_and(|v| v >= ProtocolVersion::V_2026_07_28);
+
+        if billable && modern && supports_elicitation && !self.shared.no_confirm {
+            if let Some(m) = meta {
+                let quote = tier_estimate(m.cost);
+                let needs_confirm = quote > self.shared.auto_approve_under
+                    && quote >= self.shared.confirm_over_credits.min(u64::MAX);
+                let threshold_hit = quote >= self.shared.confirm_over_credits
+                    || self.shared.confirm_over_credits == 0;
+                if (threshold_hit || quote > self.shared.auto_approve_under) && needs_confirm {
+                    return self.issue_cost_confirmation(&name, arguments, quote);
+                }
+                if threshold_hit && quote > self.shared.auto_approve_under {
+                    return self.issue_cost_confirmation(&name, arguments, quote);
+                }
+            }
+        }
+
+        // --- Execution: task promotion for async jobs ----------------------
+        let supports_tasks = context
+            .client_capabilities()
+            .is_some_and(|c| c.supports_tasks());
+        let is_async_job = meta.is_some_and(|m| m.async_job);
+
+        if is_async_job && supports_tasks && modern {
+            let tool_name = name.clone();
+            let args = arguments.clone();
+            let task_client = ArtCraftClient::new(self.shared.startup_credentials.clone());
+            let task = self.shared.tasks.spawn(Default::default(), move |ctx| {
+                Box::pin(async move {
+                    tokio::select! {
+                        _ = ctx.cancelled() => {
+                            Err(rmcp::task_manager::TaskExit::Cancelled)
+                        }
+                        result = run_and_track_job(&tool_name, args, &task_client) => {
+                            match result {
+                                Ok(contents) => Ok(CallToolResult::success(
+                                    contents.into_iter().map(content_block).collect(),
+                                )),
+                                Err(e) => Ok(CallToolResult::error(vec![
+                                    ContentBlock::text(format!("Error: {}", e)),
+                                ])),
+                            }
+                        }
+                    }
+                })
+            });
+            return Ok(CallToolResponse::Task(CreateTaskResult::new(task)));
+        }
+
+        // Synchronous execution (legacy clients and non-job tools).
+        Ok(tool_outcome(
+            tools::execute_tool(&name, arguments, &client).await,
+        ))
+    }
+}
+
+impl ArtCraftMcp {
+    /// First MRTR round: seal the pending call into requestState and ask the
+    /// client to confirm the estimated credit cost via elicitation.
+    fn issue_cost_confirmation(
+        &self,
+        name: &str,
+        arguments: Value,
+        quote: u64,
+    ) -> Result<CallToolResponse, McpError> {
+        let state = ConfirmState {
+            tool: name.to_string(),
+            args: arguments,
+            quote_credits: quote,
+            idempotency_key: uuid::Uuid::new_v4().to_string(),
+            expires_unix: chrono::Utc::now().timestamp() + 15 * 60,
+        };
+        let sealed = self
+            .shared
+            .state_codec
+            .seal_json(&state)
+            .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+
+        let mut input_requests = InputRequests::new();
+        input_requests.insert(
+            "confirm".to_string(),
+            InputRequest::Elicitation(ElicitRequest::new(
+                ElicitRequestParams::FormElicitationParams {
+                    meta: None,
+                    message: format!(
+                        "This generation is estimated at ~{} credits. Confirm to proceed?",
+                        quote
+                    ),
+                    requested_schema: serde_json::from_value(json!({
+                        "type": "object",
+                        "properties": {
+                            "confirm": {
+                                "type": "boolean",
+                                "title": "Confirm generation",
+                                "description": format!("Spend ~{} credits on {}?", quote, name)
+                            }
+                        },
+                        "required": ["confirm"]
+                    }))
+                    .map_err(|e| McpError::internal_error(e.to_string(), None))?,
+                },
+            )),
+        );
+
+        Ok(InputRequiredResult::new(Some(input_requests), Some(sealed)).into())
+    }
+
+    /// Retry round: verify the sealed state, read the confirmation, execute
+    /// or report a clean cancellation.
+    async fn handle_confirm_retry(
+        &self,
+        sealed: &str,
+        input_responses: Option<&InputResponses>,
+        client: &ArtCraftClient,
+        context: &RequestContext<RoleServer>,
+    ) -> Result<CallToolResponse, McpError> {
+        let state: ConfirmState = self
+            .shared
+            .state_codec
+            .open_json(sealed)
+            .map_err(|_| McpError::invalid_params("tampered or unknown request state", None))?;
+
+        if state.expires_unix != 0 && chrono::Utc::now().timestamp() > state.expires_unix {
+            return Ok(CallToolResult::error(vec![ContentBlock::text(
+                "cost confirmation expired; please re-issue the request",
+            )])
+            .into());
+        }
+
+        let response = input_responses
+            .and_then(|r| r.get("confirm"))
+            .ok_or_else(|| McpError::invalid_params("missing confirmation response", None))?;
+        let response: ElicitResult = serde_json::from_value(response.clone())
+            .map_err(|_| McpError::invalid_params("invalid confirmation response", None))?;
+
+        let approved = match response.action {
+            ElicitationAction::Accept => response
+                .content
+                .as_ref()
+                .and_then(|c| c["confirm"].as_bool())
+                .unwrap_or(false),
+            ElicitationAction::Decline | ElicitationAction::Cancel => false,
+            _ => false,
+        };
+
+        if !approved {
+            return Ok(CallToolResult::success(vec![ContentBlock::text(format!(
+                "Generation cancelled — no credits spent ({}).",
+                state.tool
+            ))])
+            .into());
+        }
+
+        // Confirmed: execute with the original arguments. Task promotion is
+        // applied on this round as well so confirmations don't lose tracking.
+        let meta = registry::meta_for(&state.tool);
+        let supports_tasks = context
+            .client_capabilities()
+            .is_some_and(|c| c.supports_tasks());
+        if meta.is_some_and(|m| m.async_job) && supports_tasks {
+            let tool_name = state.tool.clone();
+            let args = state.args.clone();
+            let task_client = ArtCraftClient::new(self.shared.startup_credentials.clone());
+            let task = self.shared.tasks.spawn(Default::default(), move |ctx| {
+                Box::pin(async move {
+                    tokio::select! {
+                        _ = ctx.cancelled() => Err(rmcp::task_manager::TaskExit::Cancelled),
+                        result = run_and_track_job(&tool_name, args, &task_client) => {
+                            match result {
+                                Ok(contents) => Ok(CallToolResult::success(
+                                    contents.into_iter().map(content_block).collect(),
+                                )),
+                                Err(e) => Ok(CallToolResult::error(vec![
+                                    ContentBlock::text(format!("Error: {}", e)),
+                                ])),
+                            }
+                        }
+                    }
+                })
+            });
+            return Ok(CallToolResponse::Task(CreateTaskResult::new(task)));
+        }
+
+        Ok(tool_outcome(
+            tools::execute_tool(&state.tool, state.args, client).await,
+        ))
+    }
+}
+
+/// Submit a generation job and poll it to completion inside a task, so the
+/// task lifecycle mirrors the remote ArtCraft job lifecycle.
+async fn run_and_track_job(
+    tool_name: &str,
+    args: Value,
+    client: &ArtCraftClient,
+) -> anyhow::Result<Vec<ToolContent>> {
+    let mut contents = tools::execute_tool(tool_name, args, client).await?;
+
+    // Generation tools report the job token in their text output; when we can
+    // extract it, poll until the remote job reaches a terminal state.
+    let text: String = contents.iter().map(|c| c.text.clone()).collect();
+    if let Some(token) = extract_job_token(&text) {
+        let poll_args = json!({ "job_token": token });
+        for _ in 0..240 {
+            tokio::time::sleep(std::time::Duration::from_secs(15)).await;
+            match tools::execute_tool("artcraft_get_job_status", poll_args.clone(), client).await {
+                Ok(status_contents) => {
+                    let status_text: String =
+                        status_contents.iter().map(|c| c.text.clone()).collect();
+                    let lower = status_text.to_lowercase();
+                    if lower.contains("complete") || lower.contains("succeeded") {
+                        contents.extend(status_contents);
+                        return Ok(contents);
+                    }
+                    if lower.contains("fail") || lower.contains("error") || lower.contains("cancel") {
+                        contents.extend(status_contents);
+                        return Ok(contents);
+                    }
+                }
+                Err(_) => continue,
+            }
+        }
+    }
+    Ok(contents)
+}
+
+fn extract_job_token(text: &str) -> Option<String> {
+    for line in text.lines() {
+        let lower = line.to_lowercase();
+        if lower.contains("job") && lower.contains("token") {
+            if let Some(pos) = line.rfind(|c: char| c == ':' || c == '`') {
+                let candidate = line[pos + 1..]
+                    .trim()
+                    .trim_matches('`')
+                    .trim_matches('.')
+                    .trim();
+                if candidate.len() >= 8
+                    && candidate
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+                {
+                    return Some(candidate.to_string());
+                }
+            }
+        }
+    }
+    None
+}
+
+fn tool_outcome(result: anyhow::Result<Vec<ToolContent>>) -> CallToolResponse {
+    match result {
+        Ok(contents) => CallToolResult::success(
+            contents.into_iter().map(content_block).collect(),
+        )
+        .into(),
+        Err(e) => {
+            warn!("tool failed: {}", e);
+            CallToolResult::error(vec![ContentBlock::text(format!("Error: {}", e))]).into()
         }
     }
 }
@@ -171,11 +526,15 @@ fn convert_tool(def: crate::types::Tool) -> Tool {
         Value::Object(map) => map,
         _ => Map::new(),
     };
-    Tool::new(
-        Cow::<'static, str>::Owned(def.name),
+    let mut tool = Tool::new(
+        Cow::<'static, str>::Owned(def.name.clone()),
         Cow::<'static, str>::Owned(def.description),
         std::sync::Arc::new(schema_object),
-    )
+    );
+    if let Some(meta) = registry::meta_for(&def.name) {
+        tool.annotations = Some(meta.annotations());
+    }
+    tool
 }
 
 fn content_block(content: ToolContent) -> rmcp::model::ContentBlock {

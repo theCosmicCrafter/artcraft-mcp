@@ -11,6 +11,7 @@ path = "src/main.rs"
 
 [dependencies]
 log = "0.4"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 # Upstream ArtCraft wire types and API client.
 # storytold/artcraft is public and dual-licensed MIT/Apache; pinned deliberately.
 # Bump ARTCRAFT_REV in lockstep with upstream releases (see README).
