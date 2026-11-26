@@ -98,7 +98,7 @@ pub fn read_resource(uri: &str) -> Option<ReadResourceResponse> {
     let app = APPS.iter().find(|a| a.uri == uri)?;
     let asset = AppsAssets::get(app.file)?;
     let html = String::from_utf8_lossy(&asset.data).to_string();
-    let contents = vec![ResourceContents::text(html, uri)];
+    let contents = vec![ResourceContents::text(html, uri).with_mime_type("text/html;profile=mcp-app")];
     Some(ReadResourceResponse::Complete(ReadResourceResult::new(contents)))
 }
 

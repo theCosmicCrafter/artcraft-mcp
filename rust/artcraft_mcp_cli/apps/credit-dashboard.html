@@ -23,4 +23,20 @@ window.addEventListener('message',(ev)=>{
     if(m)document.getElementById('bal').textContent=m[1];
   }
 },false);
-</script></body></html>
+</script><script>
+// MCP Apps handshake: hosts gate tool-result delivery on ui/initialize.
+(function(){
+  function ready(){
+    if(!window.parent||window.parent===window)return;
+    window.parent.postMessage({jsonrpc:'2.0',id:'ui-init',method:'ui/initialize',params:{protocolVersion:'2026-01-26',capabilities:{}}},'*');
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',ready)}else{ready()}
+  window.addEventListener('message',function(ev){
+    var d=ev.data||{};
+    if(d.id==='ui-init'&&d.result){
+      window.parent.postMessage({jsonrpc:'2.0',method:'ui/notifications/initialized',params:{}},'*');
+    }
+  },false);
+})();
+</script>
+</body></html>
