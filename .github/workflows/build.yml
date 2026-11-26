@@ -118,6 +118,7 @@ jobs:
           r = {m.get("id"): m for m in map(json.loads, sys.stdin)}
           server = r[1]["result"]["serverInfo"]
           assert server["version"] == "2.0.0", server
+          assert r[1]["result"]["protocolVersion"] == "2024-11-05", r[1]["result"]
           tools = r[2]["result"]["tools"]
           assert len(tools) == 61, f"packaged binary must expose all 61 tools, got {len(tools)}"
           print(server["name"], server["version"], "packaged binary ok")
@@ -154,7 +155,7 @@ jobs:
           SERVER_PID=$!
           sleep 2
           set +e
-          npx -y @modelcontextprotocol/conformance server \
+          npx -y @modelcontextprotocol/conformance@0.1.16 server \
             --url http://127.0.0.1:8787/mcp \
             --suite active \
             --expected-failures ../../conformance/conformance-baseline.yml \
