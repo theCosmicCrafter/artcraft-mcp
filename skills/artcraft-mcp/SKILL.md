@@ -29,6 +29,25 @@ Instead, act as a helpful guide:
 3. Give them exact, step-by-step instructions: **"To set this up, please open the ArtCraft Desktop App, navigate to Settings > API Keys, and enter your credentials for [Provider Name]."**
 4. Once they confirm it's done, re-run `check_provider_credentials` and resume their generation!
 
+## Progressive Discovery (v2.0+ clients)
+
+On MCP `2026-07-28` clients the server exposes a small hot catalog instead of
+all 61 tools. Reach the rest through the three meta-tools:
+
+1. `artcraft_search_tools(query, category?, detail_level?)` — find tools by
+   keyword or browse a category (`image`, `video`, `3d`, `splat`, `audio`,
+   `voice`, `character`, `lora`, `jobs`, `account`, `community`, `files`).
+2. `artcraft_describe_tool(names[])` — read the full input schema and examples
+   before calling.
+3. `artcraft_call_deferred_tool(name, arguments)` — execute. Stringified
+   numbers/booleans ("5", "true") are coerced automatically.
+
+Legacy clients (Claude Desktop, Windsurf, Cursor on `2025-*` or `2024-11-05`)
+still receive the full 61-tool list exactly as before — no workflow change.
+
+Expensive generations may ask for one confirmation before spending credits
+(MRTR cost gate); declining cancels cleanly with zero credits spent.
+
 ## References
 For detailed lists of available models and settings, please consult the following reference files:
 - [Image Models](references/image-models.md): Complete list of supported image models (Flux, Midjourney, Nano Banana, Seedream, etc.)
@@ -44,7 +63,7 @@ For detailed lists of available models and settings, please consult the followin
 Enqueues an image generation request using ArtCraft's omni-gen image endpoint.
 - **Required parameter**: `prompt` (The text describing the desired image).
 - **Optional parameters**:
-  - `model`: e.g., `flux_1_dev` (default), `nano_banana_pro`, `seedream_4`, `seedream_5`, `midjourney_8`, `flux_3`.
+  - `model`: e.g., `flux_1_dev` (default), `nano_banana_pro`, `seedream_4`, `seedream_5p0_pro`, `midjourney_8`, `gpt_image_2p5_flare`.
   - `aspect_ratio`: e.g., `square`, `wide_sixteen_by_nine`, `tall_nine_by_sixteen`.
   - `quality`: `standard` or `high`.
   - `image_batch_count`: Number of images to generate (integer, default is 1).
@@ -59,18 +78,18 @@ Enqueues a video generation request using ArtCraft's omni-gen video endpoint.
   - `image_reference_tokens`, `video_reference_tokens`, `audio_reference_tokens`: Comma-separated strings of MediaFileTokens.
 
 ### 3. `artcraft_generate_3d_object`
-Enqueues an Image-to-3D generation request using Hunyuan 3D or Tripo3D.
-- **Required parameter**: `media_file_token` (The uploaded image token to convert to 3D).
-- **Optional parameters**: `model` (`tripo_h3_1`), `version` (`2.0` or `2.1`), `face_count`, `enable_pbr`, `enable_texture`, `texture_quality`, `geometry_quality`.
+Enqueues a text-, image-, or multi-view-to-3D generation request using Hunyuan 3D, Tripo3D, Meshy, or Rodin.
+- **Input**: `prompt` and/or `image_media_token` (plus optional `reference_image_media_tokens` and `front`/`back`/`left`/`right_image_media_token`).
+- **Optional parameters**: `model` (`hunyuan_3d_3` default, `hunyuan_3d_3p1_pro`, `tripo3d_h3p1`, `meshy_v6`, `rodin_2p5_fast`, ...), `target_face_count`, `output_type`, `polygon_type`, `enable_pbr`, `enable_texture`, `texture_quality`, `geometry_quality`, `input_mesh_media_file_token`.
 
 ### 4. `artcraft_generate_splat`
-Enqueues a Gaussian Splat generation request using WorldLabs Marble.
+Enqueues a Gaussian Splat generation request using WorldLabs Marble or TripoSplat.
 - **Optional parameters**:
-  - `image_media_file_token` (Input image token to seed world generation).
+  - `image_media_token` (Input image token to seed world generation; extra views go in `reference_image_media_tokens`).
   - `prompt` (Text description of the world/scene).
-  - `version` (`marble_0p1_mini`, `marble_0p1_plus`, `marble_1p0`, `marble_1p1`).
-  - `is_panoramic` (boolean for 360° environment).
-  *(Note: Either `prompt` or `image_media_file_token` must be provided).*
+  - `model` (`marble_1p1_plus` default, `marble_1p1`, `marble_1p0`, `marble_1p0_draft`, `marble_0p1_plus`, `marble_0p1_mini`, `triposplat`).
+  - `is_panoramic` (boolean for 360° environment), `reference_video_media_token`, `disable_recaption`.
+  *(Note: Either `prompt` or `image_media_token` must be provided. `triposplat` takes exactly one `image_media_token`; prompts, videos, panorama and recaption flags are not supported).*
 
 ### 5. `artcraft_generate_audio`
 Generates ambient audio, soundscapes, or full musical compositions via Suno.

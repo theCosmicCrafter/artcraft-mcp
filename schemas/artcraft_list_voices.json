@@ -1,1 +1,1 @@
-{"name":"artcraft_list_voices","description":"List available voices.","parameters":{"properties":{},"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"List available voices.","name":"artcraft_list_voices","parameters":{"properties":{},"type":"object"}}

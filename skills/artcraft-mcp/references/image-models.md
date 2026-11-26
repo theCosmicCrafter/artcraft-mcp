@@ -6,7 +6,7 @@ The ArtCraft MCP server supports a wide variety of image models via the `model` 
 When generating images, the agent MUST adhere to these rules:
 - **`prompt`**: Mandatory. Detail the subject, style, lighting, and composition.
 - **`aspect_ratio`**: Optional but highly recommended. Valid options: `square`, `wide_three_by_two`, `wide_sixteen_by_nine`, `wide_twenty_one_by_nine`, `tall_two_by_three`, `tall_nine_by_sixteen`. Defaults to `square` if omitted.
-- **`quality`**: Optional. Valid options: `standard`, `high`. 
+- **`quality`**: Optional. Valid options: `auto`, `low`, `medium`, `high`, `xhigh`, `max` (model-dependent). 
 - **`image_batch_count`**: Number of images to generate (1 to 4).
 - **`generation_mode`** (Used mainly in cost estimation): `text_to_image` or `image_edit`.
 
@@ -15,10 +15,11 @@ When generating images, the agent MUST adhere to these rules:
 - **`flux_1_schnell`**: Fast variant of Flux 1. Use when speed is preferred over ultra-fine details.
 - **`flux_pro_1p1` / `flux_pro_1p1_ultra`**: Professional and ultra-high-quality variants. Use for cinematic or highly polished commercial outputs.
 - **`flux_2_lora_angles`**: LoRA fine-tuned variant. Use when specific camera angles or character poses are requested.
-- **`flux_3` / `flux_3_pro`**: Next-generation Flux 3 architectures with advanced lighting and detail rendition.
+- `flux_3` and `flux_3_draft` are video models; see the video model reference.
 
 ## Nano Banana (Gemini)
 Nano Banana models are unique in their support for advanced composition and editing.
+- **`nano_banana` / `nano_banana_2`**: Standard Nano Banana models for generation and editing.
 - **`nano_banana_pro`**: Pro variant. 
   - **Capabilities**: Supports multi-image composition (up to 14 inputs), single image editing, and targeting specific resolutions (1K/2K/4K).
   - **Editing Workflow**: To edit an existing image, use `upload_media` to get a `MediaFileToken`, then pass it to the `image_reference_tokens` parameter. Specify the edit instructions clearly in the `prompt`.
@@ -26,8 +27,8 @@ Nano Banana models are unique in their support for advanced composition and edit
 
 ## Seedream
 - **`seedream_4` / `seedream_4p5`**: Highly aesthetic, anime, and illustration-friendly generation models. Best used with anime-style prompts.
-- **`seedream_5` / `seedream_5_lite`**: Core Seedream 5 releases for high-fidelity stylized generation.
-- **`seedream_5_pro` / `seedream_5_ultra`**: Pro and Ultra Seedream 5 models with fine-grained color dynamic range and composition control.
+- **`seedream_5_lite`**: Lightweight Seedream 5 release for high-fidelity stylized generation.
+- **`seedream_5p0_pro` / `seedream_5p0_pro_u`**: Seedream 5.0 Pro and its Ultra variant, with fine-grained color dynamic range and composition control.
 
 ## Midjourney
 Midjourney models require a linked `midjourney.web_login.toml` credential.

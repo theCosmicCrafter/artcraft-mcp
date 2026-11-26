@@ -1,1 +1,1 @@
-{"name":"artcraft_create_prompt","description":"Create a prompt object to associate with future generations.","parameters":{"properties":{"text":{"type":"string"}},"required":["text"],"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Create a prompt object to associate with future generations.","name":"artcraft_create_prompt","parameters":{"properties":{"text":{"type":"string"}},"required":["text"],"type":"object"}}

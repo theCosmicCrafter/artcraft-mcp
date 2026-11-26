@@ -25,7 +25,7 @@ Always estimate costs before launching resource-heavy jobs to prevent running ou
 ### A. General Media Estimation (`artcraft_estimate_cost`)
 Supports Image, Video, 3D Mesh, and Voice pipelines.
 - **Parameters**:
-  - `model`: Model identifier (e.g. `seedance_2p0`, `flux_1_dev`, `tripo_h3_1`).
+  - `model`: Model identifier (e.g. `seedance_2p0`, `flux_1_dev`, `marble_1p1_plus`). There is no cost estimator for 3D meshes.
   - `provider`: Provider identifier (e.g. `artcraft`, `fal`, `midjourney`).
   - `generation_mode`: Mode (`text_to_image`, `image_to_video`, `text_to_video`, etc.).
   - `duration_seconds`: Video duration (5, 10, 15s).

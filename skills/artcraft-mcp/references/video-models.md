@@ -10,13 +10,14 @@ When generating video, the agent MUST adhere to these rules:
 - **Video-to-Video Workflow**: Upload a source video and pass its token to `video_reference_tokens` to use it as a style or motion reference.
 
 ## Seedance (Default Family)
+- **`seedance_1p0_lite` / `seedance_1p5_pro`**: Earlier Seedance releases.
 - **`seedance_2p0`**: (Default model) High quality general-purpose video generation. Supports text-to-video and image-to-video.
 - **`seedance_2p0_fast`**: Faster variant for quick prototyping.
 - **`seedance_2p0_bp` / `seedance_2p0_bp_fast`**: BytePlus variants for different backend infrastructure.
-- **`seedance_2p0_u` / `seedance_2p0_u_fast`**: Ultra high quality variants for final renders.
 - **`seedance_2p0_bpu` / `seedance_2p0_bpu_fast`**: BytePlus Ultra variants.
-- **`seedance_2p5` / `seedance_2p5_fast`**: Next-generation Seedance 2.5 with enhanced temporal consistency.
-- **`seedance_2p5_bp` / `seedance_2p5_u`**: Seedance 2.5 BytePlus and Ultra quality variants.
+- **`seedance_2p0_mini` / `seedance_2p0_bp_mini` / `seedance_2p0_bpu_mini`**: Low-cost Mini variants.
+- **`seedance_2p5_preview` / `seedance_2p5`**: Next-generation Seedance 2.5 with enhanced temporal consistency.
+- **`seedance_2p5_u`**: Seedance 2.5 Ultra quality variant.
 
 ## Kling
 Kling models excel at realistic physics, fluid motion, and adherence to complex prompts.
@@ -29,6 +30,7 @@ Kling models excel at realistic physics, fluid motion, and adherence to complex 
 Google's Veo models are exceptional for cinematic realism, accurate lighting, and consistent physics.
 - **`veo_3` / `veo_3_fast`**: State-of-the-art Veo models. Strong support for complex cinematic prompts and image-to-video.
 - **`veo_3p1` / `veo_3p1_fast`**: Incremental improvements on Veo 3 for better prompt adherence.
+- **`veo_3p1_lite`**: Lower-cost Veo 3.1 variant.
 - **`veo_2`**: Legacy Veo 2 model.
 
 ## Sora
@@ -42,13 +44,19 @@ Google's Veo models are exceptional for cinematic realism, accurate lighting, an
 - **`wan_3p0`**: Alibaba's Wan 3.0 high-fidelity video generation model.
 - **`wan_3p0_prime`**: Enhanced quality Wan 3.0 variant for complex motion dynamics.
 
+## Vidu
+- **`vidu_q3` / `vidu_q3_turbo`**: Vidu Q3 and its faster Turbo variant.
+
+## Flux
+- **`flux_3` / `flux_3_draft`**: Flux 3 video and its cheaper draft tier.
+
 ## MiniMax (Hailuo)
 - **`minimax_h3`**: MiniMax H3 cinematic video generation.
 - **`minimax_h3_turbo`**: High-speed MiniMax H3 model.
 - **`minimax_h3_ultra`**: Maximum resolution and detail MiniMax H3 model.
 
 ## Beeble
-- **`switch_x`**: Beeble SwitchX model specialized in relighting, scene location change, and subject replacement.
+- **Beeble SwitchX**: Not an `artcraft_generate_video` model; use `artcraft_edit_video` for relighting, scene location change, and subject replacement.
 
 ## Video Output Format Options
 ArtCraft supports specifying output video containers:

@@ -1,1 +1,1 @@
-{"name":"artcraft_list_media_files","description":"List all session media files with pagination.","parameters":{"properties":{"cursor":{"type":"string"},"limit":{"type":"integer"}},"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"List all session media files with pagination.","name":"artcraft_list_media_files","parameters":{"properties":{"cursor":{"type":"string"},"limit":{"type":"integer"}},"type":"object"}}

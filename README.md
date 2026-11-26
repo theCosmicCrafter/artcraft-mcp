@@ -184,7 +184,7 @@ Agent skills and prompt guidance are provided in `skills/artcraft-mcp/`:
 - **`references/`**: Model capability tables, aspect ratio rules, and duration limits for:
   - **Image**: Flux 1 Dev/Schnell, Flux Pro 1.1 Ultra, Nano Banana Pro, Seedream 4/4.5/5, Midjourney 7/8.
   - **Video**: Kling (3.0/2.6/2.1), Veo (3/3.1), Seedance (2.0/1.5), Sora 2, Grok Imagine Video.
-  - **3D & Splat**: Hunyuan 3D 2.0/2.1, WorldLabs Marble Gaussian Splatting.
+  - **3D & Splat**: Hunyuan 3D 2.0/2.1/3/3.1, Tripo3D H3.1, Meshy 6, Rodin 2.5 Fast, WorldLabs Marble and TripoSplat Gaussian Splatting.
 
 ---
 
