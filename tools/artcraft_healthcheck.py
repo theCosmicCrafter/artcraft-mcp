@@ -127,37 +127,49 @@ def main():
     res = run_session(bin_path, requests)
 
     # 1. Initialize
-    if res[0] and "result" in res[0]:
-        s_info = res[0]["result"].get("serverInfo", {})
+    init_result = res[0].get("result", {}) if res[0] else {}
+    if init_result.get("serverInfo") and init_result.get("protocolVersion"):
+        s_info = init_result["serverInfo"]
         print(f"[PASS] MCP Protocol Connected: {s_info.get('name')} v{s_info.get('version')}")
     else:
-        print(f"[FAIL] Initialize failed: {res[0]}")
+        print(f"[FAIL] Initialize failed or used a legacy wire shape: {res[0]}")
         sys.exit(1)
 
     # 2. List tools
+    checks_passed = True
     if res[1] and "result" in res[1]:
         tools = res[1]["result"].get("tools", [])
         print(f"[PASS] Tools Discovery: {len(tools)} tools registered and accessible.")
     else:
         print(f"[FAIL] tools/list failed: {res[1]}")
+        checks_passed = False
 
     # 3. Credits
-    if res[2] and "result" in res[2]:
-        text = res[2]["result"]["content"][0]["text"].replace("\n", " | ")
+    credits_result = res[2].get("result", {}) if res[2] else {}
+    if credits_result and not credits_result.get("isError"):
+        text = credits_result["content"][0]["text"].replace("\n", " | ")
         print(f"[PASS] Account Authentication: {text}")
     else:
         print(f"[FAIL] Account check failed: {res[2]}")
+        checks_passed = False
 
     # 4. Cost estimation
-    if res[3] and "result" in res[3]:
-        text = res[3]["result"]["content"][0]["text"].replace("\n", " | ")
+    cost_result = res[3].get("result", {}) if res[3] else {}
+    if cost_result and not cost_result.get("isError"):
+        text = cost_result["content"][0]["text"].replace("\n", " | ")
         print(f"[PASS] API Cost Estimator: {text}")
     else:
         print(f"[FAIL] Cost estimation check failed: {res[3]}")
+        checks_passed = False
 
     print("\n" + "=" * 65)
-    print("   [+] All diagnostic checks PASSED successfully!")
+    if checks_passed:
+        print("   [+] All diagnostic checks PASSED successfully!")
+    else:
+        print("   [-] Diagnostic checks FAILED; see failures above.")
     print("=" * 65)
+    if not checks_passed:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

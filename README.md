@@ -1,6 +1,6 @@
 # ArtCraft MCP Server & Automation Suite
 
-[![Protocol: MCP](https://img.shields.io/badge/MCP-2024--11--05-blue.svg)](https://modelcontextprotocol.io)
+[![Protocol: MCP](https://img.shields.io/badge/MCP-2026--07--28-blue.svg)](https://modelcontextprotocol.io)
 [![Language: Rust](https://img.shields.io/badge/Language-Rust%202021-orange.svg)](https://www.rust-lang.org)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-green.svg)](https://python.org)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE.md)
@@ -102,12 +102,13 @@ Add to your MCP client configuration file (e.g., `claude_desktop_config.json` or
 
 ## 🔑 Authentication
 
-`artcraft-mcp` (the 61-tool server in `rust/artcraft_mcp_cli`) reads credentials from files only — it does not read environment variables. It checks, in order:
+`artcraft-mcp` (the 61-tool server in `rust/artcraft_mcp_cli`) resolves credentials in this order:
 
-1. **Credential Files** in `~/Artcraft/credentials/` (`%USERPROFILE%\Artcraft\credentials\` on Windows):
+1. **Environment variables**: `ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN`, then `ARTCRAFT_API_KEY`, then `ARTCRAFT_SESSION` with optional `ARTCRAFT_AVT`.
+2. **Credential Files** in `~/Artcraft/credentials/` (`%USERPROFILE%\Artcraft\credentials\` on Windows):
    - `artcraft_session.txt` — Your session cookie
    - `artcraft_avt.txt` — Your visitor cookie
-2. **ArtCraft Desktop App cookie store**, used for whichever cookie is still missing:
+3. **ArtCraft Desktop App cookie store**, used for whichever cookie is still missing:
 
    | OS | Path |
    |---|---|
@@ -115,9 +116,7 @@ Add to your MCP client configuration file (e.g., `claude_desktop_config.json` or
    | macOS | `~/Library/Application Support/ai.artcraft.app/.cookies` |
    | Linux | `$XDG_DATA_HOME/ai.artcraft.app/.cookies` (default `~/.local/share/ai.artcraft.app/.cookies`) |
 
-Without credentials the server still starts and lists its tools, but account calls return `401 Unauthorized`.
-
-> The `ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN` / `ARTCRAFT_API_KEY` / `ARTCRAFT_SESSION` + `ARTCRAFT_AVT` environment variables apply to the separate `artcraft-mcp-server` core server, not to `artcraft-mcp`.
+Without credentials the server still starts, serves discovery, and lists its tools; account-bound calls return an upstream authentication error.
 
 ---
 

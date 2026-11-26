@@ -8,9 +8,9 @@ name: Build binaries
 on:
   push:
     branches: [main]
-    paths: ["rust/**", ".github/workflows/build.yml"]
+    paths: ["rust/**", "bin/**", "conformance/**", ".github/workflows/build.yml"]
   pull_request:
-    paths: ["rust/**", ".github/workflows/build.yml"]
+    paths: ["rust/**", "bin/**", "conformance/**", ".github/workflows/build.yml"]
   workflow_dispatch:
 
 permissions:
@@ -102,6 +102,28 @@ jobs:
           print(len(tools), "tools (progressive catalog ok)")
           EOF
 
+      - name: Smoke test packaged Windows binary
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        env:
+          PYTHONUTF8: "1"
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+            | ../../bin/artcraft-mcp.exe \
+            | python3 -c '
+          import sys, json
+          r = {m.get("id"): m for m in map(json.loads, sys.stdin)}
+          server = r[1]["result"]["serverInfo"]
+          assert server["version"] == "2.0.0", server
+          assert r[1]["result"]["protocolVersion"] == "2024-11-05", r[1]["result"]
+          tools = r[2]["result"]["tools"]
+          assert len(tools) == 61, f"packaged binary must expose all 61 tools, got {len(tools)}"
+          print(server["name"], server["version"], "packaged binary ok")
+          '
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
@@ -133,7 +155,7 @@ jobs:
           SERVER_PID=$!
           sleep 2
           set +e
-          npx -y @modelcontextprotocol/conformance server \
+          npx -y @modelcontextprotocol/conformance@0.1.16 server \
             --url http://127.0.0.1:8787/mcp \
             --suite active \
             --expected-failures ../../conformance/conformance-baseline.yml \
@@ -141,4 +163,4 @@ jobs:
           STATUS=$?
           kill $SERVER_PID 2>/dev/null
           echo "conformance exit: $STATUS"
-          exit 0 # informational until the baseline is ratified; see conformance-baseline.yml
+          exit "$STATUS"
