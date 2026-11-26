@@ -20,6 +20,8 @@ use rmcp::{ErrorData as McpError, ServerHandler, ServiceExt};
 use serde_json::{Map, Value, json};
 use tracing::{info, warn};
 
+use artcraft_client::endpoints::jobs::list_session_jobs::{list_session_jobs, States};
+
 use crate::client::ArtCraftClient;
 use crate::registry::{self, CostTier, HOT_TOOLS, META_TOOLS};
 use crate::types::ToolContent;
@@ -648,6 +650,57 @@ impl ArtCraftMcp {
 
 /// Submit a generation job and poll it to completion inside a task, so the
 /// task lifecycle mirrors the remote ArtCraft job lifecycle.
+struct JobPoll {
+    contents: Vec<ToolContent>,
+    terminal_success: bool,
+    terminal_failure: bool,
+}
+
+/// Typed job-status poll: same response shape the artcraft_get_job_status tool
+/// renders, but with terminal-state classification from the upstream enum
+/// itself rather than text scraping.
+async fn poll_job_status(token: &str, client: &ArtCraftClient) -> anyhow::Result<JobPoll> {
+    let response = list_session_jobs(&client.api_host, client.creds_ref(), States::All).await?;
+    let job = response
+        .jobs
+        .iter()
+        .find(|j| j.job_token.as_str() == token)
+        .ok_or_else(|| anyhow::anyhow!("job not found"))?;
+    // JobStatusPlus debug-printing uses its snake_case to_str values
+    // (upstream impl_enum_display_and_debug_using_to_str); normalize defensively
+    // so a future upstream format change degrades to "keeps polling then
+    // times out with the token" instead of a wrong terminal verdict.
+    let status = format!("{:?}", job.status.status);
+    let status_value = status.to_lowercase().replace('_', "");
+    let terminal_success = status_value == "completesuccess";
+    let terminal_failure = matches!(
+        status_value.as_str(),
+        "completefailure" | "dead" | "cancelledbyuser" | "cancelledbysystem"
+    );
+    // Re-render the human-readable lines exactly as the tool would, so the
+    // task result content is unchanged.
+    let mut lines = vec![
+        format!("Job: {}", job.job_token.as_str()),
+        format!("Status: {}", status),
+        format!("Progress: {}%", job.status.progress_percentage),
+    ];
+    if let Some(failure) = &job.status.maybe_failure_message {
+        lines.push(format!("Failure: {}", failure));
+    }
+    if let Some(result) = job.maybe_result.as_ref() {
+        lines.push(format!("Result token: {}", result.entity_token));
+    }
+    Ok(JobPoll {
+        contents: vec![ToolContent {
+            content_type: "text".to_string(),
+            text: lines.join("
+"),
+        }],
+        terminal_success,
+        terminal_failure,
+    })
+}
+
 async fn run_and_track_job(
     tool_name: &str,
     args: Value,
@@ -659,11 +712,14 @@ async fn run_and_track_job(
     // extract it, poll until the remote job reaches a terminal state.
     let text: String = contents.iter().map(|c| c.text.clone()).collect();
     if let Some(token) = extract_job_token(&text) {
-        let poll_args = json!({ "job_token": token });
         for _ in 0..240 {
             tokio::time::sleep(std::time::Duration::from_secs(15)).await;
-            match tools::execute_tool("artcraft_get_job_status", poll_args.clone(), client).await {
-                Ok(status_contents) => {
+            // Poll the typed upstream API directly rather than re-parsing the
+            // text output of artcraft_get_job_status: task completion must not
+            // depend on display formatting.
+            match poll_job_status(&token, client).await {
+                Ok(poll) => {
+                    let status_contents = poll.contents;
                     let status_text: String =
                         status_contents.iter().map(|c| c.text.clone()).collect();
                     // Parse the dedicated `Status:` line rather than scanning
@@ -673,18 +729,9 @@ async fn run_and_track_job(
                     // Pending, Started, CompleteSuccess, CompleteFailure,
                     // AttemptFailed (transient retry), Dead, CancelledByUser,
                     // CancelledBySystem.
-                    let status_value = status_text
-                        .lines()
-                        .find_map(|line| {
-                            line.strip_prefix("Status:")
-                                .map(|v| v.trim().to_lowercase())
-                        })
-                        .unwrap_or_default();
-                    let terminal_failure = matches!(
-                        status_value.as_str(),
-                        "complete_failure" | "dead" | "cancelled_by_user" | "cancelled_by_system"
-                    );
-                    let terminal_success = status_value == "complete_success";
+                    let terminal_failure = poll.terminal_failure;
+                    let terminal_success = poll.terminal_success;
+                    let _ = status_text;
                     if terminal_failure || terminal_success {
                         contents.extend(status_contents);
                         return Ok(contents);
