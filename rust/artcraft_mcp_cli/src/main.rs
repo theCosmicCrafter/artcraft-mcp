@@ -13,6 +13,7 @@ mod auth;
 mod client;
 mod coercion;
 mod discovery;
+mod files_ext;
 mod registry;
 mod server;
 mod tasks_store;

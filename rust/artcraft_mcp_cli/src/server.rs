@@ -23,7 +23,7 @@ use tracing::{info, warn};
 use crate::client::ArtCraftClient;
 use crate::registry::{self, CostTier, HOT_TOOLS, META_TOOLS};
 use crate::types::ToolContent;
-use crate::{Cli, ToolMode, auth, discovery, telemetry, tools};
+use crate::{Cli, ToolMode, auth, discovery, files_ext, telemetry, tools};
 
 /// Static per-tier credit estimates used for the MRTR confirmation gate.
 /// Real per-argument quotes come from artcraft_estimate_cost; the gate only
@@ -59,6 +59,11 @@ pub struct SharedState {
     /// Handles are unguessable UUIDs; durable cross-restart persistence is
     /// tracked in the SQLite task store (see tasks_store.rs).
     pub tasks: TaskManager,
+    /// Spool for out-of-band file uploads (io.modelcontextprotocol/files).
+    pub spool: files_ext::SharedSpool,
+    /// Absolute loopback base URL of the ephemeral relay (stdio mode only).
+    /// None in HTTP mode, where upload targets use relative paths.
+    pub relay_base_url: std::sync::RwLock<Option<String>>,
 }
 
 impl ArtCraftMcp {
@@ -75,6 +80,8 @@ impl ArtCraftMcp {
                 state_codec,
                 startup_credentials: auth::load_credentials(),
                 tasks: TaskManager::new(),
+                spool: std::sync::Arc::new(files_ext::UploadSpool::default()),
+                relay_base_url: std::sync::RwLock::new(None),
             }),
         }
     }
@@ -107,6 +114,11 @@ pub fn extension_capabilities() -> ExtensionCapabilities {
         "io.modelcontextprotocol/tasks".to_string(),
         json!({ "supported": true }).as_object().cloned().unwrap_or_default(),
     );
+    ext.insert(
+        files_ext::EXT_KEY.to_string(),
+        json!({ "upload": {}, "maxInlineBytes": files_ext::MAX_INLINE_BYTES })
+            .as_object().cloned().unwrap_or_default(),
+    );
     ext
 }
 
@@ -117,9 +129,16 @@ fn trace_meta(meta: Option<&MetaObject>) {
     }
 }
 
+fn confirm_kind() -> String {
+    "confirm".to_string()
+}
+
 /// MRTR state carried in the sealed requestState for cost confirmation.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct ConfirmState {
+    #[serde(default = "confirm_kind")]
+    #[allow(dead_code)]
+    kind: String,
     tool: String,
     args: Value,
     quote_credits: u64,
@@ -226,9 +245,19 @@ impl ServerHandler for ArtCraftMcp {
 
         // --- MRTR retry round: sealed state present ------------------------
         if let Some(sealed) = request.request_state.clone() {
-            return self
-                .handle_confirm_retry(&sealed, request.input_responses.as_ref(), &client, &context)
-                .await;
+            let kind = self
+                .shared
+                .state_codec
+                .open_json::<Value>(&sealed)
+                .ok()
+                .and_then(|v| v.get("kind").and_then(|k| k.as_str()).map(|k| k.to_string()))
+                .unwrap_or_else(|| "confirm".to_string());
+            return if kind == "upload" {
+                self.handle_upload_retry(&sealed, &client).await
+            } else {
+                self.handle_confirm_retry(&sealed, request.input_responses.as_ref(), &client, &context)
+                    .await
+            };
         }
 
         // --- Schema-guided coercion for direct calls too -------------------
@@ -243,6 +272,63 @@ impl ServerHandler for ArtCraftMcp {
         } else {
             arguments
         };
+
+        // --- Files extension: inline data and out-of-band uploads ----------
+        let client_files_caps = context
+            .client_capabilities()
+            .and_then(|c| c.extensions.as_ref().map(|e| e.get(files_ext::EXT_KEY).cloned()).flatten());
+        let client_files_upload = client_files_caps.as_ref().is_some_and(|v| v.get("upload").is_some());
+        let client_files_download = client_files_caps.as_ref().is_some_and(|v| v.get("download").is_some());
+
+        match files_ext::detect_file_inputs(&arguments) {
+            Ok(inputs) if !inputs.is_empty() => {
+                // Inline base64 data: decode small files straight to disk.
+                let mut all_inline = true;
+                let mut rewritten = arguments.clone();
+                for (key, meta) in &inputs {
+                    if let Some(data) = &meta.data {
+                        if meta.size > files_ext::MAX_INLINE_BYTES {
+                            all_inline = false;
+                            break;
+                        }
+                        match decode_inline_file(meta) {
+                            Ok(path) => {
+                                rewritten[key] = json!({ "inline_saved": path });
+                            }
+                            Err(e) => {
+                                return Ok(tool_outcome(Err(e)));
+                            }
+                        }
+                    } else {
+                        all_inline = false;
+                    }
+                }
+                if all_inline {
+                    // Rewrite file arguments to saved paths and execute.
+                    if let Some(map) = rewritten.as_object_mut() {
+                        let keys: Vec<String> = map.keys().cloned().collect();
+                        for k in keys {
+                            if let Some(saved) = map[&k].get("inline_saved").and_then(|v| v.as_str()) {
+                                map.insert("file_path".to_string(), json!(saved));
+                                map.remove(&k);
+                            }
+                        }
+                    }
+                    return Ok(tool_outcome(tools::execute_tool(&name, rewritten, &client).await));
+                }
+                if client_files_upload {
+                    return self.issue_upload_request(&name, arguments, inputs).await;
+                }
+                // Client cannot transfer files: fail cleanly rather than fake it.
+                return Ok(CallToolResult::error(vec![ContentBlock::text(
+                    "file arguments require a client supporting io.modelcontextprotocol/files upload; pass a local file_path instead",
+                )]).into());
+            }
+            Err(e) => {
+                return Ok(CallToolResult::error(vec![ContentBlock::text(format!("Error: {}", e))]).into());
+            }
+            _ => {}
+        }
 
         // --- Cost confirmation gate (MRTR) ---------------------------------
         let meta = registry::meta_for(&name);
@@ -303,9 +389,8 @@ impl ServerHandler for ArtCraftMcp {
         }
 
         // Synchronous execution (legacy clients and non-job tools).
-        Ok(tool_outcome(
-            tools::execute_tool(&name, arguments, &client).await,
-        ))
+        let outcome = tool_outcome(tools::execute_tool(&name, arguments.clone(), &client).await);
+        Ok(enrich_downloads(outcome, &name, client_files_download))
     }
 }
 
@@ -319,6 +404,7 @@ impl ArtCraftMcp {
         quote: u64,
     ) -> Result<CallToolResponse, McpError> {
         let state = ConfirmState {
+            kind: confirm_kind(),
             tool: name.to_string(),
             args: arguments,
             quote_credits: quote,
@@ -541,12 +627,250 @@ fn content_block(content: ToolContent) -> rmcp::model::ContentBlock {
     rmcp::model::ContentBlock::text(content.text)
 }
 
+impl ArtCraftMcp {
+    /// Issue an upload_required-style MRTR round for out-of-band file bytes.
+    ///
+    /// rmcp 3.11 has no typed `upload_required` result (the files extension
+    /// is a November 2026 draft), so the upload instructions ride inside the
+    /// MRTR envelope: `inputRequests` is empty and the targets are carried in
+    /// `_meta["io.modelcontextprotocol/files"].uploads`. Retry semantics,
+    /// state sealing, and expiry match the draft exactly.
+    /// TODO(rmcp): emit native `resultType: "upload_required"` once the SDK
+    /// models the files extension.
+    async fn issue_upload_request(
+        &self,
+        tool: &str,
+        args: Value,
+        inputs: Vec<(String, files_ext::FileInputMeta)>,
+    ) -> Result<CallToolResponse, McpError> {
+        // Validate everything checkable without the bytes first.
+        for (key, meta) in &inputs {
+            if meta.size == 0 {
+                // Zero-byte files never get upload targets per the draft.
+                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                    "file input '{}' declares size 0; empty files must be sent inline or omitted",
+                    key
+                ))])
+                .into());
+            }
+            if meta.size > files_ext::MAX_UPLOAD_BYTES {
+                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                    "file input '{}' is {} bytes, over the {} byte limit",
+                    key, meta.size, files_ext::MAX_UPLOAD_BYTES
+                ))])
+                .into());
+            }
+        }
+
+        let mut pending = Vec::new();
+        for (key, meta) in inputs {
+            let token = uuid::Uuid::new_v4().simple().to_string();
+            self.shared.spool.register(&token).await;
+            pending.push(files_ext::PendingUpload {
+                file_id: meta.id.clone(),
+                arg_key: key,
+                token,
+                mime_type: meta.mime_type,
+                declared_size: meta.size,
+                name: meta.name,
+            });
+        }
+
+        let state = files_ext::UploadState {
+            tool: tool.to_string(),
+            args,
+            uploads: pending.clone(),
+            expires_unix: chrono::Utc::now().timestamp() + 15 * 60,
+        };
+        // Wrap with kind tag for retry dispatch.
+        let mut state_value = serde_json::to_value(&state)
+            .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        state_value["kind"] = json!("upload");
+        let sealed = self
+            .shared
+            .state_codec
+            .seal_json(&state_value)
+            .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+
+        let base_url = self
+            .shared
+            .relay_base_url
+            .read()
+            .ok()
+            .and_then(|g| g.clone());
+        let targets: Vec<Value> = pending
+            .iter()
+            .map(|u| files_ext::upload_target(u, base_url.as_deref()))
+            .collect();
+
+        let mut meta_obj = MetaObject::default();
+        meta_obj.insert(
+            files_ext::EXT_KEY.to_string(),
+            json!({ "uploads": targets }),
+        );
+        let result = InputRequiredResult::new(None, Some(sealed)).with_meta(meta_obj);
+        Ok(result.into())
+    }
+
+    /// Upload retry: verify state, consume spooled bytes, write them to disk
+    /// with a correct extension, rewrite the arguments to file_path form, and
+    /// execute the original tool.
+    async fn handle_upload_retry(
+        &self,
+        sealed: &str,
+        client: &ArtCraftClient,
+    ) -> Result<CallToolResponse, McpError> {
+        let state_value: Value = self
+            .shared
+            .state_codec
+            .open_json(sealed)
+            .map_err(|_| McpError::invalid_params("tampered or unknown request state", None))?;
+        let state: files_ext::UploadState = serde_json::from_value(state_value)
+            .map_err(|_| McpError::invalid_params("malformed upload state", None))?;
+
+        if chrono::Utc::now().timestamp() > state.expires_unix {
+            return Ok(CallToolResult::error(vec![ContentBlock::text(
+                "upload request expired; please re-issue the call",
+            )])
+            .into());
+        }
+
+        let mut args = state.args.clone();
+        for upload in &state.uploads {
+            let Some(spooled) = self.shared.spool.take(&upload.token).await else {
+                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                    "no bytes received for file '{}' — upload to the target first",
+                    upload.file_id
+                ))])
+                .into());
+            };
+            // Re-verify client-asserted metadata against actual bytes.
+            let size = tokio::fs::metadata(&spooled)
+                .await
+                .map(|m| m.len())
+                .unwrap_or(0);
+            if size == 0 {
+                let _ = tokio::fs::remove_file(&spooled).await;
+                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                    "file '{}' uploaded zero bytes",
+                    upload.file_id
+                ))])
+                .into());
+            }
+            if size != upload.declared_size {
+                let _ = tokio::fs::remove_file(&spooled).await;
+                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                    "file '{}' size mismatch: declared {} bytes, received {}",
+                    upload.file_id, upload.declared_size, size
+                ))])
+                .into());
+            }
+            // Give the spool file a useful extension for downstream MIME sniffing.
+            let ext = upload
+                .name
+                .as_deref()
+                .and_then(|n| n.rsplit('.').next().map(|e| e.to_string()))
+                .unwrap_or_else(|| "bin".to_string());
+            let final_path = spooled.with_extension(ext);
+            let _ = tokio::fs::rename(&spooled, &final_path).await;
+            // Replace the file-input object with a plain file_path argument.
+            if let Some(map) = args.as_object_mut() {
+                map.remove(&upload.arg_key);
+                map.insert("file_path".to_string(), json!(final_path.to_string_lossy()));
+            }
+        }
+
+        Ok(tool_outcome(
+            tools::execute_tool(&state.tool, args, client).await,
+        ))
+    }
+}
+
+/// Decode an inline base64 file input to a temp file, returning its path.
+fn decode_inline_file(meta: &files_ext::FileInputMeta) -> anyhow::Result<String> {
+    use base64::Engine;
+    let data = meta.data.as_deref().unwrap_or("");
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(data)
+        .map_err(|e| anyhow::anyhow!("invalid base64 in inline file data: {}", e))?;
+    if bytes.len() as u64 != meta.size {
+        return Err(anyhow::anyhow!(
+            "inline file size mismatch: declared {}, decoded {}",
+            meta.size,
+            bytes.len()
+        ));
+    }
+    let ext = meta
+        .name
+        .as_deref()
+        .and_then(|n| n.rsplit('.').next().map(|e| e.to_string()))
+        .unwrap_or_else(|| "bin".to_string());
+    let path = std::env::temp_dir().join(format!(
+        "artcraft-mcp-inline-{}.{}",
+        uuid::Uuid::new_v4().simple(),
+        ext
+    ));
+    std::fs::write(&path, &bytes)?;
+    Ok(path.to_string_lossy().to_string())
+}
+
+/// When the client accepts download targets, strip media URLs from
+/// model-visible text and carry them in `_meta` instead (draft requirement:
+/// no URLs in content when the files extension is active).
+fn enrich_downloads(
+    outcome: CallToolResponse,
+    tool: &str,
+    client_supports_download: bool,
+) -> CallToolResponse {
+    if !client_supports_download || tool != "artcraft_download_media_file" {
+        return outcome;
+    }
+    let CallToolResponse::Complete(mut result) = outcome else {
+        return outcome;
+    };
+    let text: String = result
+        .content
+        .iter()
+        .filter_map(|c| c.as_text().map(|t| t.text.clone()))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let Some(url) = files_ext::extract_first_url(&text) else {
+        return CallToolResponse::Complete(result);
+    };
+    let mut meta = result.meta.clone().unwrap_or_default();
+    let files_meta = files_ext::download_meta(vec![("file-1".to_string(), url.clone(), None)]);
+    if let Some(inner) = files_meta.get(files_ext::EXT_KEY) {
+        meta.insert(files_ext::EXT_KEY.to_string(), inner.clone());
+    }
+    result.meta = Some(meta);
+    result.content = vec![ContentBlock::text(
+        "Media file ready — download target attached in result metadata.",
+    )];
+    CallToolResponse::Complete(result)
+}
+
 // ---------------------------------------------------------------------------
 // Transports
 // ---------------------------------------------------------------------------
 
 pub async fn serve_stdio(cli: Cli) -> anyhow::Result<()> {
     let service = ArtCraftMcp::new(&cli);
+
+    // Ephemeral loopback relay for out-of-band file uploads: stdio has no
+    // HTTP address of its own, so upload targets use this listener's URL.
+    if let Ok(listener) = tokio::net::TcpListener::bind("127.0.0.1:0").await {
+        if let Ok(addr) = listener.local_addr() {
+            let base = format!("http://{}", addr);
+            if let Ok(mut guard) = service.shared.relay_base_url.write() {
+                *guard = Some(base);
+            }
+            let router = files_ext::relay_router(service.shared.spool.clone());
+            tokio::spawn(async move {
+                let _ = axum::serve(listener, router).await;
+            });
+        }
+    }
+
     let server = service.serve(rmcp::transport::stdio()).await?;
     server.waiting().await?;
     Ok(())
@@ -586,6 +910,7 @@ pub async fn serve_http(cli: Cli) -> anyhow::Result<()> {
     let router = axum::Router::new()
         .nest_service("/mcp", service)
         .route("/health", axum::routing::get(|| async { "OK" }))
+        .merge(files_ext::relay_router(handler.shared.spool.clone()))
         .layer(axum::middleware::from_fn(origin_and_auth_middleware));
 
     info!("artcraft-mcp listening on http://{}/mcp", addr);
