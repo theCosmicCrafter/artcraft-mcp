@@ -1,0 +1,15 @@
+# .devinignore - files excluded from indexing and agent context
+# Edit for your project, then commit it.
+node_modules/
+dist/
+build/
+out/
+coverage/
+.venv/
+venv/
+target/
+*.log
+*.msi
+*.zip
+*.tar
+*.tar.gz

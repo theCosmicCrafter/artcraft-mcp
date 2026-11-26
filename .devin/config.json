@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "_meta": {
+    "note": "Project-level Devin config. Personal/machine-specific overrides go in config.local.json (gitignored). Stamped by /setup-project 2026-10."
+  },
+  "permissions": {
+    "allow": [],
+    "ask": [
+      "Exec(git push)",
+      "Exec(npm publish)",
+      "Exec(pip install)",
+      "Exec(uv add)"
+    ]
+  }
+}
