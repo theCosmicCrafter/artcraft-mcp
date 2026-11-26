@@ -77,9 +77,16 @@ impl ToolMeta {
             || name.starts_with("artcraft_get")
             || name.starts_with("artcraft_search")
             || name.starts_with("artcraft_estimate")
+            || name.contains("_search") // e.g. artcraft_tts_search_models
             || name == "artcraft_describe_tool"
             || name == "artcraft_search_tools";
-        let destructive = name.contains("delete") || name.contains("terminate");
+        // Destructive covers deletion/termination plus operations that
+        // overwrite or remove existing data: media downloads overwrite host
+        // files in place, and tag/metadata updates can drop existing values.
+        let destructive = name.contains("delete")
+            || name.contains("terminate")
+            || name.contains("download")
+            || name.contains("update");
         // Mutations are not idempotent except where they carry idempotency
         // tokens (uploads) — be conservative.
         let idempotent = read_only;
