@@ -32,8 +32,10 @@ mod prompts;
 mod resources_ext;
 
 /// Static per-tier credit estimates used for the MRTR confirmation gate.
-/// Real per-argument quotes come from artcraft_estimate_cost; the gate only
-/// needs a conservative magnitude to decide whether to confirm.
+/// Only a fallback: the gate first asks the upstream OmniGen cost routes
+/// for the exact price of the requested model+arguments and drops to these
+/// magnitudes when no model-specific quote is available, so a pricing
+/// failure can never lower the quoted figure.
 fn tier_estimate(tier: CostTier) -> u64 {
     match tier {
         CostTier::Free => 0,
@@ -41,6 +43,17 @@ fn tier_estimate(tier: CostTier) -> u64 {
         CostTier::Medium => 40,
         CostTier::High => 120,
     }
+}
+
+/// Credit figure shown in the MRTR confirmation prompt: either the exact
+/// upstream quote for the requested call or the conservative tier fallback.
+struct CostQuote {
+    credits: u64,
+    /// True when priced by the upstream cost route for this exact request;
+    /// false for the approximate tier fallback.
+    exact: bool,
+    /// Upstream reports the call as free/unlimited for this account.
+    free: bool,
 }
 
 /// Shared, cheaply cloneable server state. The HTTP service factory builds a
@@ -577,11 +590,26 @@ impl ServerHandler for ArtCraftMcp {
 
         if billable && modern && supports_elicitation && !self.shared.no_confirm {
             if let Some(m) = meta {
-                let quote = tier_estimate(m.cost);
+                // Prefer the exact upstream price for this model+arguments
+                // (e.g. flux_1_schnell is free despite the tool's Medium
+                // tier); fall back to the conservative tier magnitude when
+                // the call can't be priced.
+                let quote = match tools::model_cost_quote(&name, &arguments, &client).await {
+                    Some(q) => CostQuote {
+                        credits: q.credits,
+                        exact: true,
+                        free: q.free,
+                    },
+                    None => CostQuote {
+                        credits: tier_estimate(m.cost),
+                        exact: false,
+                        free: false,
+                    },
+                };
                 let over_threshold = self.shared.confirm_over_credits == 0
-                    || quote >= self.shared.confirm_over_credits;
+                    || quote.credits >= self.shared.confirm_over_credits;
                 let auto_approved = self.shared.auto_approve_under > 0
-                    && quote <= self.shared.auto_approve_under;
+                    && quote.credits <= self.shared.auto_approve_under;
                 if over_threshold && !auto_approved {
                     return self.issue_cost_confirmation(&name, arguments, quote);
                 }
@@ -633,13 +661,13 @@ impl ArtCraftMcp {
         &self,
         name: &str,
         arguments: Value,
-        quote: u64,
+        quote: CostQuote,
     ) -> Result<CallToolResponse, McpError> {
         let state = ConfirmState {
             kind: confirm_kind(),
             tool: name.to_string(),
             args: arguments,
-            quote_credits: quote,
+            quote_credits: quote.credits,
             idempotency_key: uuid::Uuid::new_v4().to_string(),
             expires_unix: chrono::Utc::now().timestamp() + 15 * 60,
         };
@@ -649,23 +677,49 @@ impl ArtCraftMcp {
             .seal_json(&state)
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
 
+        // Exact quotes come from the upstream cost route for this model and
+        // these arguments; anything else is the conservative tier magnitude
+        // and must be presented as approximate.
+        let (message, field_description) = if quote.free {
+            (
+                format!(
+                    "{} is estimated at 0 credits (free tier for this account). Confirm to proceed?",
+                    name
+                ),
+                format!("Run {} — estimated cost: 0 credits (free)", name),
+            )
+        } else if quote.exact {
+            (
+                format!(
+                    "{} is estimated at {} credits (exact upstream quote for this request). Confirm to proceed?",
+                    name, quote.credits
+                ),
+                format!("Spend {} credits on {}?", quote.credits, name),
+            )
+        } else {
+            (
+                format!(
+                    "{} is estimated at ~{} credits (approximate; no model-specific quote available). Confirm to proceed?",
+                    name, quote.credits
+                ),
+                format!("Spend ~{} credits on {}?", quote.credits, name),
+            )
+        };
+
         let mut input_requests = InputRequests::new();
         input_requests.insert(
             "confirm".to_string(),
             InputRequest::Elicitation(ElicitRequest::new(
                 ElicitRequestParams::FormElicitationParams {
                     meta: None,
-                    message: format!(
-                        "This generation is estimated at ~{} credits. Confirm to proceed?",
-                        quote
-                    ),
+                    message,
                     requested_schema: serde_json::from_value(json!({
                         "type": "object",
                         "properties": {
                             "confirm": {
                                 "type": "boolean",
                                 "title": "Confirm generation",
-                                "description": format!("Spend ~{} credits on {}?", quote, name)
+                                "description": field_description
                             }
                         },
                         "required": ["confirm"]

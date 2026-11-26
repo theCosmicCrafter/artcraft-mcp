@@ -14,17 +14,26 @@ use crate::client::ArtCraftClient;
 use crate::tools::http::typed_json_post;
 use crate::types::{Tool, ToolContent};
 
+/// OmniGen cost routes share their request bodies with the matching
+/// `/v1/omni_gen/generate/*` endpoints; the pinned api-defs rev carries the
+/// request/response types but no path constants, so they live here.
+pub(crate) const OMNI_GEN_COST_IMAGE_PATH: &str = "/v1/omni_gen/cost/image";
+pub(crate) const OMNI_GEN_COST_VIDEO_PATH: &str = "/v1/omni_gen/cost/video";
+pub(crate) const OMNI_GEN_COST_AUDIO_PATH: &str = "/v1/omni_gen/cost/audio";
+pub(crate) const OMNI_GEN_COST_MESH_PATH: &str = "/v1/omni_gen/cost/mesh";
+pub(crate) const OMNI_GEN_COST_SPLAT_PATH: &str = "/v1/omni_gen/cost/splat";
+
 pub fn tools() -> Vec<Tool> {
     vec![
         Tool {
             name: "artcraft_estimate_cost".to_string(),
-            description: "Estimate the cost of an image, video, or splat generation before running it. Returns credits and USD cents required.".to_string(),
+            description: "Estimate the cost of an image, video, audio, 3D mesh, or splat generation before running it. Returns credits and USD cents required.".to_string(),
             input_schema: Some(json!({
                 "type": "object",
                 "properties": {
                     "media_type": {
                         "type": "string",
-                        "enum": ["image", "video", "splat"],
+                        "enum": ["image", "video", "audio", "mesh", "splat"],
                         "description": "Type of media to estimate cost for"
                     },
                     "model": {
@@ -109,6 +118,71 @@ fn opt_num(response: &Value, key: &str) -> String {
 
 fn opt_bool(response: &Value, key: &str) -> bool {
     response.get(key).and_then(|v| v.as_bool()).unwrap_or(false)
+}
+
+fn opt_tri(response: &Value, key: &str) -> &'static str {
+    match response.get(key).and_then(|v| v.as_bool()) {
+        Some(true) => "yes",
+        Some(false) => "no",
+        None => "unknown",
+    }
+}
+
+/// A per-call price resolved against the upstream OmniGen cost routes — the
+/// exact figure the matching generate call would charge for these arguments.
+#[derive(Debug, Clone, Copy)]
+pub struct ModelCostQuote {
+    pub credits: u64,
+    /// Upstream reports this call as free or unlimited for the account
+    /// (also set when the quoted price is literally 0 credits).
+    pub free: bool,
+}
+
+/// MRTR support: for billable tools whose arguments map 1:1 onto an OmniGen
+/// cost request, ask upstream for the exact price of this call. Returns
+/// `None` for tools without a matching cost route, an unrecognizable model,
+/// or any upstream/parse failure — callers keep the conservative tier
+/// estimate in those cases so a pricing failure can never lower the quote.
+pub async fn model_cost_quote(
+    tool_name: &str,
+    arguments: &Value,
+    client: &ArtCraftClient,
+) -> Option<ModelCostQuote> {
+    let response = match tool_name {
+        "artcraft_generate_image" => {
+            let request = crate::tools::generate::build_image_request(arguments, None).ok()?;
+            typed_json_post(OMNI_GEN_COST_IMAGE_PATH, request, client).await
+        }
+        "artcraft_generate_video" => {
+            let request = crate::tools::generate::build_video_request(arguments, None).ok()?;
+            typed_json_post(OMNI_GEN_COST_VIDEO_PATH, request, client).await
+        }
+        "artcraft_generate_audio" => {
+            let request = crate::tools::generate::build_audio_request(arguments, None).ok()?;
+            typed_json_post(OMNI_GEN_COST_AUDIO_PATH, request, client).await
+        }
+        "artcraft_generate_3d_object" => {
+            let request = crate::tools::generate::build_mesh_request(arguments, None).ok()?;
+            typed_json_post(OMNI_GEN_COST_MESH_PATH, request, client).await
+        }
+        "artcraft_generate_splat" => {
+            let request = crate::tools::generate::build_splat_request(arguments, None).ok()?;
+            typed_json_post(OMNI_GEN_COST_SPLAT_PATH, request, client).await
+        }
+        _ => return None,
+    }
+    .ok()?;
+
+    let credits = response.get("cost_in_credits").and_then(|v| v.as_u64());
+    let free_flags =
+        opt_bool(&response, "is_free") || opt_bool(&response, "is_unlimited");
+    let (credits, free) = match (credits, free_flags) {
+        (Some(c), flags) => (c, flags || c == 0),
+        (None, true) => (0, true),
+        // No numeric quote and not marked free: stay conservative.
+        (None, false) => return None,
+    };
+    Some(ModelCostQuote { credits, free })
 }
 
 pub async fn estimate_cost(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
@@ -219,6 +293,48 @@ pub async fn estimate_cost(arguments: Value, client: &ArtCraftClient) -> Result<
             }])
         }
         "splat" => estimate_splat_cost(arguments, client).await,
+        "audio" => {
+            let request = crate::tools::generate::build_audio_request(&arguments, None)?;
+            let response = typed_json_post(OMNI_GEN_COST_AUDIO_PATH, request, client).await?;
+
+            let text = format!(
+                "Audio cost estimate:\n  Model: {}\n  Credits: {}\n  USD cents: {}\n  Free: {}\n  Unlimited: {}\n  Rate limited: {}\n  Watermark: {}\n  Failures refunded: {}",
+                model_str,
+                opt_num(&response, "cost_in_credits"),
+                opt_num(&response, "cost_in_usd_cents"),
+                opt_bool(&response, "is_free"),
+                opt_bool(&response, "is_unlimited"),
+                opt_bool(&response, "is_rate_limited"),
+                opt_bool(&response, "has_watermark"),
+                opt_tri(&response, "failures_are_refunded")
+            );
+
+            Ok(vec![ToolContent {
+                content_type: "text".to_string(),
+                text,
+            }])
+        }
+        "mesh" => {
+            let request = crate::tools::generate::build_mesh_request(&arguments, None)?;
+            let response = typed_json_post(OMNI_GEN_COST_MESH_PATH, request, client).await?;
+
+            let text = format!(
+                "Mesh cost estimate:\n  Model: {}\n  Credits: {}\n  USD cents: {}\n  Free: {}\n  Unlimited: {}\n  Rate limited: {}\n  Watermark: {}\n  Failures refunded: {}",
+                model_str,
+                opt_num(&response, "cost_in_credits"),
+                opt_num(&response, "cost_in_usd_cents"),
+                opt_bool(&response, "is_free"),
+                opt_bool(&response, "is_unlimited"),
+                opt_bool(&response, "is_rate_limited"),
+                opt_bool(&response, "has_watermark"),
+                opt_tri(&response, "failures_are_refunded")
+            );
+
+            Ok(vec![ToolContent {
+                content_type: "text".to_string(),
+                text,
+            }])
+        }
         _ => Err(anyhow!("Unknown media_type: {}", media_type)),
     }
 }

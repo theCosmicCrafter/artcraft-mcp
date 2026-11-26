@@ -44,3 +44,50 @@ Desktop.ini
 
 # Make sure precompiled binaries are tracked
 !bin/*.exe
+
+# --- cascade-ops backup additions ---
+# auto-generated/augmented for GitHub backup — cascade-ops
+# secrets
+!.env.example
+*.key
+*.pem
+secrets.json
+credentials.json
+*.token
+# model weights (live on D:\models, never in git)
+*.safetensors
+*.gguf
+*.ckpt
+*.pt
+*.pth
+*.onnx
+models/
+checkpoints/
+weights/
+loras/
+unet/
+text_encoders/
+# regenerable
+*.pyc
+node_modules/
+build/
+renders/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.next/
+.turbo/
+.cache/
+# ide/os noise
+.history/
+.vs/
+.vscode/
+desktop.ini
+nul
+*.whl
+.eggs/
+
+# E2E matrix reports contain live Stripe checkout session URLs — never commit
+tools/e2e_matrix_report_final.json
+tools/e2e_matrix_evidence.json

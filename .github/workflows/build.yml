@@ -72,7 +72,7 @@ jobs:
           r = {m.get("id"): m for m in map(json.loads, sys.stdin)}
           assert r[1]["result"]["protocolVersion"] == "2024-11-05", r.get(1)
           tools = r[2]["result"]["tools"]
-          assert len(tools) == 61, f"legacy clients must see all 61 tools, got {len(tools)}"
+          assert len(tools) == 99, f"legacy clients must see all 99 tools, got {len(tools)}"
           print(len(tools), "tools (legacy regression ok)")
           '
 
@@ -120,7 +120,7 @@ jobs:
           assert server["version"] == "2.0.0", server
           assert r[1]["result"]["protocolVersion"] == "2024-11-05", r[1]["result"]
           tools = r[2]["result"]["tools"]
-          assert len(tools) == 61, f"packaged binary must expose all 61 tools, got {len(tools)}"
+          assert len(tools) == 99, f"packaged binary must expose all 99 tools, got {len(tools)}"
           print(server["name"], server["version"], "packaged binary ok")
           '
 

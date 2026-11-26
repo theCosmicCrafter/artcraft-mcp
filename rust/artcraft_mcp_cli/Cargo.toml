@@ -21,7 +21,7 @@ enums = { git = "https://github.com/storytold/artcraft", rev = "9a1cc6b701e9dbec
 tokens = { git = "https://github.com/storytold/artcraft", rev = "9a1cc6b701e9dbec38af820507c9b33b668f54f0" }
 
 # MCP protocol (2026-07-28 stateless core + legacy fallback)
-rmcp = { version = "3.11", features = [
+rmcp = { version = "3.12", features = [
   "server",
   "macros",
   "transport-io",

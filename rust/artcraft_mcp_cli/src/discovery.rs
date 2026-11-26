@@ -22,11 +22,11 @@ pub fn meta_tool_defs() -> Vec<Tool> {
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Search terms (e.g. 'voice clone', 'lora weights', 'upload')"
+                        "description": "Search terms (e.g. 'lora weights', 'upload', 'video')"
                     },
                     "category": {
                         "type": "string",
-                        "enum": ["image", "video", "3d", "splat", "audio", "voice", "character", "lora", "jobs", "account", "community", "files"],
+                        "enum": ["image", "video", "3d", "splat", "audio", "character", "lora", "jobs", "account", "community", "files"],
                         "description": "Optional category filter"
                     },
                     "detail_level": {
@@ -259,15 +259,12 @@ fn example_for(name: &str) -> Option<&'static str> {
         "artcraft_edit_video" => {
             r#"{"model": "switch_x", "video_media_token": "mf_abc123", "prompt": "make it look like nighttime"}"#
         }
-        "artcraft_tts_generate" => {
-            r#"{"voice_token": "vo_abc123", "text": "Hello from ArtCraft", "model": "artcraft_tts"}"#
+        "artcraft_edit_image" => {
+            r#"{"model": "gemini_25_flash", "image_media_token": "mf_abc123", "prompt": "make the cube blue"}"#
         }
         "artcraft_upload_image" => r#"{"file_path": "C:/art/character.png"}"#,
         "artcraft_generate_splat" => {
             r#"{"model": "marble_1p1_plus", "image_media_token": "mf_abc123"}"#
-        }
-        "artcraft_voice_convert" => {
-            r#"{"voice_token": "vo_abc123", "audio_media_token": "mf_xyz789"}"#
         }
         _ => return None,
     })

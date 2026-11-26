@@ -32,18 +32,18 @@ Instead, act as a helpful guide:
 ## Progressive Discovery (v2.0+ clients)
 
 On MCP `2026-07-28` clients the server exposes a small hot catalog instead of
-all 61 tools. Reach the rest through the three meta-tools:
+all 99 tools. Reach the rest through the three meta-tools:
 
 1. `artcraft_search_tools(query, category?, detail_level?)` — find tools by
    keyword or browse a category (`image`, `video`, `3d`, `splat`, `audio`,
-   `voice`, `character`, `lora`, `jobs`, `account`, `community`, `files`).
+   `character`, `lora`, `jobs`, `account`, `community`, `files`).
 2. `artcraft_describe_tool(names[])` — read the full input schema and examples
    before calling.
 3. `artcraft_call_deferred_tool(name, arguments)` — execute. Stringified
    numbers/booleans ("5", "true") are coerced automatically.
 
 Legacy clients (Claude Desktop, Windsurf, Cursor on `2025-*` or `2024-11-05`)
-still receive the full 61-tool list exactly as before — no workflow change.
+still receive the full 99-tool list exactly as before — no workflow change.
 
 Expensive generations may ask for one confirmation before spending credits
 (MRTR cost gate); declining cancels cleanly with zero credits spent.
@@ -53,7 +53,7 @@ For detailed lists of available models and settings, please consult the followin
 - [Image Models](references/image-models.md): Complete list of supported image models (Flux, Midjourney, Nano Banana, Seedream, etc.)
 - [Video Models](references/video-models.md): Complete list of supported video models (Seedance, Kling, Sora, Veo, etc.)
 - [3D and Splat Models](references/three_d_and_splat_models.md): Complete list of supported 3D object and Gaussian Splat models (Hunyuan 3D, WorldLabs Marble)
-- [Audio & Voice Models](references/audio-models.md): Suno audio generation, TTS speech synthesis, and voice conversion
+- [Audio Models](references/audio-models.md): Suno audio generation and TTS model search
 - [Billing & Credits](references/billing-and-credits.md): Credit top-ups, Stripe subscriptions, customer portal, and cost estimations
 - [Aspect Ratios](references/aspect-ratios.md): Supported aspect ratios (Square, Widescreen, Tall, etc.)
 
@@ -112,7 +112,7 @@ Tracks and controls asynchronous generation jobs.
 
 ### 9. `artcraft_estimate_cost` / `artcraft_estimate_splat_cost`
 Inspects credit costs prior to launching heavy workloads.
-- `artcraft_estimate_cost`: Estimates credit quote for image, video, 3D, and voice pipelines.
+- `artcraft_estimate_cost`: Estimates credit quotes for image, video, 3D, audio, and mesh pipelines with model-specific pricing.
 - `artcraft_estimate_splat_cost`: Pre-calculates exact credit usage for WorldLabs Marble splatting.
 
 ### 10. `artcraft_get_credits` / `artcraft_get_subscription`
@@ -125,8 +125,7 @@ Direct Stripe billing and subscription management.
 - `artcraft_get_billing_portal_url`: Generates a Stripe customer portal redirect URL.
 
 ### 12. Voice, TTS & Character Customization Tools
-- `artcraft_tts_generate`: Synthesizes spoken audio from text.
-- `artcraft_voice_convert`: Applies neural voice conversion to audio samples.
+- `artcraft_tts_search_models`: Searches 3,768 community TTS voice models. (Legacy TTS inference and voice conversion were removed upstream; `artcraft_tts_generate` is deprecated.)
 - `artcraft_create_character`: Creates reusable character definitions with LoRAs and traits.
 - `artcraft_search_weights` / `artcraft_get_weight`: Discovers and inspects community LoRAs.
 

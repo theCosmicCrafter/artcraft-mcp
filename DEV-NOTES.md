@@ -5,7 +5,7 @@
 This package contains the ArtCraft MCP Server ready for development and testing.
 
 ### Files Included:
-- `artcraft-mcp.exe` - The full 61-tool MCP server executable (Rust, release build)
+- `artcraft-mcp.exe` - The full 99-tool MCP server executable (Rust, release build)
 - `ArtCraft-MCP-Setup-Guide.md` - Complete setup and configuration guide
 - `README.md` - ArtCraft MCP project README
 - `LICENSE.md` - License information
@@ -51,9 +51,9 @@ Copy the `skills/` folder to your skills directory for AI assistant guidance.
 
 - **Language**: Rust
 - **Build**: Release mode (optimized)
-- **Version**: 1.1.0
+- **Version**: 2.0.0
 - **Protocol**: Model Context Protocol (MCP) over stdio
-- **Tools**: 61 tools for image/video generation, 3D, splats, audio/Suno, voice, TTS, characters, LoRAs, and community features
+- **Tools**: 99 tools for image/video generation, 3D, splats, audio/Suno, characters, folders, API keys, MCP sessions, billing, and community features
 
 ## Known Issues
 

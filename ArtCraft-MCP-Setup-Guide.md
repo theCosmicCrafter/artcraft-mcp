@@ -2,7 +2,7 @@
 
 ## What Is This?
 
-The ArtCraft MCP Server is a standalone executable that connects your AI coding assistant (Windsurf, Claude Desktop, or any MCP-compatible client) to the ArtCraft AI generation platform. It exposes **40+ tools** for generating images, videos, 3D objects, voice, and more — all through natural language commands.
+The ArtCraft MCP Server is a standalone executable that connects your AI coding assistant (Windsurf, Claude Desktop, or any MCP-compatible client) to the ArtCraft AI generation platform. It exposes **99 tools** for generating images, videos, 3D objects, audio, and more — all through natural language commands.
 
 ---
 

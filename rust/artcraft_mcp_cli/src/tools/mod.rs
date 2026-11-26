@@ -27,6 +27,8 @@ mod studio;
 mod tts;
 mod weights;
 
+pub use cost::model_cost_quote;
+
 pub fn get_all_tools() -> Vec<Tool> {
     let mut tools = Vec::new();
 

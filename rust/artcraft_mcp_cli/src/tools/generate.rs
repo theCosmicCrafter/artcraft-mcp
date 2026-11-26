@@ -286,21 +286,23 @@ pub fn tools() -> Vec<Tool> {
     ]
 }
 
-pub async fn generate_image(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+/// Shared request body for `/v1/omni_gen/generate/image` and
+/// `/v1/omni_gen/cost/image`. `prompt` stays optional here because the
+/// upstream cost route prices purely from model + options; generation
+/// callers must require it before calling this builder.
+pub fn build_image_request(
+    arguments: &Value,
+    idempotency_token: Option<String>,
+) -> Result<OmniGenImageCostAndGenerateRequest> {
     let model_str = arguments["model"]
         .as_str()
         .ok_or_else(|| anyhow!("model is required"))?;
-    let prompt = arguments["prompt"]
-        .as_str()
-        .ok_or_else(|| anyhow!("prompt is required"))?;
-
     let model = parse_image_model(model_str)?;
-    let idempotency_token = Uuid::new_v4().to_string();
 
-    let request = OmniGenImageCostAndGenerateRequest {
-        idempotency_token: Some(idempotency_token),
+    Ok(OmniGenImageCostAndGenerateRequest {
+        idempotency_token,
         model: Some(model),
-        prompt: Some(prompt.to_string()),
+        prompt: arguments["prompt"].as_str().map(|s| s.to_string()),
         image_media_tokens: parse_media_tokens(&arguments["image_media_tokens"]),
         resolution: parse_resolution(arguments["resolution"].as_str()),
         aspect_ratio: parse_aspect_ratio(arguments["aspect_ratio"].as_str()),
@@ -309,7 +311,18 @@ pub async fn generate_image(arguments: Value, client: &ArtCraftClient) -> Result
         adjust_horizontal_angle: arguments["adjust_horizontal_angle"].as_f64(),
         adjust_vertical_angle: arguments["adjust_vertical_angle"].as_f64(),
         adjust_zoom: arguments["adjust_zoom"].as_f64(),
-    };
+    })
+}
+
+pub async fn generate_image(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+    arguments["model"]
+        .as_str()
+        .ok_or_else(|| anyhow!("model is required"))?;
+    arguments["prompt"]
+        .as_str()
+        .ok_or_else(|| anyhow!("prompt is required"))?;
+
+    let request = build_image_request(&arguments, Some(Uuid::new_v4().to_string()))?;
 
     let response = typed_json_post("/v1/omni_gen/generate/image", request, client).await?;
 
@@ -324,21 +337,22 @@ pub async fn generate_image(arguments: Value, client: &ArtCraftClient) -> Result
     }])
 }
 
-pub async fn generate_video(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+/// Shared request body for `/v1/omni_gen/generate/video` and
+/// `/v1/omni_gen/cost/video`. See `build_image_request` for why `prompt`
+/// remains optional at this layer.
+pub fn build_video_request(
+    arguments: &Value,
+    idempotency_token: Option<String>,
+) -> Result<OmniGenVideoCostAndGenerateRequest> {
     let model_str = arguments["model"]
         .as_str()
         .ok_or_else(|| anyhow!("model is required"))?;
-    let prompt = arguments["prompt"]
-        .as_str()
-        .ok_or_else(|| anyhow!("prompt is required"))?;
-
     let model = parse_video_model(model_str)?;
-    let idempotency_token = Uuid::new_v4().to_string();
 
-    let request = OmniGenVideoCostAndGenerateRequest {
-        idempotency_token: Some(idempotency_token),
+    Ok(OmniGenVideoCostAndGenerateRequest {
+        idempotency_token,
         model: Some(model),
-        prompt: Some(prompt.to_string()),
+        prompt: arguments["prompt"].as_str().map(|s| s.to_string()),
         negative_prompt: arguments["negative_prompt"].as_str().map(|s| s.to_string()),
         start_frame_image_media_token: parse_media_token(
             arguments["start_frame_image_media_token"].as_str(),
@@ -367,7 +381,18 @@ pub async fn generate_video(arguments: Value, client: &ArtCraftClient) -> Result
         generate_audio: arguments["generate_audio"].as_bool(),
         estimate_only: None,
         maybe_output_format: None,
-    };
+    })
+}
+
+pub async fn generate_video(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+    arguments["model"]
+        .as_str()
+        .ok_or_else(|| anyhow!("model is required"))?;
+    arguments["prompt"]
+        .as_str()
+        .ok_or_else(|| anyhow!("prompt is required"))?;
+
+    let request = build_video_request(&arguments, Some(Uuid::new_v4().to_string()))?;
 
     let response = typed_json_post("/v1/omni_gen/generate/video", request, client).await?;
 
@@ -382,19 +407,19 @@ pub async fn generate_video(arguments: Value, client: &ArtCraftClient) -> Result
     }])
 }
 
-pub async fn generate_audio(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let prompt = arguments["prompt"]
-        .as_str()
-        .ok_or_else(|| anyhow!("prompt is required"))?;
+/// Shared request body for `/v1/omni_gen/generate/audio` and
+/// `/v1/omni_gen/cost/audio`. Mirrors `generate_audio`'s model default.
+pub fn build_audio_request(
+    arguments: &Value,
+    idempotency_token: Option<String>,
+) -> Result<OmniGenAudioCostAndGenerateRequest> {
     let model_str = arguments["model"].as_str().unwrap_or("suno_music");
-
     let model = parse_audio_model(model_str)?;
-    let idempotency_token = Uuid::new_v4().to_string();
 
-    let request = OmniGenAudioCostAndGenerateRequest {
-        idempotency_token: Some(idempotency_token),
+    Ok(OmniGenAudioCostAndGenerateRequest {
+        idempotency_token,
         model: Some(model),
-        prompt: Some(prompt.to_string()),
+        prompt: arguments["prompt"].as_str().map(|s| s.to_string()),
         style_prompt: arguments["style_prompt"].as_str().map(|s| s.to_string()),
         audio_media_tokens: parse_media_tokens(&arguments["audio_media_tokens"]),
         image_media_tokens: parse_media_tokens(&arguments["image_media_tokens"]),
@@ -407,7 +432,15 @@ pub async fn generate_audio(arguments: Value, client: &ArtCraftClient) -> Result
         speed: arguments["speed"].as_f64(),
         volume: arguments["volume"].as_f64(),
         pitch: arguments["pitch"].as_f64(),
-    };
+    })
+}
+
+pub async fn generate_audio(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+    arguments["prompt"]
+        .as_str()
+        .ok_or_else(|| anyhow!("prompt is required"))?;
+
+    let request = build_audio_request(&arguments, Some(Uuid::new_v4().to_string()))?;
 
     let response = typed_json_post("/v1/omni_gen/generate/audio", request, client).await?;
 
@@ -422,15 +455,17 @@ pub async fn generate_audio(arguments: Value, client: &ArtCraftClient) -> Result
     }])
 }
 
-pub async fn generate_3d_object(
-    arguments: Value,
-    client: &ArtCraftClient,
-) -> Result<Vec<ToolContent>> {
+/// Shared request body for `/v1/omni_gen/generate/mesh` and
+/// `/v1/omni_gen/cost/mesh`. Mirrors `generate_3d_object`'s model default
+/// and reference-image merge.
+pub fn build_mesh_request(
+    arguments: &Value,
+    idempotency_token: Option<String>,
+) -> Result<OmniGenMeshCostAndGenerateRequest> {
     let model_str = arguments["model"].as_str().unwrap_or("hunyuan_3d_3");
     let model = parse_mesh_model(model_str)?;
 
     let prompt = arguments["prompt"].as_str().map(|s| s.to_string());
-    let idempotency_token = Uuid::new_v4().to_string();
 
     // Primary image token can come from image_media_token or reference_image_media_tokens
     let primary_image = parse_media_token(arguments["image_media_token"].as_str());
@@ -447,8 +482,8 @@ pub async fn generate_3d_object(
         Some(ref_images)
     };
 
-    let request = OmniGenMeshCostAndGenerateRequest {
-        idempotency_token: Some(idempotency_token),
+    Ok(OmniGenMeshCostAndGenerateRequest {
+        idempotency_token,
         model: Some(model),
         prompt,
         reference_image_media_tokens: ref_images_opt,
@@ -466,7 +501,14 @@ pub async fn generate_3d_object(
         enable_texture: arguments["enable_texture"].as_bool(),
         texture_quality: parse_mesh_quality(arguments["texture_quality"].as_str()),
         geometry_quality: parse_mesh_quality(arguments["geometry_quality"].as_str()),
-    };
+    })
+}
+
+pub async fn generate_3d_object(
+    arguments: Value,
+    client: &ArtCraftClient,
+) -> Result<Vec<ToolContent>> {
+    let request = build_mesh_request(&arguments, Some(Uuid::new_v4().to_string()))?;
 
     let response = typed_json_post("/v1/omni_gen/generate/mesh", request, client).await?;
 
@@ -481,12 +523,17 @@ pub async fn generate_3d_object(
     }])
 }
 
-pub async fn generate_splat(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+/// Shared request body for `/v1/omni_gen/generate/splat` and
+/// `/v1/omni_gen/cost/splat`. Mirrors `generate_splat`'s model default and
+/// reference-image merge.
+pub fn build_splat_request(
+    arguments: &Value,
+    idempotency_token: Option<String>,
+) -> Result<OmniGenSplatCostAndGenerateRequest> {
     let model_str = arguments["model"].as_str().unwrap_or("marble_1p1_plus");
     let model = parse_splat_model(model_str)?;
 
     let prompt = arguments["prompt"].as_str().map(|s| s.to_string());
-    let idempotency_token = Uuid::new_v4().to_string();
 
     let primary_image = parse_media_token(arguments["image_media_token"].as_str());
     let mut ref_images =
@@ -502,8 +549,8 @@ pub async fn generate_splat(arguments: Value, client: &ArtCraftClient) -> Result
         Some(ref_images)
     };
 
-    let request = OmniGenSplatCostAndGenerateRequest {
-        idempotency_token: Some(idempotency_token),
+    Ok(OmniGenSplatCostAndGenerateRequest {
+        idempotency_token,
         model: Some(model),
         prompt,
         reference_image_media_tokens: ref_images_opt,
@@ -512,7 +559,11 @@ pub async fn generate_splat(arguments: Value, client: &ArtCraftClient) -> Result
         ),
         is_panoramic: arguments["is_panoramic"].as_bool(),
         disable_recaption: arguments["disable_recaption"].as_bool(),
-    };
+    })
+}
+
+pub async fn generate_splat(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+    let request = build_splat_request(&arguments, Some(Uuid::new_v4().to_string()))?;
 
     let response = typed_json_post("/v1/omni_gen/generate/splat", request, client).await?;
 
