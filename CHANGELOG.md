@@ -20,6 +20,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 - Skill references listed model ids that do not exist upstream (`flux_3_pro`, `seedream_5_pro`, `seedream_5_ultra`, `seedance_2p5_fast`, `seedance_2p5_bp`, `tripo_h3_1`), the never-launched `seedance_2p0_u` variants, and 3D/splat parameter names the server does not accept.
+- `artcraft_get_session_info` now uses the upstream `/v1/session` endpoint and reads the nested session payload instead of the removed `/v1/users/session_info` route.
+- The MCP conformance expected-failure baseline now uses the `server:` array format consumed by `@modelcontextprotocol/conformance`.
+- README authentication and protocol-version documentation now match the v2.0 server behavior.
+- Rebuilt the checked-in Windows `bin/artcraft-mcp.exe` from the v2.0 Rust crate; the previous binary still reported v0.1.0 and the pre-camelCase initialize wire shape.
+- `tools/artcraft_healthcheck.py` now fails on legacy initialize wire shapes and tool-level `isError` responses instead of reporting them as passes.
 
 ## [1.1.0] - 2026-10-07
 

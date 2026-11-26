@@ -7,7 +7,8 @@
 # tools-call-error, server-sse-multiple-streams, resources-list,
 # dns-rebinding-protection.
 #
-# Every entry is a deliberate non-implementation, not a defect:
+# The conformance CLI expects `server:`/`client:` arrays of scenario names.
+# Every entry here is a deliberate non-implementation, not a defect:
 # - Logging and Sampling are DEPRECATED in MCP 2026-07-28 (SEP-2577) and the
 #   v2.0 brief explicitly forbids implementing them.
 # - Prompts, resource subscriptions/templates, and completion are optional
@@ -22,48 +23,26 @@
 # - tools-call-with-progress: progress notifications not yet implemented
 #   (tracked; tasks extension carries job lifecycle instead).
 
-expected_failures:
-  - scenario: logging-set-level
-    reason: "Logging deprecated in 2026-07-28 (SEP-2577); not implemented by design"
-  - scenario: completion-complete
-    reason: "Completion is an optional capability; not exposed"
-  - scenario: tools-call-image
-    reason: "Domain server returns text/structured results; media via files extension download targets"
-  - scenario: tools-call-audio
-    reason: "Domain server returns text/structured results; media via files extension download targets"
-  - scenario: tools-call-embedded-resource
-    reason: "Domain server returns text/structured results; media via files extension download targets"
-  - scenario: tools-call-mixed-content
-    reason: "Domain server returns text/structured results; media via files extension download targets"
-  - scenario: tools-call-with-logging
-    reason: "Logging deprecated in 2026-07-28 (SEP-2577); not implemented by design"
-  - scenario: tools-call-with-progress
-    reason: "Progress notifications not yet implemented; tasks extension carries job lifecycle"
-  - scenario: tools-call-sampling
-    reason: "Sampling deprecated in 2026-07-28 (SEP-2577); not implemented by design"
-  - scenario: tools-call-elicitation
-    reason: "Elicitation is used for MRTR cost confirmation on billable tools, not conformance echo tools"
-  - scenario: elicitation-sep1034-defaults
-    reason: "Elicitation is used for MRTR cost confirmation on billable tools, not conformance echo tools"
-  - scenario: elicitation-sep1330-enums
-    reason: "Elicitation is used for MRTR cost confirmation on billable tools, not conformance echo tools"
-  - scenario: resources-read-text
-    reason: "ui:// app resources exist but conformance expects generic test resources"
-  - scenario: resources-read-binary
-    reason: "ui:// app resources exist but conformance expects generic test resources"
-  - scenario: resources-templates-read
-    reason: "Resource templates are optional; not exposed"
-  - scenario: resources-subscribe
-    reason: "Resource subscriptions are optional; not exposed"
-  - scenario: resources-unsubscribe
-    reason: "Resource subscriptions are optional; not exposed"
-  - scenario: prompts-list
-    reason: "Prompts capability not exposed; ArtCraft prompt creation is a tool, not an MCP prompt"
-  - scenario: prompts-get-simple
-    reason: "Prompts capability not exposed"
-  - scenario: prompts-get-with-args
-    reason: "Prompts capability not exposed"
-  - scenario: prompts-get-embedded-resource
-    reason: "Prompts capability not exposed"
-  - scenario: prompts-get-with-image
-    reason: "Prompts capability not exposed"
+server:
+  - logging-set-level
+  - completion-complete
+  - tools-call-image
+  - tools-call-audio
+  - tools-call-embedded-resource
+  - tools-call-mixed-content
+  - tools-call-with-logging
+  - tools-call-with-progress
+  - tools-call-sampling
+  - tools-call-elicitation
+  - elicitation-sep1034-defaults
+  - elicitation-sep1330-enums
+  - resources-read-text
+  - resources-read-binary
+  - resources-templates-read
+  - resources-subscribe
+  - resources-unsubscribe
+  - prompts-list
+  - prompts-get-simple
+  - prompts-get-with-args
+  - prompts-get-embedded-resource
+  - prompts-get-with-image

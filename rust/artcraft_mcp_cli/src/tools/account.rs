@@ -99,16 +99,38 @@ pub fn tools() -> Vec<Tool> {
 
 pub async fn get_session_info(_arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
     let api_hostname = client.api_host.to_api_hostname_and_scheme();
-    let url = format!("{}/v1/users/session_info", api_hostname);
+    let url = format!("{}/v1/session", api_hostname);
     let response = raw_json_get(&url, client.creds_ref()).await?;
 
-    let username = response.get("username").and_then(|v| v.as_str()).unwrap_or("?");
-    let email = response.get("email").and_then(|v| v.as_str()).unwrap_or("?");
-    let user_token = response.get("user_token").and_then(|v| v.as_str()).unwrap_or("?");
+    let logged_in = response.get("logged_in").and_then(|v| v.as_bool()).unwrap_or(false);
+    if !logged_in {
+        return Ok(vec![ToolContent {
+            content_type: "text".to_string(),
+            text: "Session info:\n  Logged in: false".to_string(),
+        }]);
+    }
+
+    let user = response.get("user").cloned().unwrap_or_else(|| json!({}));
+    let core_info = user.get("core_info").cloned().unwrap_or_else(|| json!({}));
+    let username = user
+        .get("username")
+        .and_then(|v| v.as_str())
+        .or_else(|| core_info.get("username").and_then(|v| v.as_str()))
+        .unwrap_or("?");
+    let display_name = user
+        .get("display_name")
+        .and_then(|v| v.as_str())
+        .or_else(|| core_info.get("display_name").and_then(|v| v.as_str()))
+        .unwrap_or(username);
+    let user_token = user
+        .get("user_token")
+        .and_then(|v| v.as_str())
+        .or_else(|| core_info.get("user_token").and_then(|v| v.as_str()))
+        .unwrap_or("?");
 
     let text = format!(
-        "Session info:\n  User: {}\n  Email: {}\n  Token: {}",
-        username, email, user_token
+        "Session info:\n  Logged in: true\n  User: {}\n  Display name: {}\n  Token: {}",
+        username, display_name, user_token
     );
 
     Ok(vec![ToolContent {
