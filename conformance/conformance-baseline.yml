@@ -2,47 +2,9 @@
 # Run: npx @modelcontextprotocol/conformance server --url http://127.0.0.1:8787/mcp \
 #        --suite active --expected-failures conformance/conformance-baseline.yml
 #
-# Result of the 2026-11-26 run: 10 passed / 22 failed, all failures accounted
-# for below. Passing: server-initialize, ping, tools-list, tools-call-simple-text,
-# tools-call-error, server-sse-multiple-streams, resources-list,
-# dns-rebinding-protection.
-#
-# The conformance CLI expects `server:`/`client:` arrays of scenario names.
-# Every entry here is a deliberate non-implementation, not a defect:
-# - Logging and Sampling are DEPRECATED in MCP 2026-07-28 (SEP-2577) and the
-#   v2.0 brief explicitly forbids implementing them.
-# - Prompts, resource subscriptions/templates, and completion are optional
-#   capabilities this server does not expose; the conformance scenarios fail
-#   because the capability is absent, not because behavior is wrong.
-# - tools-call-image/audio/embedded-resource/mixed-content assume a server
-#   whose tools echo binary content; ArtCraft tools return text/structured
-#   results and media via download targets (io.modelcontextprotocol/files).
-# - Elicitation scenarios target conformance-specific test tools; ArtCraft's
-#   elicitation use is the MRTR cost-confirmation gate on billable generation
-#   tools, exercised by tests/protocol_smoke.rs instead.
-# - tools-call-with-progress: progress notifications not yet implemented
-#   (tracked; tasks extension carries job lifecycle instead).
+# Result of the 2026-11-26 active-suite verification: 40 passed / 0 failed
+# across all 30 active scenarios. There are currently no expected failures.
+# Keep this array empty; entries that start passing must be removed because
+# the conformance CLI treats stale baseline entries as a failure.
 
-server:
-  - logging-set-level
-  - completion-complete
-  - tools-call-image
-  - tools-call-audio
-  - tools-call-embedded-resource
-  - tools-call-mixed-content
-  - tools-call-with-logging
-  - tools-call-with-progress
-  - tools-call-sampling
-  - tools-call-elicitation
-  - elicitation-sep1034-defaults
-  - elicitation-sep1330-enums
-  - resources-read-text
-  - resources-read-binary
-  - resources-templates-read
-  - resources-subscribe
-  - resources-unsubscribe
-  - prompts-list
-  - prompts-get-simple
-  - prompts-get-with-args
-  - prompts-get-embedded-resource
-  - prompts-get-with-image
+server: []

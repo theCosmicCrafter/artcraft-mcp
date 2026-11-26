@@ -1,53 +1,57 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use serde_json::{json, Value};
 
 use crate::client::ArtCraftClient;
+use crate::tools::http::raw_json_get;
 use crate::types::{Tool, ToolContent};
-use crate::tools::http::{raw_json_get, raw_json_post};
 
 pub fn tools() -> Vec<Tool> {
     vec![
         Tool {
             name: "artcraft_tts_generate".to_string(),
-            description: "Generate speech from text using available TTS models.".to_string(),
+            description: "Deprecated: upstream legacy TTS inference is shut down. This tool does not enqueue work.".to_string(),
             input_schema: Some(json!({"type":"object","properties":{"text":{"type":"string"},"voice_model":{"type":"string"}},"required":["text","voice_model"]})),
         },
         Tool {
             name: "artcraft_tts_search_models".to_string(),
-            description: "Discover available TTS voices and models.".to_string(),
+            description: "List legacy TTS voice/model metadata using the upstream /tts/list compatibility endpoint.".to_string(),
             input_schema: Some(json!({"type":"object","properties":{}})),
         },
     ]
 }
 
-pub async fn tts_generate(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let text = arguments["text"].as_str()
-        .ok_or_else(|| anyhow!("text is required"))?;
-    let voice_model = arguments["voice_model"].as_str()
-        .ok_or_else(|| anyhow!("voice_model is required"))?;
-
-    let api_hostname = client.api_host.to_api_hostname_and_scheme();
-    let url = format!("{}/v1/tts/generate", api_hostname);
-    let body = json!({ "text": text, "voice_model": voice_model });
-    let response = raw_json_post(&url, body, client.creds_ref()).await?;
-
-    let job_token = response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?");
+pub async fn tts_generate(_arguments: Value, _client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
-        text: format!("TTS generation queued.\nJob token: {}", job_token),
+        text: "Legacy TTS inference is shut down upstream. The old /v1/tts/inference compatibility route only returns a synthetic job token and cannot produce audio, so this MCP no longer enqueues TTS jobs.".to_string(),
     }])
 }
 
-pub async fn tts_search_models(_arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let api_hostname = client.api_host.to_api_hostname_and_scheme();
-    let url = format!("{}/v1/tts/models", api_hostname);
-    let response = raw_json_get(&url, client.creds_ref()).await?;
+pub async fn tts_search_models(
+    _arguments: Value,
+    client: &ArtCraftClient,
+) -> Result<Vec<ToolContent>> {
+    let url = client.absolute_url("/tts/list");
+    let response = raw_json_get(&url, client).await?;
 
-    let models = response.get("models").and_then(|v| v.as_array())
-        .map(|arr| arr.iter().map(|item| {
-            let name = item.get("name").and_then(|v| v.as_str()).unwrap_or("?");
-            format!("  - {}", name)
-        }).collect::<Vec<_>>())
+    let models = response
+        .get("models")
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .map(|item| {
+                    let token = item
+                        .get("model_token")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("?");
+                    let title = item
+                        .get("title")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("(untitled)");
+                    format!("  - {} | {}", token, title)
+                })
+                .collect::<Vec<_>>()
+        })
         .unwrap_or_default();
 
     let text = if models.is_empty() {

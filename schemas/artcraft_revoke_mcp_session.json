@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Revoke the calling MCP private session. This route must be called while the server is authenticated with that MCP private session token. Revoked sessions are unrecoverable.","name":"artcraft_revoke_mcp_session","parameters":{"properties":{},"required":[],"type":"object"}}

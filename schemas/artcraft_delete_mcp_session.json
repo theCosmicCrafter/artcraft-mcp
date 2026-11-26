@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Terminate an MCP session by its non-secret management token. Upstream accepts an API key or web session for this dashboard-management route.","name":"artcraft_delete_mcp_session","parameters":{"properties":{"session_token":{"type":"string"}},"required":["session_token"],"type":"object"}}

@@ -1,15 +1,17 @@
 use anyhow::{anyhow, Result};
 use serde_json::{json, Value};
 
-use artcraft_api_defs::generate::cost_estimate::estimate_image_cost::{EstimateImageCostRequest, GenerationMode as ImageGenerationMode};
-use artcraft_api_defs::generate::cost_estimate::estimate_video_cost::{EstimateVideoCostRequest, GenerationMode as VideoGenerationMode};
+use artcraft_api_defs::generate::cost_estimate::estimate_image_cost::{
+    EstimateImageCostRequest, GenerationMode as ImageGenerationMode,
+};
 use artcraft_api_defs::generate::cost_estimate::estimate_splat_cost::EstimateSplatCostRequest;
-use artcraft_client::endpoints::generate::cost_estimate::image::estimate_image_cost;
-use artcraft_client::endpoints::generate::cost_estimate::video::estimate_video_cost;
-use artcraft_client::endpoints::generate::cost_estimate::splat::estimate_splat_cost::estimate_splat_cost as client_estimate_splat_cost;
+use artcraft_api_defs::generate::cost_estimate::estimate_video_cost::{
+    EstimateVideoCostRequest, GenerationMode as VideoGenerationMode,
+};
 use enums::common::generation_provider::GenerationProvider;
 
 use crate::client::ArtCraftClient;
+use crate::tools::http::typed_json_post;
 use crate::types::{Tool, ToolContent};
 
 pub fn tools() -> Vec<Tool> {
@@ -97,17 +99,33 @@ pub fn tools() -> Vec<Tool> {
     ]
 }
 
+fn opt_num(response: &Value, key: &str) -> String {
+    response
+        .get(key)
+        .and_then(|v| v.as_i64())
+        .map(|v| v.to_string())
+        .unwrap_or_else(|| "N/A".to_string())
+}
+
+fn opt_bool(response: &Value, key: &str) -> bool {
+    response.get(key).and_then(|v| v.as_bool()).unwrap_or(false)
+}
+
 pub async fn estimate_cost(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let media_type = arguments["media_type"].as_str()
+    let media_type = arguments["media_type"]
+        .as_str()
         .ok_or_else(|| anyhow!("media_type is required"))?;
 
-    let model_str = arguments["model"].as_str()
+    let model_str = arguments["model"]
+        .as_str()
         .ok_or_else(|| anyhow!("model is required"))?;
 
     match media_type {
         "image" => {
             let model = crate::tools::generate::parse_image_model(model_str)?;
-            let generation_mode = arguments["generation_mode"].as_str().unwrap_or("text_to_image");
+            let generation_mode = arguments["generation_mode"]
+                .as_str()
+                .unwrap_or("text_to_image");
 
             let mode = match generation_mode {
                 "text_to_image" => ImageGenerationMode::TextToImage,
@@ -122,34 +140,39 @@ pub async fn estimate_cost(arguments: Value, client: &ArtCraftClient) -> Result<
                 model,
                 provider: GenerationProvider::Artcraft,
                 generation_mode: mode,
-                aspect_ratio: crate::tools::generate::parse_aspect_ratio(arguments["aspect_ratio"].as_str()),
-                resolution: crate::tools::generate::parse_resolution(arguments["resolution"].as_str()),
+                aspect_ratio: crate::tools::generate::parse_aspect_ratio(
+                    arguments["aspect_ratio"].as_str(),
+                ),
+                resolution: crate::tools::generate::parse_resolution(
+                    arguments["resolution"].as_str(),
+                ),
                 quality: crate::tools::generate::parse_quality(arguments["quality"].as_str()),
                 image_batch_count: arguments["batch_count"].as_u64().map(|v| v as u16),
             };
 
-            let response = estimate_image_cost::estimate_image_cost(
-                &client.api_host,
-                client.creds_ref(),
-                request,
-            ).await?;
+            let response = typed_json_post(artcraft_api_defs::generate::cost_estimate::estimate_image_cost::ESTIMATE_IMAGE_COST_PATH, request, client).await?;
 
             let text = format!(
                 "Image cost estimate:\n  Model: {}\n  Credits: {}\n  USD cents: {}\n  Free: {}\n  Unlimited: {}\n  Rate limited: {}\n  Watermark: {}",
                 model_str,
-                response.cost_in_credits.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()),
-                response.cost_in_usd_cents.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()),
-                response.is_free,
-                response.is_unlimited,
-                response.is_rate_limited,
-                response.has_watermark
+                opt_num(&response, "cost_in_credits"),
+                opt_num(&response, "cost_in_usd_cents"),
+                opt_bool(&response, "is_free"),
+                opt_bool(&response, "is_unlimited"),
+                opt_bool(&response, "is_rate_limited"),
+                opt_bool(&response, "has_watermark")
             );
 
-            Ok(vec![ToolContent { content_type: "text".to_string(), text }])
+            Ok(vec![ToolContent {
+                content_type: "text".to_string(),
+                text,
+            }])
         }
         "video" => {
             let model = crate::tools::generate::parse_video_model(model_str)?;
-            let generation_mode = arguments["generation_mode"].as_str().unwrap_or("text_to_video");
+            let generation_mode = arguments["generation_mode"]
+                .as_str()
+                .unwrap_or("text_to_video");
 
             let mode = match generation_mode {
                 "text_to_video" => VideoGenerationMode::TextToVideo,
@@ -166,40 +189,44 @@ pub async fn estimate_cost(arguments: Value, client: &ArtCraftClient) -> Result<
                 model,
                 provider: GenerationProvider::Artcraft,
                 generation_mode: mode,
-                aspect_ratio: crate::tools::generate::parse_aspect_ratio(arguments["aspect_ratio"].as_str()),
-                resolution: crate::tools::generate::parse_resolution(arguments["resolution"].as_str()),
+                aspect_ratio: crate::tools::generate::parse_aspect_ratio(
+                    arguments["aspect_ratio"].as_str(),
+                ),
+                resolution: crate::tools::generate::parse_resolution(
+                    arguments["resolution"].as_str(),
+                ),
                 duration_seconds: arguments["duration_seconds"].as_u64().map(|v| v as u16),
                 video_batch_count: arguments["batch_count"].as_u64().map(|v| v as u16),
                 generate_audio: arguments["generate_audio"].as_bool(),
             };
 
-            let response = estimate_video_cost::estimate_video_cost(
-                &client.api_host,
-                client.creds_ref(),
-                request,
-            ).await?;
+            let response = typed_json_post(artcraft_api_defs::generate::cost_estimate::estimate_video_cost::ESTIMATE_VIDEO_COST_PATH, request, client).await?;
 
             let text = format!(
                 "Video cost estimate:\n  Model: {}\n  Credits: {}\n  USD cents: {}\n  Free: {}\n  Unlimited: {}\n  Rate limited: {}\n  Watermark: {}",
                 model_str,
-                response.cost_in_credits.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()),
-                response.cost_in_usd_cents.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()),
-                response.is_free,
-                response.is_unlimited,
-                response.is_rate_limited,
-                response.has_watermark
+                opt_num(&response, "cost_in_credits"),
+                opt_num(&response, "cost_in_usd_cents"),
+                opt_bool(&response, "is_free"),
+                opt_bool(&response, "is_unlimited"),
+                opt_bool(&response, "is_rate_limited"),
+                opt_bool(&response, "has_watermark")
             );
 
-            Ok(vec![ToolContent { content_type: "text".to_string(), text }])
+            Ok(vec![ToolContent {
+                content_type: "text".to_string(),
+                text,
+            }])
         }
-        "splat" => {
-            estimate_splat_cost(arguments, client).await
-        }
+        "splat" => estimate_splat_cost(arguments, client).await,
         _ => Err(anyhow!("Unknown media_type: {}", media_type)),
     }
 }
 
-pub async fn estimate_splat_cost(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+pub async fn estimate_splat_cost(
+    arguments: Value,
+    client: &ArtCraftClient,
+) -> Result<Vec<ToolContent>> {
     let model_str = arguments["model"].as_str().unwrap_or("marble_1p1_plus");
     let model = crate::tools::generate::parse_splat_model(model_str)?;
     let has_reference_image = arguments["has_reference_image"].as_bool();
@@ -210,27 +237,34 @@ pub async fn estimate_splat_cost(arguments: Value, client: &ArtCraftClient) -> R
         has_reference_image,
     };
 
-    let response = client_estimate_splat_cost(
-        &client.api_host,
-        client.creds_ref(),
+    let response = typed_json_post(
+        artcraft_api_defs::generate::cost_estimate::estimate_splat_cost::ESTIMATE_SPLAT_COST_PATH,
         request,
-    ).await?;
+        client,
+    )
+    .await?;
 
     let text = format!(
         "Splat cost estimate:\n  Model: {}\n  Credits: {}\n  USD cents: {}\n  Free: {}\n  Unlimited: {}\n  Rate limited: {}\n  Watermark: {}",
         model_str,
-        response.cost_in_credits.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()),
-        response.cost_in_usd_cents.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()),
-        response.is_free,
-        response.is_unlimited,
-        response.is_rate_limited,
-        response.has_watermark
+        opt_num(&response, "cost_in_credits"),
+        opt_num(&response, "cost_in_usd_cents"),
+        opt_bool(&response, "is_free"),
+        opt_bool(&response, "is_unlimited"),
+        opt_bool(&response, "is_rate_limited"),
+        opt_bool(&response, "has_watermark")
     );
 
-    Ok(vec![ToolContent { content_type: "text".to_string(), text }])
+    Ok(vec![ToolContent {
+        content_type: "text".to_string(),
+        text,
+    }])
 }
 
-pub async fn list_image_models(_arguments: Value, _client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+pub async fn list_image_models(
+    _arguments: Value,
+    _client: &ArtCraftClient,
+) -> Result<Vec<ToolContent>> {
     let models = vec![
         "flux_1_dev - Fast open-source Flux",
         "flux_1_schnell - Free fastest Flux",
@@ -269,7 +303,10 @@ pub async fn list_image_models(_arguments: Value, _client: &ArtCraftClient) -> R
     }])
 }
 
-pub async fn list_video_models(_arguments: Value, _client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+pub async fn list_video_models(
+    _arguments: Value,
+    _client: &ArtCraftClient,
+) -> Result<Vec<ToolContent>> {
     let models = vec![
         "minimax_h3 - MiniMax Hailuo H3 long video generation",
         "minimax_h3_turbo - MiniMax H3 Turbo fast mode",

@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Get one owned folder by token. Upstream folder endpoints currently require web-session cookie credentials; API-key/MCP bearer credentials are not accepted by these routes.","name":"artcraft_get_folder","parameters":{"properties":{"folder_token":{"type":"string"}},"required":["folder_token"],"type":"object"}}

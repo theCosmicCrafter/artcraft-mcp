@@ -1,1 +1,1 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"List all user characters.","name":"artcraft_list_characters","parameters":{"properties":{},"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"List user characters for the current session.","name":"artcraft_list_characters","parameters":{"properties":{"cursor":{"type":"integer"}},"type":"object"}}

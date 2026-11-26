@@ -1,1 +1,1 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Search model weights by keyword.","name":"artcraft_search_weights","parameters":{"properties":{"query":{"type":"string"}},"required":["query"],"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Search model weights by keyword. Note: upstream search is retired and currently returns an empty successful result set.","name":"artcraft_search_weights","parameters":{"properties":{"query":{"type":"string"}},"required":["query"],"type":"object"}}

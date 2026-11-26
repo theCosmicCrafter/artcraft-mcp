@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Submit optional user feedback explaining why they unsubscribed. Requires web-session cookie auth and records the reason upstream.","name":"artcraft_set_unsubscribe_reason","parameters":{"properties":{"reason":{"minLength":1,"type":"string"}},"required":["reason"],"type":"object"}}

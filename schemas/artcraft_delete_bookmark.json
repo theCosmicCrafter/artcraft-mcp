@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Delete a bookmark by its bookmark token.","name":"artcraft_delete_bookmark","parameters":{"properties":{"bookmark_token":{"type":"string"}},"required":["bookmark_token"],"type":"object"}}

@@ -1,1 +1,1 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Discover available TTS voices and models.","name":"artcraft_tts_search_models","parameters":{"properties":{},"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"List legacy TTS voice/model metadata using the upstream /tts/list compatibility endpoint.","name":"artcraft_tts_search_models","parameters":{"properties":{},"type":"object"}}

@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Delete a comment by its comment token.","name":"artcraft_delete_comment","parameters":{"properties":{"as_mod":{"type":"boolean"},"comment_token":{"type":"string"}},"required":["comment_token"],"type":"object"}}

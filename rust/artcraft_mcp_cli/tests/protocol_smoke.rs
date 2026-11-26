@@ -53,7 +53,7 @@ fn legacy_client_gets_full_catalog() {
         .find(|m| m.get("id") == Some(&serde_json::json!(2)))
         .expect("tools/list response");
     let count = tools_line["result"]["tools"].as_array().unwrap().len();
-    assert_eq!(count, 61, "legacy clients must see all 61 tools");
+    assert_eq!(count, 99, "legacy clients must see all 99 currently supported tools");
 }
 
 #[test]
@@ -77,7 +77,7 @@ fn modern_client_gets_progressive_catalog() {
 }
 
 #[test]
-fn search_tools_finds_voice_catalog() {
+fn search_tools_finds_tts_catalog() {
     let meta = modern_meta();
     let call = serde_json::json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{
         "name": "artcraft_search_tools",
@@ -86,7 +86,7 @@ fn search_tools_finds_voice_catalog() {
     }});
     let input = format!("{}\n", serde_json::to_string(&call).unwrap());
     let out = run_stdio(&input);
-    assert!(out.contains("artcraft_create_voice"), "search should find voice tools: {}", &out[..out.len().min(500)]);
+    assert!(out.contains("artcraft_tts_search_models"), "search should find TTS tools: {}", &out[..out.len().min(500)]);
 }
 
 #[test]
@@ -206,4 +206,160 @@ fn mrtr_tampered_state_rejected() {
         "tampered state must be rejected: {}",
         &out[..out.len().min(400)]
     );
+}
+
+fn response_by_id(out: &str, id: u64) -> serde_json::Value {
+    out.lines()
+        .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
+        .find(|message| message.get("id") == Some(&serde_json::json!(id)))
+        .unwrap_or_else(|| panic!("missing response id {id}; output: {out}"))
+}
+
+/// The 2025-era protocol surface used by the official conformance suite:
+/// ArtCraft prompt templates, deterministic resources/templates, and completion.
+#[test]
+fn prompts_resources_and_completion_surface() {
+    let input = concat!(
+        r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}"#,
+        "\n",
+        r#"{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}"#,
+        "\n",
+        r#"{"jsonrpc":"2.0","id":2,"method":"prompts/list","params":{}}"#,
+        "\n",
+        r#"{"jsonrpc":"2.0","id":3,"method":"prompts/get","params":{"name":"test_prompt_with_arguments","arguments":{"arg1":"alpha","arg2":"beta"}}}"#,
+        "\n",
+        r#"{"jsonrpc":"2.0","id":4,"method":"resources/read","params":{"uri":"test://static-text"}}"#,
+        "\n",
+        r#"{"jsonrpc":"2.0","id":5,"method":"resources/read","params":{"uri":"test://template/123/data"}}"#,
+        "\n",
+        r#"{"jsonrpc":"2.0","id":6,"method":"resources/read","params":{"uri":"test://static-binary"}}"#,
+        "\n",
+        r#"{"jsonrpc":"2.0","id":7,"method":"completion/complete","params":{"ref":{"type":"ref/prompt","name":"test_prompt_with_arguments"},"argument":{"name":"arg1","value":"test"}}}"#,
+        "\n"
+    );
+    let out = run_stdio(input);
+
+    let prompts = response_by_id(&out, 2);
+    let prompt_names: Vec<&str> = prompts["result"]["prompts"]
+        .as_array()
+        .expect("prompts array")
+        .iter()
+        .filter_map(|prompt| prompt["name"].as_str())
+        .collect();
+    assert!(prompt_names.contains(&"artcraft_image_generation"));
+    assert!(prompt_names.contains(&"artcraft_costed_generation_plan"));
+    assert!(
+        !prompt_names.contains(&"test_simple_prompt"),
+        "zero-cost protocol fixtures are callable but not part of the public creative catalog"
+    );
+
+    let prompt = response_by_id(&out, 3);
+    assert!(prompt["result"]["messages"][0]["content"]["text"]
+        .as_str()
+        .unwrap()
+        .contains("arg1='alpha', arg2='beta'"));
+
+    let text_resource = response_by_id(&out, 4);
+    assert_eq!(
+        text_resource["result"]["contents"][0]["text"],
+        serde_json::json!("This is the content of the static text resource.")
+    );
+    let template_resource = response_by_id(&out, 5);
+    assert_eq!(template_resource["result"]["contents"][0]["mimeType"], serde_json::json!("application/json"));
+    assert!(template_resource["result"]["contents"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("\"id\":\"123\""));
+    let binary_resource = response_by_id(&out, 6);
+    assert_eq!(binary_resource["result"]["contents"][0]["mimeType"], serde_json::json!("image/png"));
+    assert!(binary_resource["result"]["contents"][0]["blob"].as_str().unwrap().len() > 40);
+
+    let completion = response_by_id(&out, 7);
+    let values = completion["result"]["completion"]["values"].as_array().expect("completion values");
+    assert!(values.iter().any(|value| value.as_str() == Some("testValue1")));
+}
+
+/// Logging level state, filtered logging notifications, progress tokens, and
+/// rich zero-cost fixture content are independent of the ArtCraft API.
+#[test]
+fn protocol_fixture_tools_emit_notifications_and_progress() {
+    // Keep stdin open and drive the calls sequentially. Closing stdin
+    // immediately is a shutdown signal for rmcp and can cancel slower in-flight
+    // notification-bearing requests before their terminal response is written.
+    use std::io::{BufRead, BufReader, Write};
+    let mut child = Command::new(binary())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .expect("spawn server");
+    let mut stdin = child.stdin.take().unwrap();
+    let stdout = child.stdout.take().unwrap();
+    let mut reader = BufReader::new(stdout);
+    let mut lines = Vec::new();
+
+    fn write_request(stdin: &mut impl Write, request: &str) {
+        stdin.write_all(request.as_bytes()).unwrap();
+        stdin.write_all(b"\n").unwrap();
+        stdin.flush().unwrap();
+    }
+    fn read_until_id(
+        reader: &mut impl BufRead,
+        lines: &mut Vec<String>,
+        id: u64,
+    ) {
+        loop {
+            let mut line = String::new();
+            assert!(reader.read_line(&mut line).unwrap() > 0, "server closed stdout before id {id}");
+            let done = serde_json::from_str::<serde_json::Value>(&line)
+                .ok()
+                .and_then(|message| message.get("id").and_then(|id_value| id_value.as_u64()))
+                == Some(id);
+            lines.push(line);
+            if done {
+                return;
+            }
+        }
+    }
+
+    write_request(&mut stdin, r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}"#);
+    write_request(&mut stdin, r#"{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}"#);
+    read_until_id(&mut reader, &mut lines, 1);
+    write_request(&mut stdin, r#"{"jsonrpc":"2.0","id":2,"method":"logging/setLevel","params":{"level":"debug"}}"#);
+    read_until_id(&mut reader, &mut lines, 2);
+    write_request(&mut stdin, r#"{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"test_tool_with_logging","arguments":{}}}"#);
+    read_until_id(&mut reader, &mut lines, 3);
+    write_request(&mut stdin, r#"{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"test_tool_with_progress","arguments":{},"_meta":{"progressToken":"smoke-progress"}}}"#);
+    read_until_id(&mut reader, &mut lines, 4);
+    write_request(&mut stdin, r#"{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"test_image_content","arguments":{}}}"#);
+    read_until_id(&mut reader, &mut lines, 5);
+    drop(stdin);
+    let _ = child.kill();
+    let _ = child.wait();
+
+    let out = lines.join("");
+    assert!(response_by_id(&out, 2).get("result").is_some(), "logging/setLevel must succeed: {out}");
+    assert!(response_by_id(&out, 3).get("result").is_some());
+    assert!(response_by_id(&out, 4).get("result").is_some());
+
+    let messages: Vec<serde_json::Value> = out
+        .lines()
+        .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
+        .collect();
+    let log_notifications = messages
+        .iter()
+        .filter(|message| message["method"].as_str() == Some("notifications/message"))
+        .count();
+    assert!(log_notifications >= 3, "expected at least 3 logging notifications: {out}");
+    let progress_values: Vec<f64> = messages
+        .iter()
+        .filter(|message| message["method"].as_str() == Some("notifications/progress"))
+        .filter_map(|message| message["params"]["progress"].as_f64())
+        .collect();
+    for expected in [0.0, 50.0, 100.0] {
+        assert!(progress_values.contains(&expected), "missing progress {expected}: {out}");
+    }
+    let image = response_by_id(&out, 5);
+    assert_eq!(image["result"]["content"][0]["type"], serde_json::json!("image"));
+    assert_eq!(image["result"]["content"][0]["mimeType"], serde_json::json!("image/png"));
 }

@@ -5,9 +5,9 @@
 //!    The bearer gates access; upstream credentials still resolve locally.
 //! 2. Environment (in AGENTS.md priority order):
 //!    ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN, then ARTCRAFT_API_KEY, then
-//!    ARTCRAFT_SESSION + ARTCRAFT_AVT. Note: upstream artcraft_client has no
-//!    bearer/API-key auth type — all of these are session-equivalent tokens
-//!    and are sent as cookies, matching v1 behavior.
+//!    ARTCRAFT_SESSION + ARTCRAFT_AVT. MCP private sessions and API keys are
+//!    sent as `Authorization: Bearer <secret>`; only the legacy web session
+//!    pair is sent as cookies.
 //! 3. Files in ~/Artcraft/credentials/ (artcraft_session.txt, artcraft_avt.txt).
 //! 4. The ArtCraft desktop app's .cookies store (platform local data dir).
 //!
@@ -23,6 +23,8 @@ use artcraft_client::credentials::storyteller_session_cookie::StorytellerSession
 use serde_json::Value;
 use tracing::{info, warn};
 
+use crate::client::ArtCraftCredentials;
+
 const CREDENTIALS_DIR: &str = "Artcraft/credentials";
 const SESSION_FILE: &str = "artcraft_session.txt";
 const AVT_FILE: &str = "artcraft_avt.txt";
@@ -30,7 +32,7 @@ const COOKIE_STORE: &str = "ai.artcraft.app/.cookies";
 
 /// Load credentials using the env -> files -> desktop-cookie-store chain.
 /// Returns None when nothing is configured; callers must tolerate that.
-pub fn load_credentials() -> Option<StorytellerCredentialSet> {
+pub fn load_credentials() -> Option<ArtCraftCredentials> {
     if let Some(creds) = load_credentials_from_env() {
         info!("Loaded ArtCraft credentials from environment");
         return Some(creds);
@@ -62,26 +64,33 @@ pub fn load_credentials() -> Option<StorytellerCredentialSet> {
     }
 
     info!("Loaded ArtCraft credentials from files/cookie store");
-    Some(StorytellerCredentialSet::initialize(avt, session))
+    Some(ArtCraftCredentials::Cookies(StorytellerCredentialSet::initialize(
+        avt, session,
+    )))
 }
 
-fn load_credentials_from_env() -> Option<StorytellerCredentialSet> {
-    // AGENTS.md credential hierarchy: explicit integration credentials
-    // (private MCP token, API key) outrank the raw desktop session cookie.
-    let session_val = std::env::var("ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN")
+fn load_credentials_from_env() -> Option<ArtCraftCredentials> {
+    // Explicit integration credentials outrank the raw desktop session cookie.
+    // Both use the same upstream Authorization header shape; the backend
+    // distinguishes MCP sessions from API keys by token prefix.
+    if let Some(token) = std::env::var("ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN")
         .ok()
         .filter(|v| !v.trim().is_empty())
         .or_else(|| std::env::var("ARTCRAFT_API_KEY").ok().filter(|v| !v.trim().is_empty()))
-        .or_else(|| std::env::var("ARTCRAFT_SESSION").ok().filter(|v| !v.trim().is_empty()));
+    {
+        return Some(ArtCraftCredentials::AuthorizationHeader(token.trim().to_string()));
+    }
+
+    let session_val = std::env::var("ARTCRAFT_SESSION").ok().filter(|v| !v.trim().is_empty());
     let avt_val = std::env::var("ARTCRAFT_AVT").ok().filter(|v| !v.trim().is_empty());
 
     if session_val.is_none() && avt_val.is_none() {
         return None;
     }
-    Some(StorytellerCredentialSet::initialize(
+    Some(ArtCraftCredentials::Cookies(StorytellerCredentialSet::initialize(
         avt_val.map(StorytellerAvtCookie::new),
         session_val.map(StorytellerSessionCookie::new),
-    ))
+    )))
 }
 
 fn load_session_cookie(path: &Path) -> Option<StorytellerSessionCookie> {

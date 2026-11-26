@@ -1,9 +1,8 @@
 use anyhow::{anyhow, Result};
 use serde_json::{json, Value};
 
-use artcraft_client::endpoints::jobs::list_session_jobs::{list_session_jobs, States};
-
 use crate::client::ArtCraftClient;
+use crate::tools::http::{raw_json_delete, raw_json_get};
 use crate::types::{Tool, ToolContent};
 
 pub fn tools() -> Vec<Tool> {
@@ -13,15 +12,15 @@ pub fn tools() -> Vec<Tool> {
             description: "Poll the status of a single inference job by token.".to_string(),
             input_schema: Some(json!({
                 "type": "object",
-                "properties": {
-                    "job_token": { "type": "string" }
-                },
+                "properties": { "job_token": { "type": "string" } },
                 "required": ["job_token"]
             })),
         },
         Tool {
             name: "artcraft_list_jobs".to_string(),
-            description: "List all session jobs with optional state filters.".to_string(),
+            description:
+                "List recent jobs for the current authenticated or anonymous visitor session."
+                    .to_string(),
             input_schema: Some(json!({
                 "type": "object",
                 "properties": {
@@ -33,93 +32,88 @@ pub fn tools() -> Vec<Tool> {
         },
         Tool {
             name: "artcraft_terminate_job".to_string(),
-            description: "Cancel a running or pending job.".to_string(),
+            description: "Cancel a running or pending job owned by this user/session.".to_string(),
             input_schema: Some(json!({
                 "type": "object",
-                "properties": {
-                    "job_token": { "type": "string" }
-                },
+                "properties": { "job_token": { "type": "string" } },
                 "required": ["job_token"]
             })),
         },
     ]
 }
 
+fn nested_string<'a>(value: &'a Value, path: &[&str]) -> Option<&'a str> {
+    let mut current = value;
+    for key in path {
+        current = current.get(*key)?;
+    }
+    current.as_str()
+}
+
 pub async fn get_job_status(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let job_token_str = arguments["job_token"].as_str()
+    let job_token = arguments["job_token"]
+        .as_str()
         .ok_or_else(|| anyhow!("job_token is required"))?;
 
-    let response = list_session_jobs(
-        &client.api_host,
-        client.creds_ref(),
-        States::All,
-    ).await?;
+    let url = client.absolute_url(&format!("/v1/jobs/job/{}", job_token));
+    let response = raw_json_get(&url, client).await?;
+    let job = response.get("state").unwrap_or(&response);
+    let status = nested_string(job, &["status", "status"])
+        .or_else(|| response.get("status").and_then(|v| v.as_str()))
+        .unwrap_or("?");
+    let progress = job
+        .pointer("/status/progress_percentage")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0);
+    let category = nested_string(job, &["request", "inference_category"]).unwrap_or("?");
 
-    let job = response.jobs.iter().find(|j| j.job_token.as_str() == job_token_str);
-
-    match job {
-        Some(j) => {
-            let status = format!("{:?}", j.status.status);
-            let progress = j.status.progress_percentage;
-            let category = format!("{:?}", j.request.inference_category);
-            let maybe_result = j.maybe_result.as_ref();
-
-            let mut lines = vec![
-                format!("Job: {}", j.job_token.as_str()),
-                format!("Status: {}", status),
-                format!("Progress: {}%", progress),
-                format!("Category: {}", category),
-                format!("Created: {}", j.created_at),
-                format!("Updated: {}", j.updated_at),
-            ];
-
-            if let Some(extra) = &j.status.maybe_extra_status_description {
-                lines.push(format!("Extra: {}", extra));
-            }
-            if let Some(failure) = &j.status.maybe_failure_message {
-                lines.push(format!("Failure: {}", failure));
-            }
-            if let Some(result) = maybe_result {
-                lines.push(format!("Result token: {}", result.entity_token));
-                if let Some(completed_at) = result.maybe_successfully_completed_at {
-                    lines.push(format!("Completed at: {}", completed_at));
-                }
-            }
-
-            Ok(vec![ToolContent {
-                content_type: "text".to_string(),
-                text: lines.join("\n"),
-            }])
-        }
-        None => {
-            Ok(vec![ToolContent {
-                content_type: "text".to_string(),
-                text: format!("Job {} not found in session jobs.", job_token_str),
-            }])
-        }
+    let mut lines = vec![
+        format!("Job: {}", job_token),
+        format!("Status: {}", status),
+        format!("Progress: {}%", progress),
+        format!("Category: {}", category),
+    ];
+    if let Some(extra) = nested_string(job, &["status", "maybe_extra_status_description"]) {
+        lines.push(format!("Extra: {}", extra));
     }
+    if let Some(failure) = nested_string(job, &["status", "maybe_failure_message"]) {
+        lines.push(format!("Failure: {}", failure));
+    }
+    if let Some(result) = nested_string(job, &["maybe_result", "entity_token"]) {
+        lines.push(format!("Result token: {}", result));
+    }
+
+    Ok(vec![ToolContent {
+        content_type: "text".to_string(),
+        text: lines.join("\n"),
+    }])
 }
 
 pub async fn list_jobs(_arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let response = list_session_jobs(
-        &client.api_host,
-        client.creds_ref(),
-        States::All,
-    ).await?;
+    let url = client.absolute_url("/v1/jobs/session");
+    let response = raw_json_get(&url, client).await?;
+    let empty = Vec::new();
+    let jobs = response
+        .get("jobs")
+        .and_then(|v| v.as_array())
+        .unwrap_or(&empty);
 
-    let mut lines = vec![format!("Found {} jobs:", response.jobs.len())];
-
-    for job in &response.jobs {
-        let status = format!("{:?}", job.status.status);
-        let progress = job.status.progress_percentage;
-        let category = format!("{:?}", job.request.inference_category);
+    let mut lines = vec![format!("Found {} jobs:", jobs.len())];
+    for job in jobs {
+        let token = job.get("job_token").and_then(|v| v.as_str()).unwrap_or("?");
+        let status = nested_string(job, &["status", "status"]).unwrap_or("?");
+        let progress = job
+            .pointer("/status/progress_percentage")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(0);
+        let category = nested_string(job, &["request", "inference_category"]).unwrap_or("?");
+        let created = job
+            .get("created_at")
+            .and_then(|v| v.as_str())
+            .unwrap_or("?");
         lines.push(format!(
             "  - {} | {} | {}% | {} | {}",
-            job.job_token.as_str(),
-            status,
-            progress,
-            category,
-            job.created_at
+            token, status, progress, category, created
         ));
     }
 
@@ -129,9 +123,14 @@ pub async fn list_jobs(_arguments: Value, client: &ArtCraftClient) -> Result<Vec
     }])
 }
 
-pub async fn terminate_job(_arguments: Value, _client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+pub async fn terminate_job(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+    let job_token = arguments["job_token"]
+        .as_str()
+        .ok_or_else(|| anyhow!("job_token is required"))?;
+    let url = client.absolute_url(&format!("/v1/jobs/job/{}", job_token));
+    raw_json_delete(&url, json!({}), client).await?;
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
-        text: "Terminate job not yet implemented in MCP server.".to_string(),
+        text: format!("Job {} termination requested.", job_token),
     }])
 }

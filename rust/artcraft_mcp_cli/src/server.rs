@@ -20,12 +20,16 @@ use rmcp::{ErrorData as McpError, ServerHandler, ServiceExt};
 use serde_json::{Map, Value, json};
 use tracing::{info, warn};
 
-use artcraft_client::endpoints::jobs::list_session_jobs::{list_session_jobs, States};
-
-use crate::client::ArtCraftClient;
+use crate::client::{ArtCraftClient, ArtCraftCredentials};
 use crate::registry::{self, CostTier, HOT_TOOLS, META_TOOLS};
 use crate::types::ToolContent;
 use crate::{Cli, ToolMode, auth, discovery, files_ext, telemetry, tools};
+
+mod completions;
+mod conformance_tools;
+mod fixtures;
+mod prompts;
+mod resources_ext;
 
 /// Static per-tier credit estimates used for the MRTR confirmation gate.
 /// Real per-argument quotes come from artcraft_estimate_cost; the gate only
@@ -54,9 +58,7 @@ pub struct SharedState {
     /// HMAC codec sealing MRTR/upload `requestState` continuations.
     pub state_codec: RequestStateCodec,
     /// Server-level credentials resolved once at startup (env/files/cookies).
-    pub startup_credentials: Option<
-        artcraft_client::credentials::storyteller_credential_set::StorytellerCredentialSet,
-    >,
+    pub startup_credentials: Option<ArtCraftCredentials>,
     /// In-memory task manager backing io.modelcontextprotocol/tasks.
     /// Handles are unguessable UUIDs; durable cross-restart persistence is
     /// tracked in the SQLite task store (see tasks_store.rs).
@@ -71,6 +73,12 @@ pub struct SharedState {
     /// Consumed MRTR confirmation keys: a retried approval for an already
     /// executed confirmation must not spend credits twice.
     pub consumed_confirmations: std::sync::Mutex<std::collections::HashSet<String>>,
+    /// Legacy MCP logging level (2025-era clients). Stored as a severity name
+    /// so this state remains independent of rmcp's deprecated type.
+    pub log_level: std::sync::RwLock<String>,
+    /// Legacy per-process resource subscription set. Static resources never
+    /// emit updates, but subscribe/unsubscribe state is tracked accurately.
+    pub resource_subscriptions: std::sync::Mutex<std::collections::HashSet<String>>,
 }
 
 impl ArtCraftMcp {
@@ -91,6 +99,8 @@ impl ArtCraftMcp {
                 relay_base_url: std::sync::RwLock::new(None),
                 remote_exposed: cli.allow_remote,
                 consumed_confirmations: std::sync::Mutex::new(std::collections::HashSet::new()),
+                log_level: std::sync::RwLock::new("info".to_string()),
+                resource_subscriptions: std::sync::Mutex::new(std::collections::HashSet::new()),
             }),
         }
     }
@@ -162,7 +172,17 @@ struct ConfirmState {
 
 impl ServerHandler for ArtCraftMcp {
     fn get_info(&self) -> ServerConfig {
-        let mut capabilities = ServerCapabilities::builder().enable_tools().enable_resources().build();
+        #[allow(deprecated)]
+        let mut capabilities = ServerCapabilities::builder()
+            .enable_tools()
+            .enable_resources()
+            .enable_prompts()
+            .enable_completions()
+            .enable_logging()
+            .build();
+        if let Some(resources) = capabilities.resources.as_mut() {
+            resources.subscribe = Some(true);
+        }
         let extensions = extension_capabilities();
         if !extensions.is_empty() {
             capabilities.extensions = Some(extensions);
@@ -259,12 +279,60 @@ impl ServerHandler for ArtCraftMcp {
         self.shared.tasks.cancel_task(&request.task_id)
     }
 
+    async fn complete(
+        &self,
+        request: CompleteRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<CompleteResult, McpError> {
+        Ok(completions::complete(request))
+    }
+
+    #[allow(deprecated)]
+    async fn set_level(
+        &self,
+        request: SetLevelRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<(), McpError> {
+        let level = format!("{:?}", request.level).to_ascii_lowercase();
+        let mut configured = self
+            .shared
+            .log_level
+            .write()
+            .map_err(|_| McpError::internal_error("log-level lock poisoned", None))?;
+        *configured = level;
+        Ok(())
+    }
+
+    async fn list_prompts(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ListPromptsResult, McpError> {
+        Ok(prompts::list_prompts())
+    }
+
+    async fn get_prompt(
+        &self,
+        request: GetPromptRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<GetPromptResponse, McpError> {
+        prompts::get_prompt(&request.name, request.arguments.as_ref())
+    }
+
     async fn list_resources(
         &self,
         _request: Option<PaginatedRequestParams>,
         _context: RequestContext<RoleServer>,
     ) -> Result<ListResourcesResult, McpError> {
-        Ok(crate::apps::list_resources())
+        Ok(resources_ext::list_resources())
+    }
+
+    async fn list_resource_templates(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ListResourceTemplatesResult, McpError> {
+        Ok(resources_ext::list_resource_templates())
     }
 
     async fn read_resource(
@@ -272,8 +340,52 @@ impl ServerHandler for ArtCraftMcp {
         request: ReadResourceRequestParams,
         _context: RequestContext<RoleServer>,
     ) -> Result<ReadResourceResponse, McpError> {
-        crate::apps::read_resource(&request.uri)
+        resources_ext::read_resource(&request.uri)
             .ok_or_else(|| McpError::resource_not_found(format!("unknown resource {}", request.uri), None))
+    }
+
+    fn accepted_subscription_filter(
+        &self,
+        requested: &SubscriptionFilter,
+    ) -> Option<SubscriptionFilter> {
+        let mut accepted = SubscriptionFilter::new();
+        accepted.resource_subscriptions = requested.resource_subscriptions.as_ref().map(|uris| {
+            uris.iter()
+                .filter(|uri| resources_ext::subscription_uri_supported(uri))
+                .cloned()
+                .collect()
+        });
+        Some(accepted)
+    }
+
+    #[allow(deprecated)]
+    async fn subscribe(
+        &self,
+        request: SubscribeRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<(), McpError> {
+        if resources_ext::subscription_uri_supported(&request.uri) {
+            self.shared
+                .resource_subscriptions
+                .lock()
+                .map_err(|_| McpError::internal_error("resource subscription lock poisoned", None))?
+                .insert(request.uri);
+        }
+        Ok(())
+    }
+
+    #[allow(deprecated)]
+    async fn unsubscribe(
+        &self,
+        request: UnsubscribeRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<(), McpError> {
+        self.shared
+            .resource_subscriptions
+            .lock()
+            .map_err(|_| McpError::internal_error("resource subscription lock poisoned", None))?
+            .remove(&request.uri);
+        Ok(())
     }
 
     async fn call_tool(
@@ -289,6 +401,23 @@ impl ServerHandler for ArtCraftMcp {
         if name == "artcraft_app_refresh_credits" {
             name = "artcraft_get_credits".to_string();
         }
+
+        // Zero-cost local protocol fixtures required by the official MCP
+        // conformance suite. They are intercepted before registry dispatch and
+        // never reach the ArtCraft API.
+        if conformance_tools::is_fixture_tool(&name) {
+            if let Some(result) = self
+                .call_conformance_fixture(
+                    &name,
+                    request.arguments.clone().unwrap_or_default(),
+                    &context,
+                )
+                .await
+            {
+                return result;
+            }
+        }
+
         let mut arguments = Value::Object(request.arguments.clone().unwrap_or_default());
         let client = self.client_for(&context);
 
@@ -660,44 +789,50 @@ struct JobPoll {
 /// renders, but with terminal-state classification from the upstream enum
 /// itself rather than text scraping.
 async fn poll_job_status(token: &str, client: &ArtCraftClient) -> anyhow::Result<JobPoll> {
-    let response = list_session_jobs(&client.api_host, client.creds_ref(), States::All).await?;
-    let job = response
-        .jobs
-        .iter()
-        .find(|j| j.job_token.as_str() == token)
-        .ok_or_else(|| anyhow::anyhow!("job not found"))?;
-    // JobStatusPlus debug-printing uses its snake_case to_str values
-    // (upstream impl_enum_display_and_debug_using_to_str); normalize defensively
-    // so a future upstream format change degrades to "keeps polling then
-    // times out with the token" instead of a wrong terminal verdict.
-    let status = format!("{:?}", job.status.status);
+    let url = client.absolute_url(&format!("/v1/jobs/job/{}", token));
+    let request = reqwest::Client::new().get(&url).header("Accept", "application/json");
+    let response = client.apply_auth(request).send().await?;
+    if !response.status().is_success() {
+        return Err(anyhow::anyhow!("job status request failed with HTTP {}", response.status()));
+    }
+    let response_json: Value = response.json().await?;
+    let empty = Value::Null;
+    let job = response_json.get("state").unwrap_or(&empty);
+
+    let status = job.pointer("/status/status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
     let status_value = status.to_lowercase().replace('_', "");
     let terminal_success = status_value == "completesuccess";
     let terminal_failure = matches!(
         status_value.as_str(),
         "completefailure" | "dead" | "cancelledbyuser" | "cancelledbysystem"
     );
-    // Re-render the human-readable lines exactly as the tool would, so the
-    // task result content is unchanged.
+
+    let progress = job.pointer("/status/progress_percentage").and_then(|v| v.as_u64()).unwrap_or(0);
+    let category = job.pointer("/request/inference_category").and_then(|v| v.as_str()).unwrap_or("?");
+    let created = job.get("created_at").and_then(|v| v.as_str()).unwrap_or("?");
+    let updated = job.get("updated_at").and_then(|v| v.as_str()).unwrap_or("?");
     let mut lines = vec![
-        format!("Job: {}", job.job_token.as_str()),
+        format!("Job: {}", token),
         format!("Status: {}", status),
-        format!("Progress: {}%", job.status.progress_percentage),
-        format!("Category: {:?}", job.request.inference_category),
-        format!("Created: {}", job.created_at),
-        format!("Updated: {}", job.updated_at),
+        format!("Progress: {}%", progress),
+        format!("Category: {}", category),
+        format!("Created: {}", created),
+        format!("Updated: {}", updated),
     ];
-    if let Some(extra) = &job.status.maybe_extra_status_description {
+    if let Some(extra) = job.pointer("/status/maybe_extra_status_description").and_then(|v| v.as_str()) {
         lines.push(format!("Extra: {}", extra));
     }
-    if let Some(failure) = &job.status.maybe_failure_message {
+    if let Some(failure) = job.pointer("/status/maybe_failure_message").and_then(|v| v.as_str()) {
         lines.push(format!("Failure: {}", failure));
     }
-    if let Some(result) = job.maybe_result.as_ref() {
-        lines.push(format!("Result token: {}", result.entity_token));
-        if let Some(completed_at) = result.maybe_successfully_completed_at {
-            lines.push(format!("Completed at: {}", completed_at));
-        }
+    if let Some(result) = job.pointer("/maybe_result/entity_token").and_then(|v| v.as_str()) {
+        lines.push(format!("Result token: {}", result));
+    }
+    if let Some(completed_at) = job.pointer("/maybe_result/maybe_successfully_completed_at").and_then(|v| v.as_str()) {
+        lines.push(format!("Completed at: {}", completed_at));
     }
     Ok(JobPoll {
         contents: vec![ToolContent {

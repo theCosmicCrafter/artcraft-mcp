@@ -8,29 +8,24 @@ use artcraft_api_defs::omni_gen::cost_and_generate_requests::omni_gen_audio_cost
 use artcraft_api_defs::omni_gen::cost_and_generate_requests::omni_gen_mesh_cost_and_generate_request::OmniGenMeshCostAndGenerateRequest;
 use artcraft_api_defs::omni_gen::cost_and_generate_requests::omni_gen_splat_cost_and_generate_request::OmniGenSplatCostAndGenerateRequest;
 
-use artcraft_client::endpoints::omni_gen::generate::image::omni_gen_image::omni_gen_image_generate;
-use artcraft_client::endpoints::omni_gen::generate::video::omni_gen_video::omni_gen_video_generate;
-use artcraft_client::endpoints::omni_gen::generate::audio::omni_gen_audio::omni_gen_audio_generate;
-use artcraft_client::endpoints::omni_gen::generate::mesh::omni_gen_mesh::omni_gen_mesh_generate;
-use artcraft_client::endpoints::omni_gen::generate::splat::omni_gen_splat::omni_gen_splat_generate;
-
-use enums::common::generation::common_image_model::CommonImageModel;
-use enums::common::generation::common_video_model::CommonVideoModel;
-use enums::common::generation::common_audio_model::CommonAudioModel;
-use enums::common::generation::common_mesh_model::CommonMeshModel;
-use enums::common::generation::common_splat_model::CommonSplatModel;
 use enums::common::generation::common_aspect_ratio::CommonAspectRatio;
-use enums::common::generation::common_resolution::CommonResolution;
-use enums::common::generation::common_quality::CommonQuality;
+use enums::common::generation::common_audio_model::CommonAudioModel;
 use enums::common::generation::common_bitrate::CommonBitrate;
-use enums::common::generation::common_musical_key::CommonMusicalKey;
+use enums::common::generation::common_image_model::CommonImageModel;
+use enums::common::generation::common_mesh_model::CommonMeshModel;
 use enums::common::generation::common_mesh_output_type::CommonMeshOutputType;
 use enums::common::generation::common_mesh_quality::CommonMeshQuality;
+use enums::common::generation::common_musical_key::CommonMusicalKey;
 use enums::common::generation::common_polygon_type::CommonPolygonType;
+use enums::common::generation::common_quality::CommonQuality;
+use enums::common::generation::common_resolution::CommonResolution;
+use enums::common::generation::common_splat_model::CommonSplatModel;
+use enums::common::generation::common_video_model::CommonVideoModel;
 use tokens::tokens::characters::CharacterToken;
 use tokens::tokens::media_files::MediaFileToken;
 
 use crate::client::ArtCraftClient;
+use crate::tools::http::typed_json_post;
 use crate::types::{Tool, ToolContent};
 
 pub fn tools() -> Vec<Tool> {
@@ -292,9 +287,11 @@ pub fn tools() -> Vec<Tool> {
 }
 
 pub async fn generate_image(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let model_str = arguments["model"].as_str()
+    let model_str = arguments["model"]
+        .as_str()
         .ok_or_else(|| anyhow!("model is required"))?;
-    let prompt = arguments["prompt"].as_str()
+    let prompt = arguments["prompt"]
+        .as_str()
         .ok_or_else(|| anyhow!("prompt is required"))?;
 
     let model = parse_image_model(model_str)?;
@@ -314,27 +311,25 @@ pub async fn generate_image(arguments: Value, client: &ArtCraftClient) -> Result
         adjust_zoom: arguments["adjust_zoom"].as_f64(),
     };
 
-    let response = omni_gen_image_generate(
-        &client.api_host,
-        client.creds_ref(),
-        request,
-    ).await?;
+    let response = typed_json_post("/v1/omni_gen/generate/image", request, client).await?;
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
         text: format!(
             "Image generation queued successfully.\nJob token: {}\nStatus: {}\n\nPoll for results using artcraft_get_job_status with job_token '{}'",
-            response.inference_job_token.as_str(),
-            if response.success { "success" } else { "failed" },
-            response.inference_job_token.as_str()
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?"),
+            if response.get("success").and_then(|v| v.as_bool()).unwrap_or(false) { "success" } else { "failed" },
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?")
         ),
     }])
 }
 
 pub async fn generate_video(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let model_str = arguments["model"].as_str()
+    let model_str = arguments["model"]
+        .as_str()
         .ok_or_else(|| anyhow!("model is required"))?;
-    let prompt = arguments["prompt"].as_str()
+    let prompt = arguments["prompt"]
+        .as_str()
         .ok_or_else(|| anyhow!("prompt is required"))?;
 
     let model = parse_video_model(model_str)?;
@@ -345,12 +340,24 @@ pub async fn generate_video(arguments: Value, client: &ArtCraftClient) -> Result
         model: Some(model),
         prompt: Some(prompt.to_string()),
         negative_prompt: arguments["negative_prompt"].as_str().map(|s| s.to_string()),
-        start_frame_image_media_token: parse_media_token(arguments["start_frame_image_media_token"].as_str()),
-        end_frame_image_media_token: parse_media_token(arguments["end_frame_image_media_token"].as_str()),
-        reference_image_media_tokens: parse_media_tokens(&arguments["reference_image_media_tokens"]),
-        reference_video_media_tokens: parse_media_tokens(&arguments["reference_video_media_tokens"]),
-        reference_audio_media_tokens: parse_media_tokens(&arguments["reference_audio_media_tokens"]),
-        reference_character_tokens: parse_character_tokens(&arguments["reference_character_tokens"]),
+        start_frame_image_media_token: parse_media_token(
+            arguments["start_frame_image_media_token"].as_str(),
+        ),
+        end_frame_image_media_token: parse_media_token(
+            arguments["end_frame_image_media_token"].as_str(),
+        ),
+        reference_image_media_tokens: parse_media_tokens(
+            &arguments["reference_image_media_tokens"],
+        ),
+        reference_video_media_tokens: parse_media_tokens(
+            &arguments["reference_video_media_tokens"],
+        ),
+        reference_audio_media_tokens: parse_media_tokens(
+            &arguments["reference_audio_media_tokens"],
+        ),
+        reference_character_tokens: parse_character_tokens(
+            &arguments["reference_character_tokens"],
+        ),
         resolution: parse_resolution(arguments["resolution"].as_str()),
         aspect_ratio: parse_aspect_ratio(arguments["aspect_ratio"].as_str()),
         bitrate: parse_bitrate(arguments["bitrate"].as_str()),
@@ -362,25 +369,22 @@ pub async fn generate_video(arguments: Value, client: &ArtCraftClient) -> Result
         maybe_output_format: None,
     };
 
-    let response = omni_gen_video_generate(
-        &client.api_host,
-        client.creds_ref(),
-        request,
-    ).await?;
+    let response = typed_json_post("/v1/omni_gen/generate/video", request, client).await?;
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
         text: format!(
             "Video generation queued successfully.\nJob token: {}\nStatus: {}\n\nPoll for results using artcraft_get_job_status with job_token '{}'",
-            response.inference_job_token.as_str(),
-            if response.success { "success" } else { "failed" },
-            response.inference_job_token.as_str()
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?"),
+            if response.get("success").and_then(|v| v.as_bool()).unwrap_or(false) { "success" } else { "failed" },
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?")
         ),
     }])
 }
 
 pub async fn generate_audio(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let prompt = arguments["prompt"].as_str()
+    let prompt = arguments["prompt"]
+        .as_str()
         .ok_or_else(|| anyhow!("prompt is required"))?;
     let model_str = arguments["model"].as_str().unwrap_or("suno_music");
 
@@ -405,24 +409,23 @@ pub async fn generate_audio(arguments: Value, client: &ArtCraftClient) -> Result
         pitch: arguments["pitch"].as_f64(),
     };
 
-    let response = omni_gen_audio_generate(
-        &client.api_host,
-        client.creds_ref(),
-        request,
-    ).await?;
+    let response = typed_json_post("/v1/omni_gen/generate/audio", request, client).await?;
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
         text: format!(
             "Audio generation queued successfully.\nJob token: {}\nStatus: {}\n\nPoll for results using artcraft_get_job_status with job_token '{}'",
-            response.inference_job_token.as_str(),
-            if response.success { "success" } else { "failed" },
-            response.inference_job_token.as_str()
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?"),
+            if response.get("success").and_then(|v| v.as_bool()).unwrap_or(false) { "success" } else { "failed" },
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?")
         ),
     }])
 }
 
-pub async fn generate_3d_object(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+pub async fn generate_3d_object(
+    arguments: Value,
+    client: &ArtCraftClient,
+) -> Result<Vec<ToolContent>> {
     let model_str = arguments["model"].as_str().unwrap_or("hunyuan_3d_3");
     let model = parse_mesh_model(model_str)?;
 
@@ -431,13 +434,18 @@ pub async fn generate_3d_object(arguments: Value, client: &ArtCraftClient) -> Re
 
     // Primary image token can come from image_media_token or reference_image_media_tokens
     let primary_image = parse_media_token(arguments["image_media_token"].as_str());
-    let mut ref_images = parse_media_tokens(&arguments["reference_image_media_tokens"]).unwrap_or_default();
+    let mut ref_images =
+        parse_media_tokens(&arguments["reference_image_media_tokens"]).unwrap_or_default();
     if let Some(img) = primary_image {
         if !ref_images.contains(&img) {
             ref_images.insert(0, img);
         }
     }
-    let ref_images_opt = if ref_images.is_empty() { None } else { Some(ref_images) };
+    let ref_images_opt = if ref_images.is_empty() {
+        None
+    } else {
+        Some(ref_images)
+    };
 
     let request = OmniGenMeshCostAndGenerateRequest {
         idempotency_token: Some(idempotency_token),
@@ -448,7 +456,9 @@ pub async fn generate_3d_object(arguments: Value, client: &ArtCraftClient) -> Re
         back_image_media_token: parse_media_token(arguments["back_image_media_token"].as_str()),
         left_image_media_token: parse_media_token(arguments["left_image_media_token"].as_str()),
         right_image_media_token: parse_media_token(arguments["right_image_media_token"].as_str()),
-        input_mesh_media_token: parse_media_token(arguments["input_mesh_media_file_token"].as_str()),
+        input_mesh_media_token: parse_media_token(
+            arguments["input_mesh_media_file_token"].as_str(),
+        ),
         mesh_output_type: parse_mesh_output_type(arguments["output_type"].as_str()),
         polygon_type: parse_polygon_type(arguments["polygon_type"].as_str()),
         face_count: arguments["target_face_count"].as_u64(),
@@ -458,19 +468,15 @@ pub async fn generate_3d_object(arguments: Value, client: &ArtCraftClient) -> Re
         geometry_quality: parse_mesh_quality(arguments["geometry_quality"].as_str()),
     };
 
-    let response = omni_gen_mesh_generate(
-        &client.api_host,
-        client.creds_ref(),
-        request,
-    ).await?;
+    let response = typed_json_post("/v1/omni_gen/generate/mesh", request, client).await?;
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
         text: format!(
             "3D object generation queued successfully.\nJob token: {}\nStatus: {}\n\nPoll for results using artcraft_get_job_status with job_token '{}'",
-            response.inference_job_token.as_str(),
-            if response.success { "success" } else { "failed" },
-            response.inference_job_token.as_str()
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?"),
+            if response.get("success").and_then(|v| v.as_bool()).unwrap_or(false) { "success" } else { "failed" },
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?")
         ),
     }])
 }
@@ -483,37 +489,40 @@ pub async fn generate_splat(arguments: Value, client: &ArtCraftClient) -> Result
     let idempotency_token = Uuid::new_v4().to_string();
 
     let primary_image = parse_media_token(arguments["image_media_token"].as_str());
-    let mut ref_images = parse_media_tokens(&arguments["reference_image_media_tokens"]).unwrap_or_default();
+    let mut ref_images =
+        parse_media_tokens(&arguments["reference_image_media_tokens"]).unwrap_or_default();
     if let Some(img) = primary_image {
         if !ref_images.contains(&img) {
             ref_images.insert(0, img);
         }
     }
-    let ref_images_opt = if ref_images.is_empty() { None } else { Some(ref_images) };
+    let ref_images_opt = if ref_images.is_empty() {
+        None
+    } else {
+        Some(ref_images)
+    };
 
     let request = OmniGenSplatCostAndGenerateRequest {
         idempotency_token: Some(idempotency_token),
         model: Some(model),
         prompt,
         reference_image_media_tokens: ref_images_opt,
-        reference_video_media_token: parse_media_token(arguments["reference_video_media_token"].as_str()),
+        reference_video_media_token: parse_media_token(
+            arguments["reference_video_media_token"].as_str(),
+        ),
         is_panoramic: arguments["is_panoramic"].as_bool(),
         disable_recaption: arguments["disable_recaption"].as_bool(),
     };
 
-    let response = omni_gen_splat_generate(
-        &client.api_host,
-        client.creds_ref(),
-        request,
-    ).await?;
+    let response = typed_json_post("/v1/omni_gen/generate/splat", request, client).await?;
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
         text: format!(
             "Splat generation queued successfully.\nJob token: {}\nStatus: {}\n\nPoll for results using artcraft_get_job_status with job_token '{}'",
-            response.inference_job_token.as_str(),
-            if response.success { "success" } else { "failed" },
-            response.inference_job_token.as_str()
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?"),
+            if response.get("success").and_then(|v| v.as_bool()).unwrap_or(false) { "success" } else { "failed" },
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?")
         ),
     }])
 }
@@ -528,9 +537,15 @@ pub fn parse_image_model(model_str: &str) -> Result<CommonImageModel> {
         "gpt_image_1p5" | "gpt-image-1.5" => CommonImageModel::GptImage1p5,
         "gpt_image_2" | "gpt-image-2" => CommonImageModel::GptImage2,
         "gpt_image_2p5_flare" | "gpt-image-2.5-flare" => CommonImageModel::GptImage2p5Flare,
-        "gpt_image_2p5_sunburst" | "gpt-image-2.5-sunburst" => CommonImageModel::GptImage2p5Sunburst,
-        "grok_imagine_image" | "grok-imagine-image" | "grok_imagine" => CommonImageModel::GrokImagineImage,
-        "grok_imagine_image_q" | "grok_imagine_image_quality" => CommonImageModel::GrokImagineImageQuality,
+        "gpt_image_2p5_sunburst" | "gpt-image-2.5-sunburst" => {
+            CommonImageModel::GptImage2p5Sunburst
+        }
+        "grok_imagine_image" | "grok-imagine-image" | "grok_imagine" => {
+            CommonImageModel::GrokImagineImage
+        }
+        "grok_imagine_image_q" | "grok_imagine_image_quality" => {
+            CommonImageModel::GrokImagineImageQuality
+        }
         "midjourney_7" | "midjourney-7" | "mj7" => CommonImageModel::Midjourney7,
         "midjourney_7_niji" | "midjourney-7-niji" => CommonImageModel::Midjourney7Niji,
         "midjourney_8" | "midjourney-8" | "mj8" => CommonImageModel::Midjourney8,
@@ -540,7 +555,9 @@ pub fn parse_image_model(model_str: &str) -> Result<CommonImageModel> {
         "seedream_4" | "seedream4" => CommonImageModel::Seedream4,
         "seedream_4p5" | "seedream4p5" => CommonImageModel::Seedream4p5,
         "seedream_5_lite" | "seedream5lite" => CommonImageModel::Seedream5Lite,
-        "seedream_5p0_pro" | "seedream-5.0-pro" | "seedream_5_pro" => CommonImageModel::Seedream5p0Pro,
+        "seedream_5p0_pro" | "seedream-5.0-pro" | "seedream_5_pro" => {
+            CommonImageModel::Seedream5p0Pro
+        }
         "seedream_5p0_pro_u" | "seedream-5.0-pro-ultra" => CommonImageModel::Seedream5p0ProUltra,
         "qwen_edit_2511_angles" => CommonImageModel::QwenEdit2511Angles,
         "flux_2_lora_angles" => CommonImageModel::Flux2LoraAngles,
@@ -552,8 +569,12 @@ pub fn parse_image_model(model_str: &str) -> Result<CommonImageModel> {
 
 pub fn parse_video_model(model_str: &str) -> Result<CommonVideoModel> {
     let model = match model_str.to_lowercase().as_str() {
-        "grok_video" | "grok-video" | "grok_imagine_video" | "grok-imagine-video" => CommonVideoModel::GrokImagineVideo,
-        "grok_imagine_video_1p5" | "grok-imagine-video-1.5" => CommonVideoModel::GrokImagineVideo1p5,
+        "grok_video" | "grok-video" | "grok_imagine_video" | "grok-imagine-video" => {
+            CommonVideoModel::GrokImagineVideo
+        }
+        "grok_imagine_video_1p5" | "grok-imagine-video-1.5" => {
+            CommonVideoModel::GrokImagineVideo1p5
+        }
         "flux_3" | "flux-3" => CommonVideoModel::Flux3,
         "flux_3_draft" | "flux-3-draft" => CommonVideoModel::Flux3Draft,
         "kling_1p6_pro" | "kling-1.6-pro" => CommonVideoModel::Kling16Pro,
@@ -621,8 +642,12 @@ pub fn parse_mesh_model(model_str: &str) -> Result<CommonMeshModel> {
         "hunyuan_3d_3p1_pro" | "hunyuan-3d-3.1-pro" => CommonMeshModel::Hunyuan3d3p1Pro,
         "hunyuan_3d_3p1_rapid" | "hunyuan-3d-3.1-rapid" => CommonMeshModel::Hunyuan3d3p1Rapid,
         "hunyuan_3d_3p1_part" | "hunyuan-3d-3.1-part" => CommonMeshModel::Hunyuan3d3p1Part,
-        "hunyuan_3d_3p1_topology" | "hunyuan-3d-3.1-topology" => CommonMeshModel::Hunyuan3d3p1SmartTopology,
-        "tripo3d_h3p1" | "tripo_3d_h3p1" | "tripo_h3_1" | "tripo" | "tripo_3d" => CommonMeshModel::Tripo3dH3p1,
+        "hunyuan_3d_3p1_topology" | "hunyuan-3d-3.1-topology" => {
+            CommonMeshModel::Hunyuan3d3p1SmartTopology
+        }
+        "tripo3d_h3p1" | "tripo_3d_h3p1" | "tripo_h3_1" | "tripo" | "tripo_3d" => {
+            CommonMeshModel::Tripo3dH3p1
+        }
         "meshy_v6" | "meshy-6" | "meshy" => CommonMeshModel::MeshyV6,
         "rodin_2p5_fast" | "rodin-2.5-fast" | "rodin" => CommonMeshModel::Rodin2p5Fast,
         _ => return Err(anyhow!("Unknown 3D mesh model: {}", model_str)),

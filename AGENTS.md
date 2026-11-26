@@ -32,3 +32,8 @@ $env:PYTHONUTF8="1"; python tools\artcraft_cost_estimator.py --check-balance
 # 1-Click setup across installed MCP clients
 $env:PYTHONUTF8="1"; python setup_mcp.py
 ```
+
+## Upstream Route Drift Check
+- Run `$env:PYTHONUTF8="1"; python tools\artcraft_drift_check.py` after syncing the local `artcraft-services` clone; pass `--upstream <checkout>` when it is not at the default location.
+- The checker statically diffs MCP tool endpoint usage against upstream Actix registrations, regenerates `tools\upstream_route_table.json`, and writes an optional machine-readable report with `--json <path>`.
+- Exit code `1` means an MCP-called route is missing upstream or uses an unregistered verb; uncovered upstream routes are informational coverage gaps, not failures. Use `--no-write-route-table` for read-only report generation.

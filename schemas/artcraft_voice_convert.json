@@ -1,1 +1,0 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Convert voice using a trained voice conversion model.","name":"artcraft_voice_convert","parameters":{"properties":{"audio_media_token":{"type":"string"},"model_token":{"type":"string"}},"required":["audio_media_token","model_token"],"type":"object"}}

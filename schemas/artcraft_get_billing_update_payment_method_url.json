@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Get a Stripe customer portal URL preconfigured for updating the payment method. This only creates the portal link; payment details are entered by the user in Stripe.","name":"artcraft_get_billing_update_payment_method_url","parameters":{"properties":{},"type":"object"}}

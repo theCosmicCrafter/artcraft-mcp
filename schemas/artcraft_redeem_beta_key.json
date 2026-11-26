@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Redeem a beta key on the current account. Requires web-session cookie auth; redemption is a one-way account mutation.","name":"artcraft_redeem_beta_key","parameters":{"properties":{"beta_key":{"type":"string"}},"required":["beta_key"],"type":"object"}}

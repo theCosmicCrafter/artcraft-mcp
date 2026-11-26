@@ -5,21 +5,27 @@ use serde_json::Value;
 use crate::client::ArtCraftClient;
 use crate::types::{Tool, ToolContent};
 
-mod generate;
-mod edit;
-mod cost;
-mod media;
-mod jobs;
-mod characters;
-mod prompts;
-mod tts;
-mod voice;
-mod weights;
-mod studio;
 mod account;
-mod social;
-mod referrals;
+mod animation;
+mod api_keys;
+mod characters;
+mod conversion;
+mod cost;
+mod craft_apps;
+mod edit;
+mod featured;
+mod folders;
+mod generate;
 mod http;
+mod jobs;
+mod mcp_sessions;
+mod media;
+mod prompts;
+mod referrals;
+mod social;
+mod studio;
+mod tts;
+mod weights;
 
 pub fn get_all_tools() -> Vec<Tool> {
     let mut tools = Vec::new();
@@ -32,12 +38,18 @@ pub fn get_all_tools() -> Vec<Tool> {
     tools.extend(characters::tools());
     tools.extend(prompts::tools());
     tools.extend(tts::tools());
-    tools.extend(voice::tools());
     tools.extend(weights::tools());
-    tools.extend(studio::tools());
     tools.extend(account::tools());
     tools.extend(social::tools());
     tools.extend(referrals::tools());
+    tools.extend(folders::tools());
+    tools.extend(api_keys::tools());
+    tools.extend(mcp_sessions::tools());
+    tools.extend(studio::tools());
+    tools.extend(animation::tools());
+    tools.extend(conversion::tools());
+    tools.extend(craft_apps::tools());
+    tools.extend(featured::tools());
 
     tools
 }
@@ -99,43 +111,127 @@ pub async fn execute_tool(
         "artcraft_tts_generate" => tts::tts_generate(arguments, client).await,
         "artcraft_tts_search_models" => tts::tts_search_models(arguments, client).await,
 
-        // Voice
-        "artcraft_voice_convert" => voice::voice_convert(arguments, client).await,
-        "artcraft_list_voice_conversion_models" => voice::list_voice_conversion_models(arguments, client).await,
-        "artcraft_create_voice" => voice::create_voice(arguments, client).await,
-        "artcraft_list_voices" => voice::list_voices(arguments, client).await,
-        "artcraft_create_voice_dataset" => voice::create_voice_dataset(arguments, client).await,
-        "artcraft_upload_voice_sample" => voice::upload_voice_sample(arguments, client).await,
-
         // Weights
         "artcraft_list_weights" => weights::list_weights(arguments, client).await,
         "artcraft_search_weights" => weights::search_weights(arguments, client).await,
         "artcraft_get_weight" => weights::get_weight(arguments, client).await,
         "artcraft_delete_weight" => weights::delete_weight(arguments, client).await,
 
-        // Studio
-        "artcraft_studio_gen2" => studio::studio_gen2(arguments, client).await,
-
         // Account & Billing
         "artcraft_get_session_info" => account::get_session_info(arguments, client).await,
         "artcraft_get_credits" => account::get_credits(arguments, client).await,
         "artcraft_get_subscription" => account::get_subscription(arguments, client).await,
-        "artcraft_create_checkout_session" => account::create_checkout_session(arguments, client).await,
-        "artcraft_create_subscription_checkout" => account::create_subscription_checkout(arguments, client).await,
-        "artcraft_get_billing_portal_url" => account::get_billing_portal_url(arguments, client).await,
+        "artcraft_create_checkout_session" => {
+            account::create_checkout_session(arguments, client).await
+        }
+        "artcraft_create_subscription_checkout" => {
+            account::create_subscription_checkout(arguments, client).await
+        }
+        "artcraft_get_billing_portal_url" => {
+            account::get_billing_portal_url(arguments, client).await
+        }
+        "artcraft_get_billing_cancel_plan_url" => {
+            account::get_billing_cancel_plan_url(arguments, client).await
+        }
+        "artcraft_get_billing_switch_plan_url" => {
+            account::get_billing_switch_plan_url(arguments, client).await
+        }
+        "artcraft_get_billing_update_payment_method_url" => {
+            account::get_billing_update_payment_method_url(arguments, client).await
+        }
+        "artcraft_set_unsubscribe_reason" => {
+            account::set_unsubscribe_reason(arguments, client).await
+        }
 
         // Social
         "artcraft_create_bookmark" => social::create_bookmark(arguments, client).await,
         "artcraft_list_bookmarks" => social::list_bookmarks(arguments, client).await,
+        "artcraft_delete_bookmark" => social::delete_bookmark(arguments, client).await,
         "artcraft_rate_media" => social::rate_media(arguments, client).await,
         "artcraft_create_comment" => social::create_comment(arguments, client).await,
         "artcraft_list_comments" => social::list_comments(arguments, client).await,
+        "artcraft_delete_comment" => social::delete_comment(arguments, client).await,
         "artcraft_list_tags" => social::list_tags(arguments, client).await,
         "artcraft_set_tags" => social::set_tags(arguments, client).await,
 
         // Referrals
         "artcraft_create_referral_code" => referrals::create_referral_code(arguments, client).await,
         "artcraft_list_referral_codes" => referrals::list_referral_codes(arguments, client).await,
+
+        // Folders
+        "artcraft_list_folders" => folders::list_folders(arguments, client).await,
+        "artcraft_create_folder" => folders::create_folder(arguments, client).await,
+        "artcraft_get_folder" => folders::get_folder(arguments, client).await,
+        "artcraft_delete_folder" => folders::delete_folder(arguments, client).await,
+        "artcraft_rename_folder" => folders::rename_folder(arguments, client).await,
+        "artcraft_set_folder_star" => folders::set_folder_star(arguments, client).await,
+        "artcraft_set_folder_color" => folders::set_folder_color(arguments, client).await,
+        "artcraft_set_folder_cover_image" => {
+            folders::set_folder_cover_image(arguments, client).await
+        }
+        "artcraft_list_subfolders" => folders::list_subfolders(arguments, client).await,
+        "artcraft_add_subfolders" => folders::add_subfolders(arguments, client).await,
+        "artcraft_remove_subfolders" => folders::remove_subfolders(arguments, client).await,
+        "artcraft_list_folder_media_files" => {
+            folders::list_folder_media_files(arguments, client).await
+        }
+        "artcraft_list_media_files_without_folder" => {
+            folders::list_media_files_without_folder(arguments, client).await
+        }
+        "artcraft_add_media_to_folder" => folders::add_media_to_folder(arguments, client).await,
+        "artcraft_remove_media_from_folder" => {
+            folders::remove_media_from_folder(arguments, client).await
+        }
+        "artcraft_move_media_to_folder" => folders::move_media_to_folder(arguments, client).await,
+
+        // API keys
+        "artcraft_create_api_key" => api_keys::create_api_key(arguments, client).await,
+        "artcraft_list_api_keys" => api_keys::list_api_keys(arguments, client).await,
+        "artcraft_get_api_key" => api_keys::get_api_key(arguments, client).await,
+        "artcraft_update_api_key" => api_keys::update_api_key(arguments, client).await,
+        "artcraft_delete_api_key" => api_keys::delete_api_key(arguments, client).await,
+
+        // MCP sessions
+        "artcraft_create_mcp_session" => mcp_sessions::create_mcp_session(arguments, client).await,
+        "artcraft_list_mcp_sessions" => mcp_sessions::list_mcp_sessions(arguments, client).await,
+        "artcraft_refresh_mcp_session" => {
+            mcp_sessions::refresh_mcp_session(arguments, client).await
+        }
+        "artcraft_revoke_mcp_session" => mcp_sessions::revoke_mcp_session(arguments, client).await,
+        "artcraft_delete_mcp_session" => mcp_sessions::delete_mcp_session(arguments, client).await,
+
+        // Studio
+        "artcraft_upload_studio_scene_snapshot" => {
+            studio::upload_studio_scene_snapshot(arguments, client).await
+        }
+        "artcraft_upload_studio_shot" => studio::upload_studio_shot(arguments, client).await,
+
+        // Animation & conversion
+        "artcraft_create_face_animation" => {
+            animation::create_face_animation(arguments, client).await
+        }
+        "artcraft_create_rerender_animation" => {
+            animation::create_rerender_animation(arguments, client).await
+        }
+        "artcraft_convert_fbx_to_gltf" => conversion::convert_fbx_to_gltf(arguments, client).await,
+        "artcraft_convert_render_engine_scene" => {
+            conversion::convert_render_engine_scene(arguments, client).await
+        }
+        "artcraft_convert_bvh_to_workflow" => {
+            conversion::convert_bvh_to_workflow(arguments, client).await
+        }
+
+        // Craft apps, featured items, and beta keys
+        "artcraft_get_craft_apps_release_info" => {
+            craft_apps::get_craft_apps_release_info(arguments, client).await
+        }
+        "artcraft_list_featured_media" => featured::list_featured_media(arguments, client).await,
+        "artcraft_search_featured_media" => {
+            featured::search_featured_media(arguments, client).await
+        }
+        "artcraft_is_featured_item" => featured::is_featured_item(arguments, client).await,
+        "artcraft_list_beta_keys" => featured::list_beta_keys(arguments, client).await,
+        "artcraft_redeem_beta_key" => featured::redeem_beta_key(arguments, client).await,
 
         _ => {
             error!("Unknown tool: {}", name);

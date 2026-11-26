@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Check whether a user, media file, or model weight is featured.","name":"artcraft_is_featured_item","parameters":{"properties":{"entity_token":{"type":"string"},"entity_type":{"enum":["user","media_file","model_weight"],"type":"string"}},"required":["entity_type","entity_token"],"type":"object"}}

@@ -1,1 +1,0 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Create a custom voice.","name":"artcraft_create_voice","parameters":{"properties":{"name":{"type":"string"}},"required":["name"],"type":"object"}}

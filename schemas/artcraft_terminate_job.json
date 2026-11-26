@@ -1,1 +1,1 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Cancel a running or pending job.","name":"artcraft_terminate_job","parameters":{"properties":{"job_token":{"type":"string"}},"required":["job_token"],"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Cancel a running or pending job owned by this user/session.","name":"artcraft_terminate_job","parameters":{"properties":{"job_token":{"type":"string"}},"required":["job_token"],"type":"object"}}

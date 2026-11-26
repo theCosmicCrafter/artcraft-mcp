@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Get a Stripe customer portal URL preconfigured for cancelling the current ArtCraft plan. This only creates the portal link; cancellation still requires user confirmation in Stripe.","name":"artcraft_get_billing_cancel_plan_url","parameters":{"properties":{},"type":"object"}}

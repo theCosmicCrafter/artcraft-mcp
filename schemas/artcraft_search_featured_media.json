@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Search public featured media files by text.","name":"artcraft_search_featured_media","parameters":{"properties":{"filter_engine_categories":{"type":"string"},"filter_media_classes":{"type":"string"},"filter_media_type":{"type":"string"},"query":{"type":"string"}},"required":["query"],"type":"object"}}

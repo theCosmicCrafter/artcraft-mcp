@@ -2,23 +2,30 @@ use anyhow::{anyhow, Result};
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-use artcraft_api_defs::generate::image::edit::flux_pro_kontext_max_edit_image::{FluxProKontextMaxEditImageRequest, FluxProKontextMaxEditImageNumImages};
-use artcraft_api_defs::generate::image::edit::gpt_image_1_edit_image::{GptImage1EditImageRequest, GptImage1EditImageImageSize, GptImage1EditImageNumImages, GptImage1EditImageImageQuality};
-use artcraft_api_defs::generate::image::edit::gemini_25_flash_edit_image::{Gemini25FlashEditImageRequest, Gemini25FlashEditImageNumImages, Gemini25FlashEditImageImageQuality};
-use artcraft_api_defs::generate::image::angle::flux_2_lora_edit_image_angle::{Flux2LoraEditImageAngleRequest, Flux2LoraEditImageAngleImageSize, Flux2LoraEditImageAngleNumImages};
-use artcraft_api_defs::generate::video::edit::beeble_switchx_edit_video::{BeebleSwitchXEditVideoRequest};
-use artcraft_api_defs::generate::image::bg_removal::remove_image_background::{RemoveImageBackgroundRequest};
-use artcraft_client::endpoints::generate::image::edit::flux_pro_kontext_max_edit_image::flux_pro_kontext_max_edit_image;
-use artcraft_client::endpoints::generate::image::edit::gpt_image_1_edit_image::gpt_image_1_edit_image;
-use artcraft_client::endpoints::generate::image::edit::gemini_25_flash_edit_image::gemini_25_flash_edit_image;
-use artcraft_client::endpoints::generate::image::angle::flux_2_lora_edit_image_angle::flux_2_lora_edit_image_angle;
-use artcraft_client::endpoints::generate::video::edit::beeble_switchx_edit_video::beeble_switchx_edit_video;
-use artcraft_client::endpoints::generate::image::bg_removal::remove_image_background::remove_image_background;
-use artcraft_client::endpoints::generate::image::inpaint::flux_dev_juggernaut_inpaint_image::flux_dev_juggernaut_inpaint_image;
-use artcraft_api_defs::generate::image::inpaint::flux_dev_juggernaut_inpaint_image::{FluxDevJuggernautInpaintImageRequest, FluxDevJuggernautInpaintImageNumImages};
+use artcraft_api_defs::generate::image::angle::flux_2_lora_edit_image_angle::{
+    Flux2LoraEditImageAngleImageSize, Flux2LoraEditImageAngleNumImages,
+    Flux2LoraEditImageAngleRequest,
+};
+use artcraft_api_defs::generate::image::bg_removal::remove_image_background::RemoveImageBackgroundRequest;
+use artcraft_api_defs::generate::image::edit::flux_pro_kontext_max_edit_image::{
+    FluxProKontextMaxEditImageNumImages, FluxProKontextMaxEditImageRequest,
+};
+use artcraft_api_defs::generate::image::edit::gemini_25_flash_edit_image::{
+    Gemini25FlashEditImageImageQuality, Gemini25FlashEditImageNumImages,
+    Gemini25FlashEditImageRequest,
+};
+use artcraft_api_defs::generate::image::edit::gpt_image_1_edit_image::{
+    GptImage1EditImageImageQuality, GptImage1EditImageImageSize, GptImage1EditImageNumImages,
+    GptImage1EditImageRequest,
+};
+use artcraft_api_defs::generate::image::inpaint::flux_dev_juggernaut_inpaint_image::{
+    FluxDevJuggernautInpaintImageNumImages, FluxDevJuggernautInpaintImageRequest,
+};
+use artcraft_api_defs::generate::video::edit::beeble_switchx_edit_video::BeebleSwitchXEditVideoRequest;
 use tokens::tokens::media_files::MediaFileToken;
 
 use crate::client::ArtCraftClient;
+use crate::tools::http::typed_json_post;
 use crate::types::{Tool, ToolContent};
 
 pub fn tools() -> Vec<Tool> {
@@ -91,11 +98,14 @@ pub fn tools() -> Vec<Tool> {
 }
 
 pub async fn edit_image(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let model_str = arguments["model"].as_str()
+    let model_str = arguments["model"]
+        .as_str()
         .ok_or_else(|| anyhow!("model is required"))?;
-    let prompt = arguments["prompt"].as_str()
+    let prompt = arguments["prompt"]
+        .as_str()
         .ok_or_else(|| anyhow!("prompt is required"))?;
-    let image_token = arguments["image_media_token"].as_str()
+    let image_token = arguments["image_media_token"]
+        .as_str()
         .ok_or_else(|| anyhow!("image_media_token is required"))?;
 
     let image_media_token = MediaFileToken::new_from_str(image_token);
@@ -109,8 +119,18 @@ pub async fn edit_image(arguments: Value, client: &ArtCraftClient) -> Result<Vec
                 image_media_token,
                 num_images: Some(FluxProKontextMaxEditImageNumImages::One),
             };
-            let response = flux_pro_kontext_max_edit_image(&client.api_host, client.creds_ref(), request).await?;
-            (response.inference_job_token.as_str().to_string(), response.success)
+            let response = typed_json_post(artcraft_api_defs::generate::image::edit::flux_pro_kontext_max_edit_image::FLUX_PRO_KONTEXT_MAX_EDIT_IMAGE_PATH, request, client).await?;
+            (
+                response
+                    .get("inference_job_token")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("?")
+                    .to_string(),
+                response
+                    .get("success")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false),
+            )
         }
         "gpt_image_1" | "gpt_image" | "gpt" | "openai" => {
             let request = GptImage1EditImageRequest {
@@ -121,8 +141,18 @@ pub async fn edit_image(arguments: Value, client: &ArtCraftClient) -> Result<Vec
                 num_images: Some(GptImage1EditImageNumImages::One),
                 image_quality: Some(GptImage1EditImageImageQuality::High),
             };
-            let response = gpt_image_1_edit_image(&client.api_host, client.creds_ref(), request).await?;
-            (response.inference_job_token.as_str().to_string(), response.success)
+            let response = typed_json_post(artcraft_api_defs::generate::image::edit::gpt_image_1_edit_image::GPT_IMAGE_1_EDIT_IMAGE_PATH, request, client).await?;
+            (
+                response
+                    .get("inference_job_token")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("?")
+                    .to_string(),
+                response
+                    .get("success")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false),
+            )
         }
         "gemini_25_flash" | "gemini" | "google" => {
             let request = Gemini25FlashEditImageRequest {
@@ -132,10 +162,25 @@ pub async fn edit_image(arguments: Value, client: &ArtCraftClient) -> Result<Vec
                 num_images: Some(Gemini25FlashEditImageNumImages::One),
                 image_quality: Some(Gemini25FlashEditImageImageQuality::High),
             };
-            let response = gemini_25_flash_edit_image(&client.api_host, client.creds_ref(), request).await?;
-            (response.inference_job_token.as_str().to_string(), response.success)
+            let response = typed_json_post(artcraft_api_defs::generate::image::edit::gemini_25_flash_edit_image::GEMINI_25_FLASH_EDIT_IMAGE_PATH, request, client).await?;
+            (
+                response
+                    .get("inference_job_token")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("?")
+                    .to_string(),
+                response
+                    .get("success")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false),
+            )
         }
-        _ => return Err(anyhow!("Unknown edit model: {}. Use flux_pro_kontext_max, gpt_image_1, or gemini_25_flash", model_str)),
+        _ => {
+            return Err(anyhow!(
+                "Unknown edit model: {}. Use flux_pro_kontext_max, gpt_image_1, or gemini_25_flash",
+                model_str
+            ))
+        }
     };
 
     Ok(vec![ToolContent {
@@ -149,8 +194,12 @@ pub async fn edit_image(arguments: Value, client: &ArtCraftClient) -> Result<Vec
     }])
 }
 
-pub async fn remove_background(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let image_token = arguments["image_media_token"].as_str()
+pub async fn remove_background(
+    arguments: Value,
+    client: &ArtCraftClient,
+) -> Result<Vec<ToolContent>> {
+    let image_token = arguments["image_media_token"]
+        .as_str()
         .ok_or_else(|| anyhow!("image_media_token is required"))?;
 
     let media_file_token = Some(MediaFileToken::new_from_str(image_token));
@@ -161,25 +210,28 @@ pub async fn remove_background(arguments: Value, client: &ArtCraftClient) -> Res
         media_file_token,
     };
 
-    let response = remove_image_background(&client.api_host, client.creds_ref(), request).await?;
+    let response = typed_json_post(artcraft_api_defs::generate::image::bg_removal::remove_image_background::REMOVE_IMAGE_BACKGROUND_PATH, request, client).await?;
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
         text: format!(
             "Background removal queued successfully.\nJob token: {}\nStatus: {}\n\nPoll for results using artcraft_get_job_status with job_token '{}'",
-            response.inference_job_token.as_str(),
-            if response.success { "success" } else { "failed" },
-            response.inference_job_token.as_str()
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?"),
+            if response.get("success").and_then(|v| v.as_bool()).unwrap_or(false) { "success" } else { "failed" },
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?")
         ),
     }])
 }
 
 pub async fn inpaint_image(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let prompt = arguments["prompt"].as_str()
+    let prompt = arguments["prompt"]
+        .as_str()
         .ok_or_else(|| anyhow!("prompt is required"))?;
-    let image_token = arguments["image_media_token"].as_str()
+    let image_token = arguments["image_media_token"]
+        .as_str()
         .ok_or_else(|| anyhow!("image_media_token is required"))?;
-    let mask_token = arguments["mask_media_token"].as_str()
+    let mask_token = arguments["mask_media_token"]
+        .as_str()
         .ok_or_else(|| anyhow!("mask_media_token is required"))?;
 
     let image_media_token = MediaFileToken::new_from_str(image_token);
@@ -194,21 +246,25 @@ pub async fn inpaint_image(arguments: Value, client: &ArtCraftClient) -> Result<
         num_images: Some(FluxDevJuggernautInpaintImageNumImages::One),
     };
 
-    let response = flux_dev_juggernaut_inpaint_image(&client.api_host, client.creds_ref(), request).await?;
+    let response = typed_json_post(artcraft_api_defs::generate::image::inpaint::flux_dev_juggernaut_inpaint_image::FLUX_DEV_JUGGERNAUT_INPAINT_PATH, request, client).await?;
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
         text: format!(
             "Inpainting queued successfully.\nJob token: {}\nStatus: {}\n\nPoll for results using artcraft_get_job_status with job_token '{}'",
-            response.inference_job_token.as_str(),
-            if response.success { "success" } else { "failed" },
-            response.inference_job_token.as_str()
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?"),
+            if response.get("success").and_then(|v| v.as_bool()).unwrap_or(false) { "success" } else { "failed" },
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?")
         ),
     }])
 }
 
-pub async fn edit_image_angle(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let image_token = arguments["image_media_token"].as_str()
+pub async fn edit_image_angle(
+    arguments: Value,
+    client: &ArtCraftClient,
+) -> Result<Vec<ToolContent>> {
+    let image_token = arguments["image_media_token"]
+        .as_str()
         .ok_or_else(|| anyhow!("image_media_token is required"))?;
 
     let image_media_token = MediaFileToken::new_from_str(image_token);
@@ -224,23 +280,25 @@ pub async fn edit_image_angle(arguments: Value, client: &ArtCraftClient) -> Resu
         image_size: Some(Flux2LoraEditImageAngleImageSize::Square),
     };
 
-    let response = flux_2_lora_edit_image_angle(&client.api_host, client.creds_ref(), request).await?;
+    let response = typed_json_post(artcraft_api_defs::generate::image::angle::flux_2_lora_edit_image_angle::FLUX_2_LORA_EDIT_IMAGE_ANGLE_PATH, request, client).await?;
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
         text: format!(
             "Angle edit queued successfully.\nJob token: {}\nStatus: {}\n\nPoll for results using artcraft_get_job_status with job_token '{}'",
-            response.inference_job_token.as_str(),
-            if response.success { "success" } else { "failed" },
-            response.inference_job_token.as_str()
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?"),
+            if response.get("success").and_then(|v| v.as_bool()).unwrap_or(false) { "success" } else { "failed" },
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?")
         ),
     }])
 }
 
 pub async fn edit_video(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
-    let video_token = arguments["video_media_token"].as_str()
+    let video_token = arguments["video_media_token"]
+        .as_str()
         .ok_or_else(|| anyhow!("video_media_token is required"))?;
-    let prompt = arguments["prompt"].as_str()
+    let prompt = arguments["prompt"]
+        .as_str()
         .ok_or_else(|| anyhow!("prompt is required"))?;
 
     let source_video_media_token = Some(MediaFileToken::new_from_str(video_token));
@@ -253,15 +311,15 @@ pub async fn edit_video(arguments: Value, client: &ArtCraftClient) -> Result<Vec
         prompt: Some(prompt.to_string()),
     };
 
-    let response = beeble_switchx_edit_video(&client.api_host, client.creds_ref(), request).await?;
+    let response = typed_json_post(artcraft_api_defs::generate::video::edit::beeble_switchx_edit_video::BEEBLE_SWITCHX_EDIT_VIDEO_PATH, request, client).await?;
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
         text: format!(
             "Video edit queued successfully.\nJob token: {}\nStatus: {}\n\nPoll for results using artcraft_get_job_status with job_token '{}'",
-            response.inference_job_token.as_str(),
-            if response.success { "success" } else { "failed" },
-            response.inference_job_token.as_str()
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?"),
+            if response.get("success").and_then(|v| v.as_bool()).unwrap_or(false) { "success" } else { "failed" },
+            response.get("inference_job_token").and_then(|v| v.as_str()).unwrap_or("?")
         ),
     }])
 }

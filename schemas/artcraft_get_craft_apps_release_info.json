@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Get the latest Craft app release information cached by the public ArtCraft backend: app versions, release assets, repository/app renames, and launcher notices. Public and free.","name":"artcraft_get_craft_apps_release_info","parameters":{"properties":{},"type":"object"}}
