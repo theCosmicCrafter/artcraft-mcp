@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>ArtCraft Player</title>
+<style>body{font-family:system-ui;margin:0;padding:12px;background:var(--color-background-primary,#000);color:var(--color-text-primary,#eee)}
+video,audio{width:100%;border-radius:8px}a{color:#818cf8}</style></head><body>
+<div id="stage"><div style="opacity:.6">Waiting for media…</div></div>
+<script>
+window.addEventListener('message',(ev)=>{
+  const d=ev.data||{};
+  if(d.method==='ui/notifications/tool-result'&&d.params){
+    const txt=(d.params.content||[]).map(c=>c.text||'').join(' ');
+    const m=txt.match(/https?:\/\/[^\s`"')]+/);
+    if(m){
+      const url=m[0];const s=document.getElementById('stage');
+      if(/\.(mp4|webm|mov)/i.test(url))s.innerHTML='<video controls autoplay src="'+url+'"></video>';
+      else if(/\.(mp3|wav|ogg|flac|m4a)/i.test(url))s.innerHTML='<audio controls autoplay src="'+url+'"></audio>';
+      else s.innerHTML='<a href="'+url+'">Open media</a>';
+    }
+  }
+},false);
+</script></body></html>

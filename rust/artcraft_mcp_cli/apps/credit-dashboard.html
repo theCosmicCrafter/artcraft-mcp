@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>ArtCraft Credits</title>
+<style>
+body{font-family:system-ui;margin:0;padding:16px;background:var(--color-background-primary,#111);color:var(--color-text-primary,#eee)}
+.big{font-size:42px;font-weight:700}
+.lbl{font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.08em}
+button{background:#4f46e5;color:#fff;border:0;border-radius:6px;padding:6px 12px;cursor:pointer}
+</style></head><body>
+<div class="lbl">Credit balance</div>
+<div class="big" id="bal">—</div>
+<button onclick="refresh()">Refresh</button>
+<pre id="raw" style="font-size:11px;opacity:.7;white-space:pre-wrap"></pre>
+<script>
+function refresh(){
+  if(window.parent){window.parent.postMessage({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'artcraft_app_refresh_credits',arguments:{}}},'*')}
+}
+window.addEventListener('message',(ev)=>{
+  const d=ev.data||{};
+  if(d.method==='ui/notifications/tool-result'&&d.params){
+    const txt=(d.params.content||[]).map(c=>c.text||'').join('\n');
+    document.getElementById('raw').textContent=txt;
+    const m=txt.match(/([0-9][0-9,]*)\s*credit/i)||txt.match(/balance[^0-9]*([0-9,]+)/i);
+    if(m)document.getElementById('bal').textContent=m[1];
+  }
+},false);
+</script></body></html>

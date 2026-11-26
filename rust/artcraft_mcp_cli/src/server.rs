@@ -115,6 +115,10 @@ pub fn extension_capabilities() -> ExtensionCapabilities {
         json!({ "supported": true }).as_object().cloned().unwrap_or_default(),
     );
     ext.insert(
+        crate::apps::EXT_KEY.to_string(),
+        json!({ "supported": true }).as_object().cloned().unwrap_or_default(),
+    );
+    ext.insert(
         files_ext::EXT_KEY.to_string(),
         json!({ "upload": {}, "maxInlineBytes": files_ext::MAX_INLINE_BYTES })
             .as_object().cloned().unwrap_or_default(),
@@ -149,7 +153,7 @@ struct ConfirmState {
 
 impl ServerHandler for ArtCraftMcp {
     fn get_info(&self) -> ServerConfig {
-        let mut capabilities = ServerCapabilities::builder().enable_tools().build();
+        let mut capabilities = ServerCapabilities::builder().enable_tools().enable_resources().build();
         let extensions = extension_capabilities();
         if !extensions.is_empty() {
             capabilities.extensions = Some(extensions);
@@ -220,6 +224,23 @@ impl ServerHandler for ArtCraftMcp {
         Ok(result)
     }
 
+    async fn list_resources(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ListResourcesResult, McpError> {
+        Ok(crate::apps::list_resources())
+    }
+
+    async fn read_resource(
+        &self,
+        request: ReadResourceRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ReadResourceResponse, McpError> {
+        crate::apps::read_resource(&request.uri)
+            .ok_or_else(|| McpError::resource_not_found(format!("unknown resource {}", request.uri), None))
+    }
+
     async fn call_tool(
         &self,
         request: CallToolRequestParams,
@@ -227,7 +248,12 @@ impl ServerHandler for ArtCraftMcp {
     ) -> Result<CallToolResponse, McpError> {
         trace_meta(request.meta.as_ref().map(|m| &m.0));
 
-        let name = request.name.to_string();
+        let mut name = request.name.to_string();
+        // App-visibility helper tool: the credit dashboard's refresh button
+        // calls this; it is never listed to the model (not in the registry).
+        if name == "artcraft_app_refresh_credits" {
+            name = "artcraft_get_credits".to_string();
+        }
         let arguments = Value::Object(request.arguments.clone().unwrap_or_default());
         let client = self.client_for(&context);
 
@@ -619,6 +645,13 @@ fn convert_tool(def: crate::types::Tool) -> Tool {
     );
     if let Some(meta) = registry::meta_for(&def.name) {
         tool.annotations = Some(meta.annotations());
+    }
+    if let Some(ui_meta) = crate::apps::annotate_tool_meta(&def.name) {
+        let mut meta = MetaObject::default();
+        for (k, v) in ui_meta {
+            meta.insert(k, v);
+        }
+        tool.meta = Some(meta);
     }
     tool
 }

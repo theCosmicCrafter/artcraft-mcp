@@ -9,6 +9,7 @@
 use clap::{Parser, ValueEnum};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+mod apps;
 mod auth;
 mod client;
 mod coercion;
