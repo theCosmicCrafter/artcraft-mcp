@@ -18,6 +18,7 @@ pub fn extract_trace_context(meta: Option<&serde_json::Value>) {
 
 /// Inject the current span's trace context into an outbound request builder,
 /// if the incoming request carried a `traceparent`.
+#[allow(dead_code)] // used by HTTP client spans in a follow-up
 pub fn propagate_trace_context(
     builder: reqwest::RequestBuilder,
     meta: Option<&serde_json::Value>,

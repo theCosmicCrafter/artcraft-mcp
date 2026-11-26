@@ -759,13 +759,13 @@ pub fn parse_polygon_type(pt: Option<&str>) -> Option<CommonPolygonType> {
 }
 
 pub fn parse_media_token(token: Option<&str>) -> Option<MediaFileToken> {
-    token.map(|t| MediaFileToken::new_from_str(t))
+    token.map(MediaFileToken::new_from_str)
 }
 
 pub fn parse_media_tokens(value: &Value) -> Option<Vec<MediaFileToken>> {
     value.as_array().map(|arr| {
         arr.iter()
-            .filter_map(|v| v.as_str().map(|s| MediaFileToken::new_from_str(s)))
+            .filter_map(|v| v.as_str().map(MediaFileToken::new_from_str))
             .collect()
     })
 }
@@ -773,7 +773,7 @@ pub fn parse_media_tokens(value: &Value) -> Option<Vec<MediaFileToken>> {
 pub fn parse_character_tokens(value: &Value) -> Option<Vec<CharacterToken>> {
     value.as_array().map(|arr| {
         arr.iter()
-            .filter_map(|v| v.as_str().map(|s| CharacterToken::new_from_str(s)))
+            .filter_map(|v| v.as_str().map(CharacterToken::new_from_str))
             .collect()
     })
 }

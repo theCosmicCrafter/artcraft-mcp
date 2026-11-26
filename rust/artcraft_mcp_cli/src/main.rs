@@ -17,7 +17,6 @@ mod discovery;
 mod files_ext;
 mod registry;
 mod server;
-mod tasks_store;
 mod telemetry;
 mod tools;
 mod types;

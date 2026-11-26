@@ -302,7 +302,7 @@ impl ServerHandler for ArtCraftMcp {
         // --- Files extension: inline data and out-of-band uploads ----------
         let client_files_caps = context
             .client_capabilities()
-            .and_then(|c| c.extensions.as_ref().map(|e| e.get(files_ext::EXT_KEY).cloned()).flatten());
+            .and_then(|c| c.extensions.as_ref().and_then(|e| e.get(files_ext::EXT_KEY).cloned()));
         let client_files_upload = client_files_caps.as_ref().is_some_and(|v| v.get("upload").is_some());
         let client_files_download = client_files_caps.as_ref().is_some_and(|v| v.get("download").is_some());
 
@@ -312,7 +312,7 @@ impl ServerHandler for ArtCraftMcp {
                 let mut all_inline = true;
                 let mut rewritten = arguments.clone();
                 for (key, meta) in &inputs {
-                    if let Some(data) = &meta.data {
+                    if meta.data.is_some() {
                         if meta.size > files_ext::MAX_INLINE_BYTES {
                             all_inline = false;
                             break;
@@ -369,14 +369,11 @@ impl ServerHandler for ArtCraftMcp {
         if billable && modern && supports_elicitation && !self.shared.no_confirm {
             if let Some(m) = meta {
                 let quote = tier_estimate(m.cost);
-                let needs_confirm = quote > self.shared.auto_approve_under
-                    && quote >= self.shared.confirm_over_credits.min(u64::MAX);
-                let threshold_hit = quote >= self.shared.confirm_over_credits
-                    || self.shared.confirm_over_credits == 0;
-                if (threshold_hit || quote > self.shared.auto_approve_under) && needs_confirm {
-                    return self.issue_cost_confirmation(&name, arguments, quote);
-                }
-                if threshold_hit && quote > self.shared.auto_approve_under {
+                let over_threshold = self.shared.confirm_over_credits == 0
+                    || quote >= self.shared.confirm_over_credits;
+                let auto_approved = self.shared.auto_approve_under > 0
+                    && quote <= self.shared.auto_approve_under;
+                if over_threshold && !auto_approved {
                     return self.issue_cost_confirmation(&name, arguments, quote);
                 }
             }
@@ -595,7 +592,7 @@ fn extract_job_token(text: &str) -> Option<String> {
     for line in text.lines() {
         let lower = line.to_lowercase();
         if lower.contains("job") && lower.contains("token") {
-            if let Some(pos) = line.rfind(|c: char| c == ':' || c == '`') {
+            if let Some(pos) = line.rfind([':', '`']) {
                 let candidate = line[pos + 1..]
                     .trim()
                     .trim_matches('`')

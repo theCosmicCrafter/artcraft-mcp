@@ -103,8 +103,17 @@ async def mcp_health() -> dict:
 
 
 @router.post("/start")
-async def mcp_start(override_path: Optional[str] = None) -> dict:
-    """Start the artcraft-mcp-server subprocess."""
+async def mcp_start(
+    override_path: Optional[str] = None,
+    transport: str = "stdio",
+    bind: str = "127.0.0.1:8787",
+) -> dict:
+    """Start the artcraft-mcp-server subprocess.
+
+    v2.0 servers support `--transport stdio|http`. stdio (default) pipes the
+    process straight to a local MCP client; http supervises a stateless
+    Streamable HTTP listener on `bind` (loopback only) that multiple clients
+    can share."""
     global _mcp_server_process
 
     if _mcp_server_process is not None and _mcp_server_process.returncode is None:
@@ -122,8 +131,11 @@ async def mcp_start(override_path: Optional[str] = None) -> dict:
     # Use asyncio subprocess so we don't block the event loop.
     # stdin/stdout are left connected for stdio transport.
     try:
+        args = [binary]
+        if transport == "http":
+            args += ["--transport", "http", "--bind", bind]
         _mcp_server_process = await asyncio.create_subprocess_exec(
-            binary,
+            *args,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -137,6 +149,8 @@ async def mcp_start(override_path: Optional[str] = None) -> dict:
         "started": True,
         "pid": _mcp_server_process.pid,
         "binary": binary,
+        "transport": transport,
+        "url": f"http://{bind}/mcp" if transport == "http" else None,
     }
 
 

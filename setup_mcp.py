@@ -60,6 +60,10 @@ def register_mcp(config_path, client_name, exe_path):
 
     data["mcpServers"]["artcraft"] = {
         "command": exe_path,
+        # stdio is the v2.0 default and what local MCP clients expect.
+        # For a shared/local-network server run the binary manually with:
+        #   artcraft-mcp --transport http --bind 127.0.0.1:8787
+        # and register a URL-based server entry instead where the client supports it.
         "args": [],
         "description": "ArtCraft AI generation platform — images, video, 3D, voice, and audio tools.",
         "enabled": True

@@ -299,10 +299,3 @@ pub async fn call_deferred_tool(
     crate::tools::execute_tool(name, coerced, client).await
 }
 
-/// Which categories exist; used to validate the category filter.
-pub fn category_names() -> Vec<&'static str> {
-    let mut cats: Vec<&'static str> = REGISTRY.iter().map(|m| m.category.as_str()).collect();
-    cats.sort();
-    cats.dedup();
-    cats
-}

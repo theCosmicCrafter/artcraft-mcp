@@ -1,7 +1,9 @@
 name: Build binaries
 
-# Builds artcraft-mcp for macOS (Apple Silicon), Linux and Windows inside the
-# ArtCraft monorepo, which the crate depends on for its API definitions.
+# Builds artcraft-mcp v2.0 for macOS (Apple Silicon), Linux and Windows.
+# Since v2.0 the crate compiles standalone: upstream artcraft crates are
+# pinned git dependencies (see rust/artcraft_mcp_cli/Cargo.toml), so no
+# monorepo checkout is needed.
 
 on:
   push:
@@ -13,10 +15,6 @@ on:
 
 permissions:
   contents: read
-
-env:
-  # Monorepo commit the crate is known to build against. Bump deliberately.
-  ARTCRAFT_REF: 9a1cc6b701e9dbec38af820507c9b33b668f54f0
 
 jobs:
   build:
@@ -34,59 +32,109 @@ jobs:
             artifact: artcraft-mcp-windows-x86_64
             bin: artcraft-mcp.exe
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: rust/artcraft_mcp_cli
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: artcraft-mcp
-
-      - uses: actions/checkout@v4
-        with:
-          repository: storytold/artcraft
-          ref: ${{ env.ARTCRAFT_REF }}
-          path: artcraft
 
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: artcraft
+          workspaces: rust/artcraft_mcp_cli
 
-      - name: Add the crate to the monorepo workspace
-        shell: bash
-        run: |
-          cp -R artcraft-mcp/rust/artcraft_mcp_cli artcraft/crates/artcraft_mcp_cli
-          python3 - <<'EOF'
-          import re, pathlib
-          p = pathlib.Path("artcraft/Cargo.toml")
-          s = p.read_text()
-          s, n = re.subn(r"members\s*=\s*\[", 'members = [ "crates/artcraft_mcp_cli",', s, count=1)
-          assert n == 1, "workspace members list not found"
-          p.write_text(s)
-          EOF
+      - name: Check
+        run: cargo check --all-targets
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+        continue-on-error: true # baseline cleanup tracked separately; check output in logs
+
+      - name: Test
+        run: cargo test --all-targets
 
       - name: Build
-        working-directory: artcraft
-        run: cargo build --release -p artcraft-mcp
+        run: cargo build --release
 
-      - name: Smoke test (initialize + tools/list)
+      - name: Smoke test (legacy initialize + tools/list regression)
         shell: bash
         run: |
           printf '%s\n' \
             '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
             '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
             '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
-            | artcraft/target/release/${{ matrix.bin }} \
+            | ./target/release/${{ matrix.bin }} \
             | python3 -c '
           import sys, json
           r = {m.get("id"): m for m in map(json.loads, sys.stdin)}
           assert r[1]["result"]["protocolVersion"] == "2024-11-05", r.get(1)
           tools = r[2]["result"]["tools"]
-          assert tools, "tools/list returned no tools"
-          print(len(tools), "tools")
+          assert len(tools) == 61, f"legacy clients must see all 61 tools, got {len(tools)}"
+          print(len(tools), "tools (legacy regression ok)")
           '
+
+      - name: Smoke test (modern 2026-07-28 progressive catalog)
+        shell: bash
+        run: |
+          python3 - <<'EOF'
+          import json, subprocess
+          meta = {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {"name": "ci", "version": "1"},
+              "io.modelcontextprotocol/clientCapabilities": {"elicitation": {}, "extensions": {}},
+          }
+          req = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/list",
+                            "params": {"_meta": meta}}) + "\n"
+          out = subprocess.run(["./target/release/${{ matrix.bin }}"], input=req,
+                               capture_output=True, text=True, timeout=30).stdout
+          msg = [json.loads(l) for l in out.splitlines() if l.strip()][0]
+          tools = msg["result"]["tools"]
+          assert len(tools) <= 13, f"progressive catalog should be small, got {len(tools)}"
+          names = {t["name"] for t in tools}
+          for required in ("artcraft_search_tools", "artcraft_describe_tool",
+                           "artcraft_call_deferred_tool", "artcraft_generate_image"):
+              assert required in names, f"missing {required}"
+          print(len(tools), "tools (progressive catalog ok)")
+          EOF
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: artcraft/target/release/${{ matrix.bin }}
+          path: rust/artcraft_mcp_cli/target/release/${{ matrix.bin }}
           if-no-files-found: error
+
+  conformance:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust/artcraft_mcp_cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust/artcraft_mcp_cli
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Run conformance suite (active)
+        shell: bash
+        run: |
+          ./target/release/artcraft-mcp --transport http --bind 127.0.0.1:8787 &
+          SERVER_PID=$!
+          sleep 2
+          set +e
+          npx -y @modelcontextprotocol/conformance server \
+            --url http://127.0.0.1:8787/mcp \
+            --suite active \
+            --expected-failures ../../conformance/conformance-baseline.yml \
+            -o /tmp/conformance-results
+          STATUS=$?
+          kill $SERVER_PID 2>/dev/null
+          echo "conformance exit: $STATUS"
+          exit 0 # informational until the baseline is ratified; see conformance-baseline.yml

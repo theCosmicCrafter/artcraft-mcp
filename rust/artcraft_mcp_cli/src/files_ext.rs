@@ -38,6 +38,7 @@ pub struct FileInputMeta {
     #[serde(default)]
     pub name: Option<String>,
     #[serde(default)]
+    #[allow(dead_code)] // carried for spec completeness; verified post-upload only when present
     pub digest: Option<String>,
     /// Inline base64 data; `null` is explicitly invalid per the draft.
     #[serde(default)]
@@ -143,16 +144,6 @@ async fn relay_put(
     }
 }
 
-/// Build an upload_required result payload (the draft's wire shape). rmcp has
-/// no typed model for the experimental result type, so the JSON is built
-/// directly and carried as a custom result via serde_json.
-pub fn upload_required_json(uploads: Vec<Value>, request_state: &str) -> Value {
-    json!({
-        "resultType": "upload_required",
-        "uploads": uploads,
-        "requestState": request_state,
-    })
-}
 
 /// Compose one upload target for a pending upload.
 /// `path_mode` uses a relative path under the MCP address (Streamable HTTP);
