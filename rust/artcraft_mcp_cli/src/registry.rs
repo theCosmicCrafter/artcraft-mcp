@@ -69,12 +69,25 @@ pub struct ToolMeta {
 
 impl ToolMeta {
     pub fn annotations(&self) -> ToolAnnotations {
-        let read_only = self.cost == CostTier::Free && !self.async_job;
+        // Read-only means the tool does not mutate any server-side state:
+        // list/get/search/estimate/billing-portal tools only. Cost alone is
+        // not the signal — deletion and mutation tools are free but destructive.
+        let name = self.name;
+        let read_only = name.starts_with("artcraft_list")
+            || name.starts_with("artcraft_get")
+            || name.starts_with("artcraft_search")
+            || name.starts_with("artcraft_estimate")
+            || name == "artcraft_describe_tool"
+            || name == "artcraft_search_tools";
+        let destructive = name.contains("delete") || name.contains("terminate");
+        // Mutations are not idempotent except where they carry idempotency
+        // tokens (uploads) — be conservative.
+        let idempotent = read_only;
         ToolAnnotations::from_raw(
             None,
             Some(read_only),
-            Some(false),
-            Some(read_only),
+            Some(destructive),
+            Some(idempotent),
             Some(true),
         )
     }
