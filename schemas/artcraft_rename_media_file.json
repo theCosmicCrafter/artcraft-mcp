@@ -1,1 +1,1 @@
-{"name":"artcraft_rename_media_file","description":"Rename a media file.","parameters":{"properties":{"media_token":{"type":"string"},"title":{"type":"string"}},"required":["media_token","title"],"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Rename a media file.","name":"artcraft_rename_media_file","parameters":{"properties":{"media_token":{"type":"string"},"title":{"type":"string"}},"required":["media_token","title"],"type":"object"}}

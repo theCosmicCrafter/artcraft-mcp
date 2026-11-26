@@ -1,1 +1,1 @@
-{"name":"artcraft_delete_weight","description":"Delete a model weight.","parameters":{"properties":{"weight_token":{"type":"string"}},"required":["weight_token"],"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Delete a model weight.","name":"artcraft_delete_weight","parameters":{"properties":{"weight_token":{"type":"string"}},"required":["weight_token"],"type":"object"}}

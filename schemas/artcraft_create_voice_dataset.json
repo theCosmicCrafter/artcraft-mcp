@@ -1,1 +1,1 @@
-{"name":"artcraft_create_voice_dataset","description":"Create a voice training dataset.","parameters":{"properties":{"name":{"type":"string"}},"required":["name"],"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Create a voice training dataset.","name":"artcraft_create_voice_dataset","parameters":{"properties":{"name":{"type":"string"}},"required":["name"],"type":"object"}}
