@@ -245,6 +245,15 @@ impl ServerHandler for ArtCraftMcp {
         request: CancelTaskParams,
         _context: RequestContext<RoleServer>,
     ) -> Result<(), McpError> {
+        // NOTE(artcraft-api): the upstream ArtCraft API exposes no cancel
+        // endpoint for generation jobs (endpoints/jobs contains only
+        // list_session_jobs), so this stops local tracking only. The upstream
+        // generation may continue and consume credits. This is the documented
+        // fallback per the no-silent-shortcuts rule; do not fake success.
+        warn!(
+            task_id = %request.task_id,
+            "task cancellation stops local tracking only; upstream ArtCraft jobs cannot be cancelled (no API endpoint)"
+        );
         self.shared.tasks.cancel_task(&request.task_id)
     }
 
@@ -401,7 +410,7 @@ impl ServerHandler for ArtCraftMcp {
                     }
                     let mut cleanup_paths: Vec<String> = Vec::new();
                     if let Some(fp) = rewritten.get("file_path").and_then(|v| v.as_str()) {
-                        if fp.contains("artcraft-mcp-inline-") {
+                        if is_spooled_temp_file(fp) {
                             cleanup_paths.push(fp.to_string());
                         }
                     }
@@ -658,13 +667,21 @@ async fn run_and_track_job(
                     let status_text: String =
                         status_contents.iter().map(|c| c.text.clone()).collect();
                     let lower = status_text.to_lowercase();
-                    if lower.contains("complete") || lower.contains("succeeded") {
+                    // Terminal failure first: "complete_failure" contains
+                    // "complete" and must never read as success. Transient
+                    // attempt_failed means the job is retrying, not dead.
+                    let failed = lower.contains("complete_failure")
+                        || (lower.contains("fail") && !lower.contains("attempt_failed"))
+                        || lower.contains("cancel")
+                        || lower.contains("dead");
+                    if failed {
                         contents.extend(status_contents);
                         return Ok(contents);
                     }
-                    if (lower.contains("fail") && !lower.contains("attempt_failed"))
-                        || lower.contains("cancel")
-                    {
+                    let succeeded = lower.contains("complete_success")
+                        || lower.contains("succeeded")
+                        || (lower.contains("complete") && !lower.contains("failure"));
+                    if succeeded {
                         contents.extend(status_contents);
                         return Ok(contents);
                     }
@@ -672,8 +689,30 @@ async fn run_and_track_job(
                 Err(_) => continue,
             }
         }
+        // The job never reached a terminal state within the polling window;
+        // returning the original queue message here would report a dead or
+        // stuck job as a successful generation.
+        return Err(anyhow::anyhow!(
+            "job did not reach a terminal state within the polling window; check artcraft_get_job_status with the job token"
+        ));
     }
     Ok(contents)
+}
+
+/// True only for paths inside the system temp directory whose file name
+/// carries one of our spool prefixes. Callers can otherwise pass a path that
+/// merely contains the prefix as a substring (e.g. a host file named
+/// "artcraft-mcp-inline-x" in a user directory) and trick cleanup into
+/// deleting files the server never created.
+fn is_spooled_temp_file(path: &str) -> bool {
+    let path = std::path::Path::new(path);
+    let temp = std::env::temp_dir();
+    if !path.starts_with(&temp) {
+        return false;
+    }
+    path.file_name()
+        .and_then(|n| n.to_str())
+        .is_some_and(|n| n.starts_with("artcraft-mcp-inline-") || n.starts_with("artcraft-mcp-upload-"))
 }
 
 fn extract_job_token(text: &str) -> Option<String> {
@@ -900,7 +939,7 @@ impl ArtCraftMcp {
 
         let mut cleanup_paths: Vec<String> = Vec::new();
         if let Some(fp) = args.get("file_path").and_then(|v| v.as_str()) {
-            if fp.contains("artcraft-mcp-upload-") {
+            if is_spooled_temp_file(fp) {
                 cleanup_paths.push(fp.to_string());
             }
         }
