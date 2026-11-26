@@ -1,0 +1,318 @@
+{
+  "phases": "free",
+  "budget": 600,
+  "start_credits": 5352,
+  "measured_spend": 0,
+  "rows": {
+    "artcraft_get_session_info": {
+      "status": "PASS",
+      "detail": "Session info: Logged in: true User: cosmiccrafter Display name: CosmicCrafter Token: [redacted]",
+      "credits": 0
+    },
+    "artcraft_get_subscription": {
+      "status": "PASS",
+      "detail": "No active subscription found.",
+      "credits": 0
+    },
+    "artcraft_get_billing_portal_url": {
+      "status": "FAIL",
+      "detail": "Error: Storyteller API error: InvalidRequest(\"{\\\"success\\\":false,\\\"error_code\\\":400,\\\"error_code_str\\\":\\\"Bad Request\\\",\\\"message\\\":\\\"user ha",
+      "credits": 0
+    },
+    "artcraft_list_jobs": {
+      "status": "PASS",
+      "detail": "Found 0 jobs:",
+      "credits": 0
+    },
+    "artcraft_list_image_models": {
+      "status": "PASS",
+      "detail": "Available image models: - flux_1_dev - Fast open-source Flux - flux_1_schnell - Free fastest Flux - flux_pro_1p1 - Premium photorealis",
+      "credits": 0
+    },
+    "artcraft_list_video_models": {
+      "status": "PASS",
+      "detail": "Available video models: - minimax_h3 - MiniMax Hailuo H3 long video generation - minimax_h3_turbo - MiniMax H3 Turbo fast mode - minim",
+      "credits": 0
+    },
+    "artcraft_list_media_files": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 401 Unauthorized",
+      "credits": 0
+    },
+    "artcraft_search_media": {
+      "status": "PASS",
+      "detail": "No media files found matching your search.",
+      "credits": 0
+    },
+    "artcraft_tts_search_models": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_list_voice_conversion_models": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_list_voices": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_list_characters": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_list_weights": {
+      "status": "PASS",
+      "detail": "No weights found.",
+      "credits": 0
+    },
+    "artcraft_search_weights": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 400 Bad Request",
+      "credits": 0
+    },
+    "artcraft_list_bookmarks": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_list_referral_codes": {
+      "status": "PASS",
+      "detail": "No referral codes found.",
+      "credits": 0
+    },
+    "artcraft_estimate_cost": {
+      "status": "PASS",
+      "detail": "Image cost estimate: Model: flux_1_dev Credits: 2 USD cents: 2 Free: false Unlimited: false Rate limited: false Watermark: fal",
+      "credits": 0
+    },
+    "artcraft_estimate_splat_cost": {
+      "status": "PASS",
+      "detail": "Splat cost estimate: Model: marble_0p1_mini Credits: 18 USD cents: 18 Free: false Unlimited: false Rate limited: false Waterma",
+      "credits": 0
+    },
+    "artcraft_get_weight": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_get_character": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_get_prompt": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_get_job_status": {
+      "status": "PASS",
+      "detail": "Job ij_nonexistent not found in session jobs.",
+      "credits": 0
+    },
+    "artcraft_upload_image": {
+      "status": "PASS",
+      "detail": "Image uploaded successfully. Media token: [redacted]",
+      "credits": 0
+    },
+    "artcraft_upload_video": {
+      "status": "PASS",
+      "detail": "Video uploaded successfully. Media token: [redacted]",
+      "credits": 0
+    },
+    "artcraft_upload_audio": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 415 Unsupported Media Type",
+      "credits": 0
+    },
+    "artcraft_generate_image": {
+      "status": "PASS",
+      "detail": "Image generation queued successfully. Job token: [redacted] Status: success Poll for results using artcraft_get_job_s",
+      "credits": 0
+    },
+    "artcraft_get_media_file": {
+      "status": "PASS",
+      "detail": "Media file details: Token: [redacted] Title: (untitled) Type: jpg Class: image Created: 2026-11-26 04:22:01",
+      "credits": 0
+    },
+    "artcraft_rename_media_file": {
+      "status": "PASS",
+      "detail": "Media file m_zz34yfvxfxebnj5fh4zhp60hn0qpac renamed to 'e2e-test-harness image'.",
+      "credits": 0
+    },
+    "artcraft_rate_media": {
+      "status": "FAIL",
+      "detail": "Error: rating is required",
+      "credits": 0
+    },
+    "artcraft_set_tags": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 405 Method Not Allowed",
+      "credits": 0
+    },
+    "artcraft_list_tags": {
+      "status": "PASS",
+      "detail": "No tags found.",
+      "credits": 0
+    },
+    "artcraft_set_media_visibility": {
+      "status": "PASS",
+      "detail": "Media file m_zz34yfvxfxebnj5fh4zhp60hn0qpac visibility set to private.",
+      "credits": 0
+    },
+    "artcraft_list_comments": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_download_media_file": {
+      "status": "PASS",
+      "detail": "Media file downloaded successfully. Token: [redacted] Saved to: C:\\Windows\\TEMP\\artcraft-e2e-tkpsw_mb\\dl.png Size: 266",
+      "credits": 0
+    },
+    "artcraft_edit_image": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_inpaint_image": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_edit_image_angle": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_remove_background": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_tts_generate": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_generate_audio": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_generate_video": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_create_voice_dataset": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_upload_voice_sample": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_create_voice": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_voice_convert": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_edit_video": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_studio_gen2": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_generate_3d_object": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_generate_splat": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_create_prompt": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_create_bookmark": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_create_comment": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_create_referral_code": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_create_checkout_session": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_create_subscription_checkout": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_create_character": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_delete_character": {
+      "status": "SKIP",
+      "detail": "paid phase not enabled",
+      "credits": 0
+    },
+    "artcraft_terminate_job": {
+      "status": "PASS",
+      "detail": "Terminate job not yet implemented in MCP server.",
+      "credits": 0
+    },
+    "artcraft_delete_weight": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_delete_media_file": {
+      "status": "PASS",
+      "detail": "deleted 4 self-created media files",
+      "credits": 0
+    },
+    "artcraft_get_credits": {
+      "status": "SKIP",
+      "detail": "no test coverage",
+      "credits": 0
+    }
+  },
+  "summary": {
+    "pass": 21,
+    "fail": 16,
+    "skip": 24
+  }
+}

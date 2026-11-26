@@ -1,0 +1,1158 @@
+{
+ "/v1/accounts/google_sso": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/users/google_sso/google_sso_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_routes.rs"
+ ],
+ "/v1/analytics": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/analytics_routes.rs"
+ ],
+ "/v1/analytics/active_user": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/analytics/log_active_user.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/analytics/log_app_active_user_handler.rs"
+ ],
+ "/v1/analytics/active_user_v2": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/analytics/log_active_user.rs",
+  "crates/api_clients/artcraft/artcraft_client/src/utils/basic_json_post_request.rs"
+ ],
+ "/v1/analytics/log_session": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/analytics/log_browser_session_handler.rs"
+ ],
+ "/v1/animation/face_animation/create": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/add_legacy_routes.rs"
+ ],
+ "/v1/animation/rerender/create": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/add_legacy_routes.rs"
+ ],
+ "/v1/api_keys": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/api_keys_routes.rs"
+ ],
+ "/v1/api_keys/create": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/api_keys/create_api_key_handler.rs"
+ ],
+ "/v1/api_keys/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/api_keys/list_api_keys_handler.rs"
+ ],
+ "/v1/api_keys/{api_key_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/api_keys/delete_api_key_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/api_keys/get_api_key_handler.rs"
+ ],
+ "/v1/app_state": [
+  "crates/service/web/dummy_service/src/main.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/app_state/get_app_state_handler.rs"
+ ],
+ "/v1/beta_keys": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/beta_key_routes.rs"
+ ],
+ "/v1/beta_keys/create": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/beta_keys/create_beta_keys_handler.rs"
+ ],
+ "/v1/beta_keys/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/beta_keys/list_beta_keys_handler.rs"
+ ],
+ "/v1/beta_keys/redeem": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/beta_keys/redeem_beta_key_handler.rs"
+ ],
+ "/v1/beta_keys/{token}/distributed": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/beta_keys/edit_beta_key_distributed_flag_handler.rs"
+ ],
+ "/v1/beta_keys/{token}/note": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/beta_keys/edit_beta_key_note_handler.rs"
+ ],
+ "/v1/billing/active_subscriptions": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/billing_fakeyou/list_active_user_subscriptions_handler.rs"
+ ],
+ "/v1/billing/stripe/checkout/create_redirect": [
+  "crates/service/plugins/billing/src/stripe/http_endpoints/checkout/create/stripe_create_checkout_session_json_handler.rs"
+ ],
+ "/v1/category": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/add_legacy_routes.rs"
+ ],
+ "/v1/character/create": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/characters/create_character_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/character_routes.rs"
+ ],
+ "/v1/character/edit": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/characters/edit_character_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/character_routes.rs"
+ ],
+ "/v1/character/{character_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/characters/delete_character_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/characters/get_character_handler.rs"
+ ],
+ "/v1/characters/session": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/characters/list_characters_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/character_routes.rs"
+ ],
+ "/v1/comments/delete/{comment_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/comments/delete_comment_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/comments_routes.rs"
+ ],
+ "/v1/comments/list/{entity_type}/{entity_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/comments/list_comments_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/comments_routes.rs"
+ ],
+ "/v1/comments/new": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/comments/create_comment_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/comments_routes.rs"
+ ],
+ "/v1/conversion/enqueue_bvh_to_workflow": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/add_legacy_routes.rs"
+ ],
+ "/v1/conversion/enqueue_fbx_to_gltf": [
+  "crates/service/web/storyteller_web/src/http_server/deprecated_endpoints/conversion/enqueue_fbx_to_gltf_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/add_legacy_routes.rs"
+ ],
+ "/v1/conversion/enqueue_render_engine_scene": [
+  "crates/service/web/storyteller_web/src/http_server/deprecated_endpoints/conversion/enqueue_render_engine_scene_to_video_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/add_legacy_routes.rs"
+ ],
+ "/v1/craft_apps": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/craft_apps_routes.rs"
+ ],
+ "/v1/craft_apps/release_info": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/craft_apps/get_craft_apps_release_info_handler.rs"
+ ],
+ "/v1/create_account": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/users/create_account_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_routes.rs"
+ ],
+ "/v1/credits": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/credits_routes.rs"
+ ],
+ "/v1/credits/namespace/{namespace}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/credits/get_session_credits_handler.rs"
+ ],
+ "/v1/credits/namespace/{}": [
+  "crates/api_clients/artcraft/artcraft_client/src/endpoints/credits/get_session_credits.rs"
+ ],
+ "/v1/dev": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/dev_routes.rs"
+ ],
+ "/v1/dev/basic_input_error": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/dev/dev_basic_input_error_handler.rs"
+ ],
+ "/v1/dev/input_error": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/dev/dev_input_error_handler.rs"
+ ],
+ "/v1/featured_item": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/featured_item_routes.rs"
+ ],
+ "/v1/featured_item/create": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/featured_items/create_featured_item_handler.rs"
+ ],
+ "/v1/featured_item/delete": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/featured_items/delete_featured_item_handler.rs"
+ ],
+ "/v1/featured_item/is_featured/{entity_type}/{entity_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/featured_items/get_is_featured_item_handler.rs"
+ ],
+ "/v1/folders": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/folders_routes.rs"
+ ],
+ "/v1/folders/create": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/folder/create_folder_handler.rs"
+ ],
+ "/v1/folders/folder/{folder_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/folder/delete_folder_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/folder/get_folder_handler.rs"
+ ],
+ "/v1/folders/folder/{folder_token}/color_code": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/folder/color_code_folder_handler.rs"
+ ],
+ "/v1/folders/folder/{folder_token}/cover_image": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/folder/cover_image_folder_handler.rs"
+ ],
+ "/v1/folders/folder/{folder_token}/rename": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/folder/rename_folder_handler.rs"
+ ],
+ "/v1/folders/folder/{folder_token}/star": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/folder/star_folder_handler.rs"
+ ],
+ "/v1/folders/list_all": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/folder/list_folders_handler.rs"
+ ],
+ "/v1/folders/media_files/{folder_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/media_files/list_folder_media_files_handler.rs"
+ ],
+ "/v1/folders/media_files/{folder_token}/bulk_add": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/media_files/bulk_add_folder_media_files_handler.rs"
+ ],
+ "/v1/folders/media_files/{folder_token}/bulk_move": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/media_files/bulk_move_folder_media_files_handler.rs"
+ ],
+ "/v1/folders/media_files/{folder_token}/bulk_remove": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/media_files/bulk_remove_folder_media_files_handler.rs"
+ ],
+ "/v1/folders/media_files_without_folder": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/media_files/list_media_files_without_folder_handler.rs"
+ ],
+ "/v1/folders/subfolders/{folder_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/subfolder/list_subfolders_handler.rs"
+ ],
+ "/v1/folders/subfolders/{folder_token}/bulk_add": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/subfolder/bulk_add_subfolders_handler.rs"
+ ],
+ "/v1/folders/subfolders/{folder_token}/bulk_remove": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/folders/subfolder/bulk_remove_subfolders_handler.rs"
+ ],
+ "/v1/generate": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/generate_routes.rs"
+ ],
+ "/v1/generate/cost_estimate/image": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/cost_estimate/estimate_image_cost.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/cost_estimate/image/estimate_image_cost_handler.rs"
+ ],
+ "/v1/generate/cost_estimate/splat": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/cost_estimate/estimate_splat_cost.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/cost_estimate/splat/estimate_splat_cost_handler.rs"
+ ],
+ "/v1/generate/cost_estimate/video": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/cost_estimate/estimate_video_cost.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/cost_estimate/video/estimate_video_cost_handler.rs"
+ ],
+ "/v1/generate/image/angle/flux_2_lora": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/angle/flux_2_lora_edit_image_angle.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/angle/flux_2_lora_edit_image_angle_handler.rs"
+ ],
+ "/v1/generate/image/angle/qwen_edit_2511": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/angle/qwen_edit_2511_edit_image_angle.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/angle/qwen_edit_2511_edit_image_angle_handler.rs"
+ ],
+ "/v1/generate/image/edit/flux_pro_kontext_max": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/edit/flux_pro_kontext_max_edit_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/edit/flux_pro_kontext_max_edit_image_handler.rs"
+ ],
+ "/v1/generate/image/edit/gemini_25_flash": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/edit/gemini_25_flash_edit_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/edit/gemini_25_flash_edit_image_handler.rs"
+ ],
+ "/v1/generate/image/edit/gpt_image_1": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/edit/gpt_image_1_edit_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/edit/gpt_image_1_edit_image_handler.rs"
+ ],
+ "/v1/generate/image/edit/qwen": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/edit/qwen_edit_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/edit/qwen_edit_image_handler.rs"
+ ],
+ "/v1/generate/image/edit/seededit_3": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/edit/seededit_3_edit_image.rs"
+ ],
+ "/v1/generate/image/flux_1_dev_text_to_image": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/text/generate_flux_1_dev_text_to_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/text/generate_flux_1_dev_text_to_image_handler.rs"
+ ],
+ "/v1/generate/image/flux_1_schnell_text_to_image": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/text/generate_flux_1_schnell_text_to_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/text/generate_flux_1_schnell_text_to_image_handler.rs"
+ ],
+ "/v1/generate/image/flux_pro_1.1_text_to_image": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/text/generate_flux_pro_11_text_to_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/text/generate_flux_pro_11_text_to_image_handler.rs"
+ ],
+ "/v1/generate/image/flux_pro_1.1_ultra_text_to_image": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/text/generate_flux_pro_11_ultra_text_to_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/text/generate_flux_pro_11_ultra_text_to_image_handler.rs"
+ ],
+ "/v1/generate/image/gemini_25_flash": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/text/gemini_25_flash_text_to_image.rs"
+ ],
+ "/v1/generate/image/gpt_image_1_text_to_image": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/text/generate_gpt_image_1_text_to_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/text/generate_gpt_image_1_text_to_image_handler.rs"
+ ],
+ "/v1/generate/image/inpaint/flux_dev_juggernaut": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/inpaint/flux_dev_juggernaut_inpaint_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/inpaint/flux_dev_juggernaut_inpaint_handler.rs"
+ ],
+ "/v1/generate/image/inpaint/flux_pro_1": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/inpaint/flux_pro_1_inpaint_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/inpaint/flux_pro_1_inpaint_handler.rs"
+ ],
+ "/v1/generate/image/multi_function/bytedance_seedream_4": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/multi_function/bytedance_seedream_v4_multi_function_image_gen.rs"
+ ],
+ "/v1/generate/image/multi_function/bytedance_seedream_4p5": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/multi_function/bytedance_seedream_v4p5_multi_function_image_gen.rs"
+ ],
+ "/v1/generate/image/multi_function/bytedance_seedream_5_lite": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/multi_function/bytedance_seedream_5_lite_multi_function_image_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/multi_function/bytedance_seedream_5_lite_multi_function_image_gen_handler.rs"
+ ],
+ "/v1/generate/image/multi_function/bytedance_seedream_v4": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/multi_function/bytedance_seedream_v4_multi_function_image_gen_handler.rs"
+ ],
+ "/v1/generate/image/multi_function/bytedance_seedream_v4p5": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/multi_function/bytedance_seedream_v4p5_multi_function_image_gen_handler.rs"
+ ],
+ "/v1/generate/image/multi_function/gpt_image_1p5": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/multi_function/gpt_image_1p5_multi_function_image_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/multi_function/gpt_image_1p5_multi_function_image_gen_handler.rs"
+ ],
+ "/v1/generate/image/multi_function/nano_banana": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/multi_function/nano_banana_multi_function_image_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/multi_function/nano_banana_multi_function_image_gen_handler.rs"
+ ],
+ "/v1/generate/image/multi_function/nano_banana_2": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/multi_function/nano_banana_2_multi_function_image_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/multi_function/nano_banana_2_multi_function_image_gen_handler.rs"
+ ],
+ "/v1/generate/image/multi_function/nano_banana_pro": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/multi_function/nano_banana_pro_multi_function_image_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/multi_function/nano_banana_pro_multi_function_image_gen_handler.rs"
+ ],
+ "/v1/generate/image/remove_background": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/image/bg_removal/remove_image_background.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/image/bg_removal/remove_image_background_handler.rs"
+ ],
+ "/v1/generate/object/hunyuan_2.0_image_to_3d": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/object/generate_hunyuan_2_0_image_to_3d.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/object/generate_hunyuan_2_0_image_to_3d_handler.rs"
+ ],
+ "/v1/generate/object/hunyuan_2.1_image_to_3d": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/object/generate_hunyuan_2_1_image_to_3d.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/object/generate_hunyuan_2_1_image_to_3d_handler.rs"
+ ],
+ "/v1/generate/object/multi_function/hunyuan3d_v3": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/object/multi_function/hunyuan3d_v3_multi_function_object_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/object/multi_function/generate_hunyuan3d_v3_multi_function_object_handler.rs"
+ ],
+ "/v1/generate/splat/worldlabs_marble_0p1_mini": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/splat/generate_worldlabs_marble_0p1_mini_splat.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/splat/generate_worldlabs_marble_0p1_mini_splat_handler.rs"
+ ],
+ "/v1/generate/splat/worldlabs_marble_0p1_plus": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/splat/generate_worldlabs_marble_0p1_plus_splat.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/splat/generate_worldlabs_marble_0p1_plus_splat_handler.rs"
+ ],
+ "/v1/generate/video/edit/beeble_switchx": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/edit/beeble_switchx_edit_video.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/edit/beeble_switchx_edit_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/kling_1.6_pro_image_to_video": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/generate_kling_1_6_pro_image_to_video.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/image/generate_kling_1_6_pro_video_handler.rs"
+ ],
+ "/v1/generate/video/kling_2.1_master_image_to_video": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/generate_kling_2_1_master_image_to_video.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/image/generate_kling_2_1_master_video_handler.rs"
+ ],
+ "/v1/generate/video/kling_2.1_pro_image_to_video": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/generate_kling_2_1_pro_image_to_video.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/image/generate_kling_2_1_pro_video_handler.rs"
+ ],
+ "/v1/generate/video/multi_function/kling_2p5_turbo_pro": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/multi_function/kling_2_5_turbo_multi_function_video_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/multi_function/kling_2p5_turbo_pro_multi_function_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/multi_function/kling_2p6_pro": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/multi_function/kling_2_6_multi_function_video_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/multi_function/kling_2p6_pro_multi_function_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/multi_function/kling_3p0_pro": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/multi_function/kling_3p0_pro_multi_function_video_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/multi_function/kling_3p0_pro_multi_function_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/multi_function/kling_3p0_standard": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/multi_function/kling_3p0_standard_multi_function_video_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/multi_function/kling_3p0_standard_multi_function_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/multi_function/seedance_1p5_pro": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/multi_function/seedance_1p5_pro_multi_function_video_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/multi_function/seedance_1p5_pro_multi_function_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/multi_function/seedance_2p0": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/multi_function/seedance_2p0_multi_function_video_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/multi_function/seedance_2p0_multi_function_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/multi_function/sora_2": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/multi_function/sora_2_multi_function_video_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/multi_function/sora_2_multi_function_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/multi_function/sora_2_pro": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/multi_function/sora_2_pro_multi_function_video_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/multi_function/sora_2_pro_multi_function_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/multi_function/veo_3p1": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/multi_function/veo_3p1_multi_function_video_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/multi_function/veo_3p1_multi_function_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/multi_function/veo_3p1_fast": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/multi_function/veo_3p1_fast_multi_function_video_gen.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/multi_function/veo_3p1_fast_multi_function_video_gen_handler.rs"
+ ],
+ "/v1/generate/video/seedance_1.0_lite_image_to_video": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/generate_seedance_1_0_lite_image_to_video.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/image/generate_seedance_1_0_lite_image_to_video_handler.rs"
+ ],
+ "/v1/generate/video/seedance_1.0_pro_image_to_video": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/generate_seedance_1_0_pro_image_to_video.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/image/generate_seedance_1_0_pro_image_to_video_handler.rs"
+ ],
+ "/v1/generate/video/veo_2_image_to_video": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/generate_veo_2_image_to_video.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/image/generate_veo_2_image_to_video_handler.rs"
+ ],
+ "/v1/generate/video/veo_3_fast_image_to_video": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/generate_veo_3_fast_image_to_video.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/image/generate_veo_3_fast_image_to_video_handler.rs"
+ ],
+ "/v1/generate/video/veo_3_image_to_video": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/generate/video/generate_veo_3_image_to_video.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/generate/video/image/generate_veo_3_image_to_video_handler.rs"
+ ],
+ "/v1/image_studio": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/image_studio_routes.rs"
+ ],
+ "/v1/image_studio/scene_snapshot": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/image_studio/upload/upload_snapshot_media_file_handler.rs"
+ ],
+ "/v1/image_studio/update_job_status": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/image_studio/update_gpt_image_job_status_handler.rs"
+ ],
+ "/v1/internal": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/internal_routes.rs"
+ ],
+ "/v1/internal/minimax_jobs/job/{job_token}/failure": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/internal/minimax_jobs/mark_minimax_job_failure_handler.rs"
+ ],
+ "/v1/internal/minimax_jobs/job/{job_token}/success": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/internal/minimax_jobs/mark_minimax_job_success_handler.rs"
+ ],
+ "/v1/internal/minimax_jobs/obtain_job": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/internal/minimax_jobs/obtain_minimax_job_handler.rs"
+ ],
+ "/v1/jobs": [
+  "crates/lib/pager/src/notification/generate_deduplication_key.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/job_routes.rs"
+ ],
+ "/v1/jobs/batch": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/inference_job/get/batch_get_inference_job_status_handler.rs"
+ ],
+ "/v1/jobs/job/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/inference_job/delete/terminate_inference_job_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/inference_job/get/get_inference_job_status_handler.rs"
+ ],
+ "/v1/jobs/session": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/jobs/list_session_jobs.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/inference_job/list/list_session_jobs_handler.rs"
+ ],
+ "/v1/jobs/session/dismiss_finished": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/inference_job/delete/dismiss_finished_session_jobs_handler.rs"
+ ],
+ "/v1/login": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/users/login_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_routes.rs"
+ ],
+ "/v1/login_challenges": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/login_challenges/handlers.rs"
+ ],
+ "/v1/login_challenges/create": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/login_challenges/handlers.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/login_challenges/tests.rs"
+ ],
+ "/v1/login_challenges/decide": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/login_challenges/handlers.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/login_challenges/tests.rs"
+ ],
+ "/v1/login_challenges/poll": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/login_challenges/handlers.rs"
+ ],
+ "/v1/login_challenges/review": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/login_challenges/handlers.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/login_challenges/tests.rs"
+ ],
+ "/v1/login_challenges/{action}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/login_challenges/endpoint_integration_tests.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/login_challenges/tests.rs"
+ ],
+ "/v1/logout": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/users/logout_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_routes.rs"
+ ],
+ "/v1/mcp/session": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/mcp_session_routes.rs"
+ ],
+ "/v1/mcp/session/create": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/mcp_sessions/create_mcp_session_handler.rs"
+ ],
+ "/v1/mcp/session/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/mcp_sessions/list_mcp_sessions_handler.rs"
+ ],
+ "/v1/mcp/session/refresh": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/mcp_sessions/refresh_mcp_session_handler.rs"
+ ],
+ "/v1/mcp/session/revoke": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/mcp_sessions/revoke_mcp_session_handler.rs"
+ ],
+ "/v1/mcp/session/{token}/delete": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/mcp_sessions/delete_mcp_session_handler.rs"
+ ],
+ "/v1/media_files": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/media_files_routes.rs"
+ ],
+ "/v1/media_files/animation_type/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/edit/change_media_file_animation_type_handler.rs"
+ ],
+ "/v1/media_files/batch": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/get/batch_get_media_files_handler.rs"
+ ],
+ "/v1/media_files/batch/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/list/list_media_files_by_batch_token_handler.rs"
+ ],
+ "/v1/media_files/batch_gen_redux": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/list_batch_generated_media_files.rs"
+ ],
+ "/v1/media_files/batch_gen_redux/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/list/list_batch_generated_redux_media_files_handler.rs"
+ ],
+ "/v1/media_files/by_job/{job_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/job/list_media_files_by_job_handler.rs"
+ ],
+ "/v1/media_files/cover_image/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/edit/set_media_file_cover_image_handler.rs"
+ ],
+ "/v1/media_files/engine_category/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/edit/change_media_file_engine_category_handler.rs"
+ ],
+ "/v1/media_files/file/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/delete/delete_media_file_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/get/get_media_file_handler.rs"
+ ],
+ "/v1/media_files/file/{}": [
+  "crates/api_clients/artcraft/artcraft_client/src/endpoints/media_files/delete_media_file.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_bookmarks_endpoint_tests.rs"
+ ],
+ "/v1/media_files/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/list/list_media_files_handler.rs"
+ ],
+ "/v1/media_files/list/user/{username}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/list/list_media_files_for_user_handler.rs"
+ ],
+ "/v1/media_files/list/user/{}": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_media_endpoint_tests.rs"
+ ],
+ "/v1/media_files/list_featured": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/list/list_featured_media_files_handler.rs"
+ ],
+ "/v1/media_files/list_pinned": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/list/list_pinned_media_files_handler.rs"
+ ],
+ "/v1/media_files/list_v2/user/{username}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/list/list_media_files_for_user_v2.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/list/list_media_files_for_user_v2_handler.rs"
+ ],
+ "/v1/media_files/list_v2/user/{}": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_media_endpoint_tests.rs"
+ ],
+ "/v1/media_files/mesh/list": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/list/by_type/list_session_mesh_media_files.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/list/by_type/list_session_mesh_media_files_handler.rs"
+ ],
+ "/v1/media_files/project/list": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/list_session_project_media_files.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/list/list_session_project_media_files_handler.rs"
+ ],
+ "/v1/media_files/rename/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/edit/rename_media_file_handler.rs"
+ ],
+ "/v1/media_files/search_featured": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/search/search_featured_media_files_handler.rs"
+ ],
+ "/v1/media_files/search_session": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/search/search_session_media_files_handler.rs"
+ ],
+ "/v1/media_files/splat/list": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/list/by_type/list_session_splat_media_files.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/list/by_type/list_session_splat_media_files_handler.rs"
+ ],
+ "/v1/media_files/upload": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_generic/upload_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/audio": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_audio_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/image": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_image_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/new_engine_asset": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_new_engine_asset_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/new_scene": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_new_scene_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/new_video": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_video_new/upload_new_video_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/pmx": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_pmx/upload_pmx_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/project/editor_2d/new": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/project/upload_new_editor_2d_project.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/project/upload_new_editor_2d_project_handler.rs"
+ ],
+ "/v1/media_files/upload/project/editor_2d/update/{token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/project/upload_updated_editor_2d_project.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/project/upload_updated_editor_2d_project_handler.rs"
+ ],
+ "/v1/media_files/upload/project/mood_board/new": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/project/upload_new_mood_board_project.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/project/upload_new_mood_board_project_handler.rs"
+ ],
+ "/v1/media_files/upload/project/mood_board/update/{token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/project/upload_updated_mood_board_project.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/project/upload_updated_mood_board_project_handler.rs"
+ ],
+ "/v1/media_files/upload/project/scene_3d/new": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/project/upload_new_scene_3d_project.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/project/upload_new_scene_3d_project_handler.rs"
+ ],
+ "/v1/media_files/upload/project/scene_3d/update/{token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/project/upload_updated_scene_3d_project.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/project/upload_updated_scene_3d_project_handler.rs"
+ ],
+ "/v1/media_files/upload/project/video_timeline/new": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/project/upload_new_video_timeline_project.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/project/upload_new_video_timeline_project_handler.rs"
+ ],
+ "/v1/media_files/upload/project/video_timeline/update/{token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/media_file/project/upload_updated_video_timeline_project.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/project/upload_updated_video_timeline_project_handler.rs"
+ ],
+ "/v1/media_files/upload/saved_scene/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_saved_scene_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/scene_snapshot": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_scene_snapshot_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/spz": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_spz_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/studio_shot": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_studio_shot/upload_studio_shot_media_file_handler.rs"
+ ],
+ "/v1/media_files/upload/video": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/upload/upload_video_old/upload_video_media_file_handler.rs"
+ ],
+ "/v1/media_files/visibility/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/media_files/edit/change_media_file_visibility_handler.rs"
+ ],
+ "/v1/media_uploads": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/add_legacy_routes.rs"
+ ],
+ "/v1/model_download": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/model_download_routes.rs"
+ ],
+ "/v1/model_download/gsv": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/model_download/enqueue_gptsovits_model_download_handler.rs"
+ ],
+ "/v1/model_inference/job/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/job_routes.rs"
+ ],
+ "/v1/model_inference/job_status/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/job_routes.rs"
+ ],
+ "/v1/model_inference/queue_length": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/job_routes.rs"
+ ],
+ "/v1/moderation": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/moderation_routes.rs"
+ ],
+ "/v1/moderation/alerts/send": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/alerts/moderation_send_alert.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/alerts/moderation_send_alert_handler.rs"
+ ],
+ "/v1/moderation/dashboards/databox": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/dashboards/moderator_list_databox_dashboards_handler.rs"
+ ],
+ "/v1/moderation/debug_logs/list/{token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/debug_logs/moderation_list_debug_logs_for_token.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/debug_logs/moderation_list_debug_logs_for_token_handler.rs"
+ ],
+ "/v1/moderation/debug_logs/list_all": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/debug_logs/moderation_list_all_debug_logs.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/debug_logs/moderation_list_all_debug_logs_handler.rs"
+ ],
+ "/v1/moderation/debug_logs/user_list/{user_token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/debug_logs/moderation_list_debug_logs_for_user.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/debug_logs/moderation_list_debug_logs_for_user_handler.rs"
+ ],
+ "/v1/moderation/job/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/jobs/moderation_get_job_by_token_handler.rs"
+ ],
+ "/v1/moderation/jobs/user/{user_token}/list": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/jobs/user/list_user_jobs.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/jobs/user/list_user_jobs_handler.rs"
+ ],
+ "/v1/moderation/staff_audit_logs/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/staff_audit_logs/moderator_list_staff_audit_logs_handler.rs"
+ ],
+ "/v1/moderation/token_info/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/info/moderator_token_info_handler.rs"
+ ],
+ "/v1/moderation/top_spenders/list": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/top_spenders/list.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/top_spenders/moderator_list_top_spenders_handler.rs"
+ ],
+ "/v1/moderation/user_daily_spends/user/{user_token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/user_daily_spends/user_daily_spends_list.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_daily_spends/moderator_user_daily_spends_handler.rs"
+ ],
+ "/v1/moderation/user_emails/change": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_emails/moderator_change_user_email_handler.rs"
+ ],
+ "/v1/moderation/user_emails/list/{username}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_emails/moderator_list_email_address_changes_for_user_handler.rs"
+ ],
+ "/v1/moderation/user_feature_flags/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_feature_flags/moderator_list_all_available_user_feature_flags_handler.rs"
+ ],
+ "/v1/moderation/user_feature_flags/user/{username_or_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_feature_flags/moderator_edit_user_feature_flags_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_feature_flags/moderator_list_user_feature_flags_handler.rs"
+ ],
+ "/v1/moderation/user_referrals/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_referrals/moderator_list_global_user_referrals_handler.rs"
+ ],
+ "/v1/moderation/user_referrals/user/{username}/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_referrals/moderator_list_user_referrals_for_user_handler.rs"
+ ],
+ "/v1/moderation/user_sessions/impersonate": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_sessions/moderator_user_session_impersonation_request_handler.rs"
+ ],
+ "/v1/moderation/user_sessions/impersonation_requests/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_sessions/moderator_list_user_session_impersonation_requests_handler.rs"
+ ],
+ "/v1/moderation/user_sessions/impersonation_requests/user/{user_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_sessions/moderator_list_user_session_impersonation_requests_for_user_handler.rs"
+ ],
+ "/v1/moderation/user_spend_events/list": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/user_spend_events/list.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_spend_events/moderator_list_user_spend_events_handler.rs"
+ ],
+ "/v1/moderation/user_spend_summaries/reengagement_list": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/user_spend_summaries/reengagement_list.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_spend_summaries/moderator_reengagement_list_handler.rs"
+ ],
+ "/v1/moderation/user_spend_summaries/summary/{user_token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/user_spend_summaries/get_summary.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_spend_summaries/moderator_get_user_spend_summary_handler.rs"
+ ],
+ "/v1/moderation/user_spend_summaries/top_users_list": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/user_spend_summaries/top_users_list.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_spend_summaries/moderator_top_users_list_handler.rs"
+ ],
+ "/v1/moderation/user_stripe_data/{user_token}/customer_ids": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/user_stripe_data/moderator_get_user_stripe_customer_ids.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user_stripe_data/moderator_get_user_stripe_customer_ids_handler.rs"
+ ],
+ "/v1/moderation/users/list_all_by_signup_date": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/user/list_users_by_signup_date.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user/moderator_list_users_by_signup_date.rs"
+ ],
+ "/v1/moderation/users/list_subscribers_by_signup_date": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/user/list_subscribing_users_by_signup_date.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user/moderator_list_subscribing_users_by_signup_date.rs"
+ ],
+ "/v1/moderation/users/lookup": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/user/user_lookup.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user/moderator_user_lookup_handler.rs"
+ ],
+ "/v1/moderation/users/lookup_by_stripe_customer_id": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/user/user_lookup_by_stripe_customer_id.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/user/moderator_user_lookup_by_stripe_customer_id_handler.rs"
+ ],
+ "/v1/moderation/wallet/create_for_user": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/wallets/moderator_create_wallet_for_user.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/wallets/moderator_create_wallet_for_user_handler.rs"
+ ],
+ "/v1/moderation/wallet/{wallet_token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/wallets/moderator_get_wallet.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/wallets/moderator_get_wallet_handler.rs"
+ ],
+ "/v1/moderation/wallet/{wallet_token}/add_banked_balance": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/wallets/moderator_add_banked_balance_to_wallet.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/wallets/moderator_add_banked_balance_to_wallet_handler.rs"
+ ],
+ "/v1/moderation/wallet_ledger_entries/wallet/{wallet_token}/list": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/wallet_ledger_entries/list_wallet_ledger_entries_by_wallet.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/wallet_ledger_entries/list_wallet_ledger_entries_by_wallet_handler.rs"
+ ],
+ "/v1/moderation/wallet_ledger_entry/{wallet_ledger_entry_token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/wallet_ledger_entries/moderator_get_wallet_ledger_entry.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/wallet_ledger_entries/moderator_get_wallet_ledger_entry_handler.rs"
+ ],
+ "/v1/moderation/wallets/user/{user_token}/list": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/moderation/wallets/list_user_wallets.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/moderation/wallets/list_user_wallets_handler.rs"
+ ],
+ "/v1/omni_api": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/omni_api_routes.rs"
+ ],
+ "/v1/omni_api/generate/image": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_api/generate/image/omni_api_image_generate_handler.rs"
+ ],
+ "/v1/omni_api/generate/video": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_api/generate/video/omni_api_video_generate_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/generate/video/tests/support.rs"
+ ],
+ "/v1/omni_api/job_status/batch": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_api/job_status/batch_get_job_status_handler.rs"
+ ],
+ "/v1/omni_api/job_status/job/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_api/job_status/get_job_status_handler.rs"
+ ],
+ "/v1/omni_api/upload/audio": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_api/upload/omni_upload_audio_media_file_handler.rs"
+ ],
+ "/v1/omni_api/upload/image": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_api/upload/omni_upload_image_media_file_handler.rs"
+ ],
+ "/v1/omni_api/upload/video": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_api/upload/omni_upload_video_media_file_handler.rs"
+ ],
+ "/v1/omni_gen": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/omni_gen_routes.rs"
+ ],
+ "/v1/omni_gen/cost/audio": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/cost/audio/omni_gen_audio_cost_handler.rs"
+ ],
+ "/v1/omni_gen/cost/image": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/cost/image/omni_gen_image_cost_handler.rs"
+ ],
+ "/v1/omni_gen/cost/mesh": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/cost/mesh/omni_gen_mesh_cost_handler.rs"
+ ],
+ "/v1/omni_gen/cost/splat": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/cost/splat/omni_gen_splat_cost_handler.rs"
+ ],
+ "/v1/omni_gen/cost/video": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/cost/video/omni_gen_video_cost_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/generate/video/tests/seedance_2p0/seedance_2p0_fast_tests.rs"
+ ],
+ "/v1/omni_gen/generate/audio": [
+  "crates/api_clients/artcraft/artcraft_client/src/endpoints/omni_gen/generate/audio/omni_gen_audio.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/generate/audio/omni_gen_audio_generate_handler.rs"
+ ],
+ "/v1/omni_gen/generate/image": [
+  "crates/api_clients/artcraft/artcraft_client/src/endpoints/omni_gen/generate/image/omni_gen_image.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/generate/image/omni_gen_image_generate_handler.rs"
+ ],
+ "/v1/omni_gen/generate/mesh": [
+  "crates/api_clients/artcraft/artcraft_client/src/endpoints/omni_gen/generate/mesh/omni_gen_mesh.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/generate/mesh/omni_gen_mesh_generate_handler.rs"
+ ],
+ "/v1/omni_gen/generate/splat": [
+  "crates/api_clients/artcraft/artcraft_client/src/endpoints/omni_gen/generate/splat/omni_gen_splat.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/generate/splat/omni_gen_splat_generate_handler.rs"
+ ],
+ "/v1/omni_gen/generate/video": [
+  "crates/api_clients/artcraft/artcraft_client/src/endpoints/omni_gen/generate/video/omni_gen_video.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/generate/video/omni_gen_video_generate_handler.rs"
+ ],
+ "/v1/omni_gen/models/audio": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/models/audio/omni_gen_audio_models_handler.rs"
+ ],
+ "/v1/omni_gen/models/image": [
+  "crates/api_clients/artcraft/artcraft_client/src/endpoints/omni_gen/models/image/omni_gen_list_image_models.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/models/image/omni_gen_image_models_handler.rs"
+ ],
+ "/v1/omni_gen/models/mesh": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/models/mesh/omni_gen_mesh_models_handler.rs"
+ ],
+ "/v1/omni_gen/models/splat": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/models/splat/omni_gen_splat_models_handler.rs"
+ ],
+ "/v1/omni_gen/models/video": [
+  "crates/api_clients/artcraft/artcraft_client/src/endpoints/omni_gen/models/video/omni_gen_list_video_models.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/omni_gen/models/video/omni_gen_video_models_handler.rs"
+ ],
+ "/v1/password_reset/redeem": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_routes.rs"
+ ],
+ "/v1/password_reset/request": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_routes.rs"
+ ],
+ "/v1/prompt/batch": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/prompts/batch_get_prompts.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/prompts/batch_get_prompts_handler.rs"
+ ],
+ "/v1/prompts/create": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/prompts/create_prompt.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/prompts/create_prompt_handler.rs"
+ ],
+ "/v1/prompts/{token}": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/prompts/get_prompt.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/prompts/get_prompt_handler.rs"
+ ],
+ "/v1/remote_download/enqueue": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/add_legacy_routes.rs"
+ ],
+ "/v1/remote_download/job_status/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/add_legacy_routes.rs"
+ ],
+ "/v1/session": [
+  "crates/lib/actix_cors_configs/src/configs/artcraft_desktop.rs",
+  "crates/lib/actix_cors_configs/src/configs/tauri.rs"
+ ],
+ "/v1/session_token": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/users/session_token_info_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_routes.rs"
+ ],
+ "/v1/stats/queues": [
+  "crates/service/web/dummy_service/src/main.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/stats/get_unified_queue_stats_handler.rs"
+ ],
+ "/v1/status_alert_check": [
+  "crates/service/web/dummy_service/src/main.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/service/status_alert_handler.rs"
+ ],
+ "/v1/stripe_artcraft": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/stripe_artcraft_routes.rs"
+ ],
+ "/v1/stripe_artcraft/checkout/create_subscription": [
+  "crates/service/plugins/billing_artcraft/src/endpoints/checkout/stripe_artcraft_create_subscription_checkout_handler.rs"
+ ],
+ "/v1/stripe_artcraft/checkout/credits_pack": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/stripe_artcraft/create_credits_pack_checkout.rs",
+  "crates/service/plugins/billing_artcraft/src/endpoints/checkout/stripe_artcraft_create_credits_pack_checkout_handler.rs"
+ ],
+ "/v1/stripe_artcraft/checkout/subscription": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/stripe_artcraft/create_subscription_checkout.rs"
+ ],
+ "/v1/stripe_artcraft/portal/cancel_plan": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/stripe_artcraft/customer_portal_cancel_plan.rs"
+ ],
+ "/v1/stripe_artcraft/portal/manage_plan": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/stripe_artcraft/customer_portal_manage_plan.rs"
+ ],
+ "/v1/stripe_artcraft/portal/switch_plan": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/stripe_artcraft/customer_portal_switch_plan.rs"
+ ],
+ "/v1/stripe_artcraft/portal/update_payment_method": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/stripe_artcraft/customer_portal_update_payment_method.rs"
+ ],
+ "/v1/stripe_artcraft/user_signup/subscription_checkout": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/stripe_artcraft/create_create_new_user_account_and_subscription_checkout.rs"
+ ],
+ "/v1/stripe_artcraft/user_signup_subscription_checkout": [
+  "crates/service/plugins/billing_artcraft/src/endpoints/checkout_with_user_signup/stripe_artcraft_create_subscription_checkout_with_user_signup_handler.rs"
+ ],
+ "/v1/stripe_artcraft/webhook": [
+  "crates/service/plugins/billing_artcraft/src/endpoints/webhook/stripe_artcraft_webhook_handler.rs"
+ ],
+ "/v1/subscriptions": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/subscription_routes.rs"
+ ],
+ "/v1/subscriptions/namespace/{namespace}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/subscriptions/get_session_subscription_handler.rs"
+ ],
+ "/v1/subscriptions/namespace/{}": [
+  "crates/api_clients/artcraft/artcraft_client/src/endpoints/subscriptions/get_session_subscription.rs"
+ ],
+ "/v1/tags": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/tag_routes.rs"
+ ],
+ "/v1/tags/bulk_add": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/bulk_add_tags_handler.rs"
+ ],
+ "/v1/tags/bulk_set": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/bulk_set_tags_handler.rs"
+ ],
+ "/v1/tags/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/list_tags_handler.rs"
+ ],
+ "/v1/tags/media_file/add/{media_file_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/add_media_file_tags_handler.rs"
+ ],
+ "/v1/tags/media_file/clear/{media_file_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/clear_media_file_tags_handler.rs"
+ ],
+ "/v1/tags/media_file/list/{media_file_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/list_media_file_tags_handler.rs"
+ ],
+ "/v1/tags/media_file/set/{media_file_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/set_media_file_tags_handler.rs"
+ ],
+ "/v1/tags/media_files/bulk_list_tags": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/bulk_list_media_file_tags_handler.rs"
+ ],
+ "/v1/tags/media_files/list_tagged": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/list_tagged_media_files_handler.rs"
+ ],
+ "/v1/tags/media_files/list_untagged": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/list_untagged_media_files_handler.rs"
+ ],
+ "/v1/tags/media_files/with_tag/{tag_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/list_media_files_with_tag_handler.rs"
+ ],
+ "/v1/tags/rename/{tag_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/rename_tag_handler.rs"
+ ],
+ "/v1/tags/{tag_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tags/delete_tag_handler.rs"
+ ],
+ "/v1/test": [
+  "crates/api_clients/artcraft/artcraft_client/src/utils/basic_query_string_post_request.rs"
+ ],
+ "/v1/trending": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/add_legacy_routes.rs"
+ ],
+ "/v1/tts/inference": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/tts/enqueue_infer_tts_handler/enqueue_infer_tts_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/tts_routes.rs"
+ ],
+ "/v1/user": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_routes.rs"
+ ],
+ "/v1/user/change_password": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/users/change_password_handler.rs"
+ ],
+ "/v1/user/edit_email": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/users/edit_email_handler.rs"
+ ],
+ "/v1/user/edit_username": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/users/edit_username_handler.rs"
+ ],
+ "/v1/user/{username}/profile": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/users/get_profile_handler.rs"
+ ],
+ "/v1/user_bookmarks/batch": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_bookmarks/batch_get_user_bookmarks_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_bookmarks_routes.rs"
+ ],
+ "/v1/user_bookmarks/create": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_bookmarks/create_user_bookmark_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_bookmarks_endpoint_tests.rs"
+ ],
+ "/v1/user_bookmarks/delete/{bookmark_token}": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_bookmarks_endpoint_tests.rs"
+ ],
+ "/v1/user_bookmarks/delete/{user_bookmark_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_bookmarks/delete_user_bookmark_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_bookmarks_routes.rs"
+ ],
+ "/v1/user_bookmarks/list/entity/{entity_type}/{entity_token}": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_bookmarks_routes.rs"
+ ],
+ "/v1/user_bookmarks/list/session": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_bookmarks_routes.rs"
+ ],
+ "/v1/user_bookmarks/list/user/{username}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_bookmarks/list_user_bookmarks_for_user_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_bookmarks_routes.rs"
+ ],
+ "/v1/user_bookmarks/list/{entity_type}/{entity_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_bookmarks/list_user_bookmarks_for_entity_handler.rs"
+ ],
+ "/v1/user_rating": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_rating_routes.rs"
+ ],
+ "/v1/user_rating/batch": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_ratings/batch_get_user_rating_handler.rs"
+ ],
+ "/v1/user_rating/rate": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_ratings/set_user_rating_handler.rs"
+ ],
+ "/v1/user_rating/view/{entity_type}/{entity_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_ratings/get_user_rating_handler.rs"
+ ],
+ "/v1/user_referral_codes/code/{token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_referral_codes/delete_referral_code_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_referral_code_routes.rs"
+ ],
+ "/v1/user_referral_codes/create": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_referral_codes/create_referral_code_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_referral_code_routes.rs"
+ ],
+ "/v1/user_referral_codes/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_referral_codes/list_referral_codes_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/user_referral_code_routes.rs"
+ ],
+ "/v1/users": [
+  "crates/lib/pager/src/notification/generate_deduplication_key.rs"
+ ],
+ "/v1/vc": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/desktop_vc_app_routes.rs"
+ ],
+ "/v1/video": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/workflow_routes.rs"
+ ],
+ "/v1/video/enqueue_vst": [
+  "crates/service/web/storyteller_web/src/http_server/deprecated_endpoints/workflows/enqueue_video_style_transfer_handler.rs"
+ ],
+ "/v1/video_info": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/video_info_routes.rs"
+ ],
+ "/v1/video_info/notes": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/video_info/video_info_notes_handler.rs"
+ ],
+ "/v1/video_info/read_only": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/video_info/video_info_read_info_handler.rs"
+ ],
+ "/v1/video_info/upload": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/video_info/video_info_upload_handler.rs"
+ ],
+ "/v1/wallets": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/wallet_routes.rs"
+ ],
+ "/v1/wallets/session_artcraft_wallet": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/user_wallets/get_or_create_session_artcraft_wallet_handler.rs"
+ ],
+ "/v1/web_referrals": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/web_referrals_routes.rs"
+ ],
+ "/v1/web_referrals/record": [
+  "crates/api_clients/artcraft/artcraft_api_defs/src/web_referrals/log_web_referral.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/web_referrals/log_web_referral_handler.rs"
+ ],
+ "/v1/webhooks": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/webhook_routes.rs"
+ ],
+ "/v1/weights": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/weights_routes.rs"
+ ],
+ "/v1/weights/by_user/{username}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/weights/list/list_weights_by_user_handler.rs"
+ ],
+ "/v1/weights/list": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/weights/list/list_available_weights_handler.rs"
+ ],
+ "/v1/weights/list_featured": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/weights/list/list_featured_weights_handler.rs"
+ ],
+ "/v1/weights/list_pinned": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/weights/list/list_pinned_weights_handler.rs"
+ ],
+ "/v1/weights/search": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/weights/search/search_model_weights_http_get_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/weights/search/search_model_weights_http_post_handler.rs"
+ ],
+ "/v1/weights/weight/{weight_token}": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/weights/delete/delete_weight_handler.rs",
+  "crates/service/web/storyteller_web/src/http_server/endpoints/weights/get/get_weight_handler.rs"
+ ],
+ "/v1/weights/weight/{weight_token}/cover_image": [
+  "crates/service/web/storyteller_web/src/http_server/endpoints/weights/update/set_model_weight_cover_image_handler.rs"
+ ],
+ "/v1/weights/weight/{}": [
+  "crates/service/web/storyteller_web/src/http_server/routes/application_routes/weights_delete_endpoint_tests.rs"
+ ],
+ "/v1/workflow": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/workflow_routes.rs"
+ ],
+ "/v1/workflows": [
+  "crates/service/web/storyteller_web/src/http_server/routes/legacy_routes/workflow_routes.rs"
+ ],
+ "/v1/workflows/enqueue_face_mirror": [
+  "crates/service/web/storyteller_web/src/http_server/deprecated_endpoints/workflows/enqueue/enqueue_live_portrait_workflow_handler.rs"
+ ],
+ "/v1/workflows/enqueue_lipsync": [
+  "crates/service/web/storyteller_web/src/http_server/deprecated_endpoints/workflows/enqueue/enqueue_face_fusion_workflow_handler.rs"
+ ],
+ "/v1/workflows/enqueue_studio": [
+  "crates/service/web/storyteller_web/src/http_server/deprecated_endpoints/workflows/enqueue/enqueue_studio_workflow_handler.rs"
+ ],
+ "/v1/workflows/enqueue_vst": [
+  "crates/service/web/storyteller_web/src/http_server/deprecated_endpoints/workflows/enqueue/enqueue_video_style_transfer_workflow_handler.rs"
+ ]
+}

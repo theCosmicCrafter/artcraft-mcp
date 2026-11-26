@@ -1,0 +1,318 @@
+{
+  "phases": "all",
+  "budget": 600,
+  "start_credits": 5352,
+  "measured_spend": 69,
+  "rows": {
+    "artcraft_get_credits": {
+      "status": "PASS",
+      "detail": "balance readable: 5352 banked",
+      "credits": 0
+    },
+    "artcraft_get_session_info": {
+      "status": "PASS",
+      "detail": "Session info: Logged in: true User: cosmiccrafter Display name: CosmicCrafter Token: [redacted]",
+      "credits": 0
+    },
+    "artcraft_get_subscription": {
+      "status": "PASS",
+      "detail": "No active subscription found.",
+      "credits": 0
+    },
+    "artcraft_get_billing_portal_url": {
+      "status": "FAIL",
+      "detail": "Error: Storyteller API error: InvalidRequest(\"{\\\"success\\\":false,\\\"error_code\\\":400,\\\"error_code_str\\\":\\\"Bad Request\\\",\\\"message\\\":\\\"user ha",
+      "credits": 0
+    },
+    "artcraft_list_jobs": {
+      "status": "PASS",
+      "detail": "Found 1 jobs: - jinf_cz2kexsfmy6sd6a2zt8rj732at6 | complete_success | 100% | image_generation | 2026-11-26 04:21:59 UTC",
+      "credits": 0
+    },
+    "artcraft_list_image_models": {
+      "status": "PASS",
+      "detail": "Available image models: - flux_1_dev - Fast open-source Flux - flux_1_schnell - Free fastest Flux - flux_pro_1p1 - Premium photorealis",
+      "credits": 0
+    },
+    "artcraft_list_video_models": {
+      "status": "PASS",
+      "detail": "Available video models: - minimax_h3 - MiniMax Hailuo H3 long video generation - minimax_h3_turbo - MiniMax H3 Turbo fast mode - minim",
+      "credits": 0
+    },
+    "artcraft_list_media_files": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 401 Unauthorized",
+      "credits": 0
+    },
+    "artcraft_search_media": {
+      "status": "PASS",
+      "detail": "No media files found matching your search.",
+      "credits": 0
+    },
+    "artcraft_tts_search_models": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_list_voice_conversion_models": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_list_voices": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_list_characters": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_list_weights": {
+      "status": "PASS",
+      "detail": "No weights found.",
+      "credits": 0
+    },
+    "artcraft_search_weights": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 400 Bad Request",
+      "credits": 0
+    },
+    "artcraft_list_bookmarks": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_list_referral_codes": {
+      "status": "PASS",
+      "detail": "No referral codes found.",
+      "credits": 0
+    },
+    "artcraft_estimate_cost": {
+      "status": "PASS",
+      "detail": "Image cost estimate: Model: flux_1_dev Credits: 2 USD cents: 2 Free: false Unlimited: false Rate limited: false Watermark: fal",
+      "credits": 0
+    },
+    "artcraft_estimate_splat_cost": {
+      "status": "PASS",
+      "detail": "Splat cost estimate: Model: marble_0p1_mini Credits: 18 USD cents: 18 Free: false Unlimited: false Rate limited: false Waterma",
+      "credits": 0
+    },
+    "artcraft_get_weight": {
+      "status": "PASS",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_get_character": {
+      "status": "PASS",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_get_prompt": {
+      "status": "PASS",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_get_job_status": {
+      "status": "PASS",
+      "detail": "Job ij_nonexistent not found in session jobs.",
+      "credits": 0
+    },
+    "artcraft_upload_image": {
+      "status": "PASS",
+      "detail": "Image uploaded successfully. Media token: [redacted]",
+      "credits": 0
+    },
+    "artcraft_upload_video": {
+      "status": "PASS",
+      "detail": "Video uploaded successfully. Media token: [redacted]",
+      "credits": 0
+    },
+    "artcraft_upload_audio": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 415 Unsupported Media Type",
+      "credits": 0
+    },
+    "artcraft_generate_image": {
+      "status": "PASS",
+      "detail": "Image generation queued successfully. Job token: [redacted] Status: success Poll for results using artcraft_get_job_s",
+      "credits": 0
+    },
+    "artcraft_get_media_file": {
+      "status": "PASS",
+      "detail": "Media file details: Token: [redacted] Title: (untitled) Type: jpg Class: image Created: 2026-11-26 04:23:15",
+      "credits": 0
+    },
+    "artcraft_rename_media_file": {
+      "status": "PASS",
+      "detail": "Media file m_na79wbng1nhe25002t73ce7yag8y0r renamed to 'e2e-test-harness image'.",
+      "credits": 0
+    },
+    "artcraft_rate_media": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_set_tags": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 405 Method Not Allowed",
+      "credits": 0
+    },
+    "artcraft_list_tags": {
+      "status": "PASS",
+      "detail": "No tags found.",
+      "credits": 0
+    },
+    "artcraft_set_media_visibility": {
+      "status": "PASS",
+      "detail": "Media file m_na79wbng1nhe25002t73ce7yag8y0r visibility set to private.",
+      "credits": 0
+    },
+    "artcraft_list_comments": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_download_media_file": {
+      "status": "PASS",
+      "detail": "Media file downloaded successfully. Token: [redacted] Saved to: C:\\Windows\\TEMP\\artcraft-e2e-6rpyhfl7\\dl.png Size: 278",
+      "credits": 0
+    },
+    "artcraft_edit_image": {
+      "status": "FAIL",
+      "detail": "Error: model is required",
+      "credits": 0
+    },
+    "artcraft_inpaint_image": {
+      "status": "FAIL",
+      "detail": "Error: Storyteller API error: InternalServerError { body: \"{\\\"success\\\":false,\\\"error_code\\\":500,\\\"error_code_str\\\":\\\"Internal Server Error\\",
+      "credits": 0
+    },
+    "artcraft_edit_image_angle": {
+      "status": "PASS",
+      "detail": "Angle edit queued successfully. Job token: [redacted] Status: success Poll for results using artcraft_get_job_status",
+      "credits": 2
+    },
+    "artcraft_remove_background": {
+      "status": "PASS",
+      "detail": "Background removal queued successfully. Job token: [redacted] Status: success Poll for results using artcraft_get_job",
+      "credits": 0
+    },
+    "artcraft_tts_generate": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_generate_audio": {
+      "status": "PASS",
+      "detail": "Audio generation queued successfully. Job token: [redacted] Status: success Poll for results using artcraft_get_job_s",
+      "credits": 8
+    },
+    "artcraft_generate_video": {
+      "status": "PASS",
+      "detail": "Video generation queued successfully. Job token: [redacted] Status: success Poll for results using artcraft_get_job_s",
+      "credits": 10
+    },
+    "artcraft_create_voice_dataset": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_upload_voice_sample": {
+      "status": "SKIP",
+      "detail": "no dataset token",
+      "credits": 0
+    },
+    "artcraft_create_voice": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_voice_convert": {
+      "status": "SKIP",
+      "detail": "no voice token or audio token",
+      "credits": 0
+    },
+    "artcraft_edit_video": {
+      "status": "FAIL",
+      "detail": "Error: Storyteller API error: InternalServerError { body: \"{\\\"success\\\":false,\\\"error_code\\\":500,\\\"error_code_str\\\":\\\"Internal Server Error\\",
+      "credits": 0
+    },
+    "artcraft_studio_gen2": {
+      "status": "FAIL",
+      "detail": "Error: image_media_token is required",
+      "credits": 0
+    },
+    "artcraft_generate_3d_object": {
+      "status": "PASS",
+      "detail": "3D object generation queued successfully. Job token: [redacted] Status: success Poll for results using artcraft_get_j",
+      "credits": 49
+    },
+    "artcraft_generate_splat": {
+      "status": "FAIL",
+      "detail": "Error: Storyteller API error: InternalServerError { body: \"{\\\"success\\\":false,\\\"error_code\\\":500,\\\"error_code_str\\\":\\\"Internal Server Error\\",
+      "credits": 0
+    },
+    "artcraft_create_prompt": {
+      "status": "PASS",
+      "detail": "Prompt created successfully. Token: [redacted] Text: e2e-test-harness artifact, ignore",
+      "credits": 0
+    },
+    "artcraft_create_bookmark": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 400 Bad Request",
+      "credits": 0
+    },
+    "artcraft_create_comment": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_create_referral_code": {
+      "status": "PASS",
+      "detail": "Referral code created successfully. Token: ?",
+      "credits": 0
+    },
+    "artcraft_create_checkout_session": {
+      "status": "PASS",
+      "detail": "Stripe credit pack checkout session created successfully. Direct checkout URL: https://checkout.stripe.com/g/pay/cs_live_bgHRlf06dSlJrPVyYqT",
+      "credits": 0
+    },
+    "artcraft_create_subscription_checkout": {
+      "status": "PASS",
+      "detail": "Stripe subscription checkout session created successfully. Direct checkout URL: https://checkout.stripe.com/g/pay/cs_live_bgbSd9UcDEPPyiFyNV",
+      "credits": 0
+    },
+    "artcraft_create_character": {
+      "status": "FAIL",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_delete_character": {
+      "status": "SKIP",
+      "detail": "character creation failed",
+      "credits": 0
+    },
+    "artcraft_terminate_job": {
+      "status": "PASS",
+      "detail": "Terminate job not yet implemented in MCP server.",
+      "credits": 0
+    },
+    "artcraft_delete_weight": {
+      "status": "PASS",
+      "detail": "Error: HTTP error: 404 Not Found",
+      "credits": 0
+    },
+    "artcraft_delete_media_file": {
+      "status": "PASS",
+      "detail": "deleted 4 self-created media files",
+      "credits": 0
+    }
+  },
+  "summary": {
+    "pass": 35,
+    "fail": 23,
+    "skip": 3
+  }
+}
