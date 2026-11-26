@@ -3,8 +3,11 @@
 //! Priority order:
 //! 1. `Authorization: Bearer` on the HTTP transport (remote/companion-brokered).
 //!    The bearer gates access; upstream credentials still resolve locally.
-//! 2. Environment: ARTCRAFT_SESSION + ARTCRAFT_AVT, or
-//!    ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN / ARTCRAFT_API_KEY as the session token.
+//! 2. Environment (in AGENTS.md priority order):
+//!    ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN, then ARTCRAFT_API_KEY, then
+//!    ARTCRAFT_SESSION + ARTCRAFT_AVT. Note: upstream artcraft_client has no
+//!    bearer/API-key auth type — all of these are session-equivalent tokens
+//!    and are sent as cookies, matching v1 behavior.
 //! 3. Files in ~/Artcraft/credentials/ (artcraft_session.txt, artcraft_avt.txt).
 //! 4. The ArtCraft desktop app's .cookies store (platform local data dir).
 //!
@@ -63,11 +66,13 @@ pub fn load_credentials() -> Option<StorytellerCredentialSet> {
 }
 
 fn load_credentials_from_env() -> Option<StorytellerCredentialSet> {
-    let session_val = std::env::var("ARTCRAFT_SESSION")
+    // AGENTS.md credential hierarchy: explicit integration credentials
+    // (private MCP token, API key) outrank the raw desktop session cookie.
+    let session_val = std::env::var("ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN")
         .ok()
         .filter(|v| !v.trim().is_empty())
-        .or_else(|| std::env::var("ARTCRAFT_MCP_PRIVATE_SESSION_TOKEN").ok().filter(|v| !v.trim().is_empty()))
-        .or_else(|| std::env::var("ARTCRAFT_API_KEY").ok().filter(|v| !v.trim().is_empty()));
+        .or_else(|| std::env::var("ARTCRAFT_API_KEY").ok().filter(|v| !v.trim().is_empty()))
+        .or_else(|| std::env::var("ARTCRAFT_SESSION").ok().filter(|v| !v.trim().is_empty()));
     let avt_val = std::env::var("ARTCRAFT_AVT").ok().filter(|v| !v.trim().is_empty());
 
     if session_val.is_none() && avt_val.is_none() {
