@@ -4,11 +4,12 @@ use serde_json::{json, Value};
 use artcraft_api_defs::generate::cost_estimate::estimate_image_cost::{
     EstimateImageCostRequest, GenerationMode as ImageGenerationMode,
 };
-use artcraft_api_defs::generate::cost_estimate::estimate_splat_cost::EstimateSplatCostRequest;
 use artcraft_api_defs::generate::cost_estimate::estimate_video_cost::{
     EstimateVideoCostRequest, GenerationMode as VideoGenerationMode,
 };
+use artcraft_api_defs::omni_gen::cost_and_generate_requests::omni_gen_splat_cost_and_generate_request::OmniGenSplatCostAndGenerateRequest;
 use enums::common::generation_provider::GenerationProvider;
+use tokens::tokens::media_files::MediaFileToken;
 
 use crate::client::ArtCraftClient;
 use crate::tools::http::typed_json_post;
@@ -339,36 +340,56 @@ pub async fn estimate_cost(arguments: Value, client: &ArtCraftClient) -> Result<
     }
 }
 
+/// Placeholder media token used only to mark "image input" pricing on the
+/// OmniGen splat cost route. The cost handler prices by input kind and never
+/// resolves tokens to files, so any token-shaped string works.
+const SPLAT_COST_PLACEHOLDER_IMAGE_TOKEN: &str = "m_00000000000000000000000000000000";
+
+/// Build the `/v1/omni_gen/cost/splat` request body for the splat cost
+/// estimate tool. The legacy `/v1/generate/cost_estimate/splat` route only
+/// maps marble_0p1_* models and 400s on everything else, so the tool uses the
+/// OmniGen route — the same request shape the generate endpoint charges.
+pub fn build_splat_cost_request(
+    arguments: &Value,
+) -> Result<OmniGenSplatCostAndGenerateRequest> {
+    let model_str = arguments["model"].as_str().unwrap_or("marble_1p1_plus");
+    let model = crate::tools::generate::parse_splat_model(model_str)?;
+    let has_reference_image = arguments["has_reference_image"].as_bool().unwrap_or(false);
+
+    let reference_image_media_tokens = has_reference_image.then(|| {
+        vec![MediaFileToken::new_from_str(SPLAT_COST_PLACEHOLDER_IMAGE_TOKEN)]
+    });
+
+    Ok(OmniGenSplatCostAndGenerateRequest {
+        idempotency_token: None,
+        model: Some(model),
+        prompt: None,
+        reference_image_media_tokens,
+        reference_video_media_token: None,
+        is_panoramic: arguments["is_panoramic"].as_bool(),
+        disable_recaption: None,
+    })
+}
+
 pub async fn estimate_splat_cost(
     arguments: Value,
     client: &ArtCraftClient,
 ) -> Result<Vec<ToolContent>> {
     let model_str = arguments["model"].as_str().unwrap_or("marble_1p1_plus");
-    let model = crate::tools::generate::parse_splat_model(model_str)?;
-    let has_reference_image = arguments["has_reference_image"].as_bool();
+    let request = build_splat_cost_request(&arguments)?;
 
-    let request = EstimateSplatCostRequest {
-        model,
-        provider: GenerationProvider::Artcraft,
-        has_reference_image,
-    };
-
-    let response = typed_json_post(
-        artcraft_api_defs::generate::cost_estimate::estimate_splat_cost::ESTIMATE_SPLAT_COST_PATH,
-        request,
-        client,
-    )
-    .await?;
+    let response = typed_json_post(OMNI_GEN_COST_SPLAT_PATH, request, client).await?;
 
     let text = format!(
-        "Splat cost estimate:\n  Model: {}\n  Credits: {}\n  USD cents: {}\n  Free: {}\n  Unlimited: {}\n  Rate limited: {}\n  Watermark: {}",
+        "Splat cost estimate:\n  Model: {}\n  Credits: {}\n  USD cents: {}\n  Free: {}\n  Unlimited: {}\n  Rate limited: {}\n  Watermark: {}\n  Failures refunded: {}",
         model_str,
         opt_num(&response, "cost_in_credits"),
         opt_num(&response, "cost_in_usd_cents"),
         opt_bool(&response, "is_free"),
         opt_bool(&response, "is_unlimited"),
         opt_bool(&response, "is_rate_limited"),
-        opt_bool(&response, "has_watermark")
+        opt_bool(&response, "has_watermark"),
+        opt_tri(&response, "failures_are_refunded")
     );
 
     Ok(vec![ToolContent {
@@ -466,4 +487,53 @@ pub async fn list_video_models(
         content_type: "text".to_string(),
         text: lines.join("\n"),
     }])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use enums::common::generation::common_splat_model::CommonSplatModel;
+
+    /// The splat cost tool must send an OmniGen-shaped request: the legacy
+    /// `/v1/generate/cost_estimate/splat` route 400s on every model except
+    /// marble_0p1_mini/marble_0p1_plus. Verified live 2026-11-26.
+    #[test]
+    fn splat_cost_request_supports_all_models() {
+        for (name, expected) in [
+            ("marble_0p1_mini", CommonSplatModel::Marble0p1Mini),
+            ("marble_1p0", CommonSplatModel::Marble1p0),
+            ("marble_1p0_draft", CommonSplatModel::Marble1p0Draft),
+            ("marble_1p1", CommonSplatModel::Marble1p1),
+            ("marble_1p1_plus", CommonSplatModel::Marble1p1Plus),
+            ("triposplat", CommonSplatModel::TripoSplat),
+        ] {
+            let request = build_splat_cost_request(&json!({ "model": name }))
+                .unwrap_or_else(|e| panic!("build should succeed for {name}: {e}"));
+            assert_eq!(request.model, Some(expected), "wrong model for {name}");
+        }
+    }
+
+    /// `has_reference_image` must produce an image-input request (the omni
+    /// route prices text vs image inputs differently; the placeholder token
+    /// is never resolved server-side).
+    #[test]
+    fn splat_cost_request_encodes_reference_image_flag() {
+        let without = build_splat_cost_request(&json!({
+            "model": "marble_1p0_draft",
+            "has_reference_image": false,
+        }))
+        .expect("build");
+        assert!(without.reference_image_media_tokens.is_none());
+
+        let with = build_splat_cost_request(&json!({
+            "model": "marble_1p0_draft",
+            "has_reference_image": true,
+        }))
+        .expect("build");
+        let tokens = with
+            .reference_image_media_tokens
+            .expect("reference tokens should be set");
+        assert_eq!(tokens.len(), 1);
+        assert!(!tokens[0].as_str().is_empty());
+    }
 }

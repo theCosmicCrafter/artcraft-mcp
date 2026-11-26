@@ -21,6 +21,9 @@ use artcraft_api_defs::generate::image::edit::gpt_image_1_edit_image::{
 use artcraft_api_defs::generate::image::inpaint::flux_dev_juggernaut_inpaint_image::{
     FluxDevJuggernautInpaintImageNumImages, FluxDevJuggernautInpaintImageRequest,
 };
+use artcraft_api_defs::generate::image::inpaint::flux_pro_1_inpaint_image::{
+    FluxPro1InpaintImageNumImages, FluxPro1InpaintImageRequest,
+};
 use artcraft_api_defs::generate::video::edit::beeble_switchx_edit_video::BeebleSwitchXEditVideoRequest;
 use tokens::tokens::media_files::MediaFileToken;
 
@@ -56,7 +59,7 @@ pub fn tools() -> Vec<Tool> {
         },
         Tool {
             name: "artcraft_inpaint_image".to_string(),
-            description: "Inpaint an image using a mask and prompt.".to_string(),
+            description: "Inpaint an image using a mask and prompt. Models: 'flux_pro_1' (default, first-party Fal flux-pro fill — works) or 'flux_dev_juggernaut' (currently broken upstream, returns HTTP 500). The mask must match the image dimensions; white regions are inpainted.".to_string(),
             input_schema: Some(json!({
                 "type": "object",
                 "properties": {
@@ -65,7 +68,7 @@ pub fn tools() -> Vec<Tool> {
                     "image_media_token": { "type": "string" },
                     "mask_media_token": { "type": "string" }
                 },
-                "required": ["prompt", "image_media_token"]
+                "required": ["prompt", "image_media_token", "mask_media_token"]
             })),
         },
         Tool {
@@ -224,6 +227,7 @@ pub async fn remove_background(
 }
 
 pub async fn inpaint_image(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
+    let model_str = arguments["model"].as_str().unwrap_or("flux_pro_1");
     let prompt = arguments["prompt"]
         .as_str()
         .ok_or_else(|| anyhow!("prompt is required"))?;
@@ -238,15 +242,37 @@ pub async fn inpaint_image(arguments: Value, client: &ArtCraftClient) -> Result<
     let mask_media_token = MediaFileToken::new_from_str(mask_token);
     let idempotency_token = Uuid::new_v4().to_string();
 
-    let request = FluxDevJuggernautInpaintImageRequest {
-        uuid_idempotency_token: idempotency_token,
-        prompt: Some(prompt.to_string()),
-        image_media_token,
-        mask_media_token,
-        num_images: Some(FluxDevJuggernautInpaintImageNumImages::One),
+    // Upstream note: the flux_dev_juggernaut route currently returns HTTP 500
+    // for every request (third-party Fal endpoint broken upstream); flux_pro_1
+    // routes to the first-party fal-ai/flux-pro fill provider and works.
+    let response = match model_str.to_lowercase().as_str() {
+        "flux_pro_1" | "flux_pro" | "flux" | "pro" | "default" => {
+            let request = FluxPro1InpaintImageRequest {
+                uuid_idempotency_token: idempotency_token,
+                prompt: Some(prompt.to_string()),
+                image_media_token,
+                mask_media_token,
+                num_images: Some(FluxPro1InpaintImageNumImages::One),
+            };
+            typed_json_post(artcraft_api_defs::generate::image::inpaint::flux_pro_1_inpaint_image::FLUX_PRO_1_INPAINT_PATH, request, client).await?
+        }
+        "flux_dev_juggernaut" | "juggernaut" | "flux_dev" => {
+            let request = FluxDevJuggernautInpaintImageRequest {
+                uuid_idempotency_token: idempotency_token,
+                prompt: Some(prompt.to_string()),
+                image_media_token,
+                mask_media_token,
+                num_images: Some(FluxDevJuggernautInpaintImageNumImages::One),
+            };
+            typed_json_post(artcraft_api_defs::generate::image::inpaint::flux_dev_juggernaut_inpaint_image::FLUX_DEV_JUGGERNAUT_INPAINT_PATH, request, client).await?
+        }
+        _ => {
+            return Err(anyhow!(
+                "Unknown inpaint model: {}. Use flux_pro_1 (default) or flux_dev_juggernaut (currently upstream-broken).",
+                model_str
+            ))
+        }
     };
-
-    let response = typed_json_post(artcraft_api_defs::generate::image::inpaint::flux_dev_juggernaut_inpaint_image::FLUX_DEV_JUGGERNAUT_INPAINT_PATH, request, client).await?;
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),
@@ -311,7 +337,27 @@ pub async fn edit_video(arguments: Value, client: &ArtCraftClient) -> Result<Vec
         prompt: Some(prompt.to_string()),
     };
 
-    let response = typed_json_post(artcraft_api_defs::generate::video::edit::beeble_switchx_edit_video::BEEBLE_SWITCHX_EDIT_VIDEO_PATH, request, client).await?;
+    let response = match typed_json_post(artcraft_api_defs::generate::video::edit::beeble_switchx_edit_video::BEEBLE_SWITCHX_EDIT_VIDEO_PATH, request, client).await {
+        Ok(response) => response,
+        Err(err) => {
+            // Upstream note (verified 2026-11-26): the Beeble SwitchX route
+            // 500s for every input — fresh public uploads and
+            // server-generated videos alike. The failure is inside the
+            // Beeble API stage (create_upload_url / presigned PUT /
+            // start_generation): either the stored api key is rejected, or
+            // Beeble's newer `upload_headers` requirement (documented as
+            // mandatory in their OpenAPI) is unmet — the upstream client
+            // drops that field. Upstream outage; no input change fixes it.
+            let msg = err.to_string();
+            if msg.contains("500") {
+                return Err(anyhow!(
+                    "{}. Note: upstream SwitchX video edit (Beeble) is currently broken for all inputs — every request returns HTTP 500 inside the provider call, not because of your video. Retry later.",
+                    msg
+                ));
+            }
+            return Err(err);
+        }
+    };
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),

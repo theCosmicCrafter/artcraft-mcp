@@ -1,0 +1,19 @@
+{
+  "start_credits": 5199,
+  "est_triposplat": "Error: HTTP error: 400 Bad Request {\"success\":false,\"error_type\":\"invalid_input\",\"error_message\":\"model TripoSplat is not supported by this endpoint\"}",
+  "est_fluxpro_edit": "Image cost estimate:\n  Model: flux_pro_1p1\n  Credits: 4\n  USD cents: 4\n  Free: false\n  Unlimited: false\n  Rate limited: false\n  Watermark: false",
+  "image_token": "m_cefctfqs332dwfb04xpc066dqfb5yj",
+  "mask_token": "m_b0p32r5q2t4qeakan9j3hashg3y5v6",
+  "triposplat": {
+    "enqueue": "Error: HTTP error: 500 Internal Server Error {\"success\":false,\"error_code\":500,\"error_code_str\":\"Internal Server Error\"}",
+    "credits": 0
+  },
+  "flux_pro_1": {
+    "http_status": 200,
+    "response": "{\"success\":true,\"inference_job_token\":\"[redacted]\"}",
+    "job": "jinf_1n66da1jv3y49f6svedqddja6c3",
+    "final": "Job: [redacted-token] Status: complete_failure Progress: 100% Category: image_generation",
+    "credits": 0
+  },
+  "end_credits": 5199
+}

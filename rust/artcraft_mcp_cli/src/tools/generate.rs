@@ -262,7 +262,7 @@ pub fn tools() -> Vec<Tool> {
         },
         Tool {
             name: "artcraft_generate_splat".to_string(),
-            description: "Generate 3D Gaussian splat worlds using ArtCraft's OmniGen Splat API. Supports WorldLabs Marble (0.1, 1.0, 1.1) and TripoSplat with multi-view and 360 panoramic inputs.".to_string(),
+            description: "Generate 3D Gaussian splat worlds using ArtCraft's OmniGen Splat API. Supports WorldLabs Marble (0.1, 1.0, 1.1) and TripoSplat with multi-view and 360 panoramic inputs. NOTE: upstream is currently returning HTTP 500 for all splat providers (outage) — calls will fail until upstream recovers.".to_string(),
             input_schema: Some(json!({
                 "type": "object",
                 "properties": {
@@ -565,7 +565,30 @@ pub fn build_splat_request(
 pub async fn generate_splat(arguments: Value, client: &ArtCraftClient) -> Result<Vec<ToolContent>> {
     let request = build_splat_request(&arguments, Some(Uuid::new_v4().to_string()))?;
 
-    let response = typed_json_post("/v1/omni_gen/generate/splat", request, client).await?;
+    let response = match typed_json_post("/v1/omni_gen/generate/splat", request, client).await {
+        Ok(response) => response,
+        Err(err) => {
+            // Upstream note (verified 2026-11-26): splat generation fails at
+            // the provider call for every model — prompt-only requests with
+            // no media 500 identically, so input shape is not the cause.
+            // marble_* (World Labs): both omni_gen and the legacy
+            // /v1/generate/splat routes fail inside `generate_world` — the
+            // stored World Labs API key is being rejected (api.worldlabs.ai
+            // answers 401 to bad keys; the server gets a non-403 error).
+            // triposplat (Fal): fal removed the application entirely —
+            // queue.fal.run/tripo3d/triposplat returns 404
+            // "Application \"triposplat\" not found" while other fal models
+            // still work. Upstream outage; no request change fixes it.
+            let msg = err.to_string();
+            if msg.contains("500") {
+                return Err(anyhow!(
+                    "{}. Note: upstream splat generation is currently broken for ALL providers — every marble_* model (World Labs: provider API key rejected) and triposplat (Fal: 'triposplat' application deleted from fal, HTTP 404 at queue.fal.run) return HTTP 500. This is an upstream outage, not a problem with your request — no model or input change will route around it. Retry later.",
+                    msg
+                ));
+            }
+            return Err(err);
+        }
+    };
 
     Ok(vec![ToolContent {
         content_type: "text".to_string(),

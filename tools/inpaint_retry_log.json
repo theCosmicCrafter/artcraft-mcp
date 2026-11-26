@@ -1,0 +1,9 @@
+{
+  "mask_token": "m_792zwakab5g93ntc89nxnm8qszh5sr",
+  "http_status": 200,
+  "response": "{\"success\":true,\"inference_job_token\":\"[redacted]\"}",
+  "job": "jinf_8t4rkxtfcp86z8f126v8thf6b8x",
+  "final": "Job: [redacted-token] Status: complete_success Progress: 100% Category: image_generation Result token: [redacted]",
+  "result_token": "m_14q0e3c1y6mkt4v2wtcrdstanp0v69",
+  "credits": 0
+}

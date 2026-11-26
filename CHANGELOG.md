@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-11-26
+
+Route-level fixes and verification hardening following the upstream root-cause investigation. Evidence: `13_inpaint_fixed_test.png` end-to-end artifact, live cost-quote verification, and the upstream isolation findings posted to storytold/artcraft-services issues #436/#437/#438.
+
+### Fixed
+- **`artcraft_inpaint_image` works again**: now defaults to `flux_pro_1` (first-party `fal-ai/flux-pro/v1/fill` provider) instead of the upstream-broken third-party `flux_dev_juggernaut` endpoint. Verified end-to-end through the MCP tool with a real inpainted artifact. The juggernaut path remains selectable as a documented upstream-broken option, and the schema correctly marks the mask as required and documents the dimension-match requirement.
+- **`artcraft_estimate_splat_cost`**: switched to the correct `/v1/omni_gen/cost/splat` route — the legacy endpoint 400s on all non-`marble_0p1_*` models. Live-verified quotes: marble_1p1 = 165cr, triposplat = 7cr, marble_0p1_mini = 24cr.
+- **Honest provider-outage errors**: `artcraft_generate_splat` and `artcraft_edit_video` now name the verified upstream causes (World Labs API key rejected; fal deleted the `triposplat` application; Beeble API failure) instead of implying another model routes around the outage.
+
+### Added
+- Regression tests for the splat cost builder (3 unit tests total, plus 8 protocol integration tests).
+
+### Verified
+- **Character generation is not flaky**: the matrix failure was an artifact of a 174-byte synthetic test PNG. With real source material the full create/poll/list/get/delete lifecycle completes successfully.
+
 ## [2.0.0] - 2026-11-26
 
 Major rebuild of the server and its verification story: the protocol moves from `2024-11-05` to the current `2026-07-28` revision, the catalog grows from 61 documented tools to 99 verified business tools, and the two-binary layout consolidates into a single dual-transport `artcraft-mcp`. The major bump is justified by breaking removals (upstream-retired capabilities) and the protocol/auth rework; legacy `2024-11-05` clients keep working unchanged and still receive the full catalog.

@@ -1,0 +1,13 @@
+{
+  "start_credits": 5199,
+  "description": "Inpaint an image using a mask and prompt. Models: 'flux_pro_1' (default, first-party Fal flux-pro fill \u2014 works) or 'flux_dev_juggernaut' (currently broken upstream, returns HTTP 500). The mask must match the image dimensions; white regions are inpainted.",
+  "mask_token": "m_7dbv1s1w183zfv5ztvjxdjkqb2a8at",
+  "default_call": "Inpainting queued successfully. Job token: [redacted] Status: success Poll for results using artcraft_get_job_status with job_token '[redacted]'",
+  "default_final": "Job: [redacted-token] Status: complete_success Progress: 100% Category: image_generation Result token: [redacted]",
+  "result_token": "m_jj2d28981r9x2sd9hhtjx9f4mf72fm",
+  "artifact": "C:\\Users\\richk\\Downloads\\artcraft-mcp-verification\\13_inpaint_fixed_test.png",
+  "default_credits": 0,
+  "unknown_model": "Error: Unknown inpaint model: no_such_model. Use flux_pro_1 (default) or flux_dev_juggernaut (currently upstream-broken).",
+  "juggernaut": "Error: HTTP error: 500 Internal Server Error {\"success\":false,\"error_code\":500,\"error_code_str\":\"Internal Server Error\"}",
+  "end_credits": 5199
+}
