@@ -683,12 +683,21 @@ async fn poll_job_status(token: &str, client: &ArtCraftClient) -> anyhow::Result
         format!("Job: {}", job.job_token.as_str()),
         format!("Status: {}", status),
         format!("Progress: {}%", job.status.progress_percentage),
+        format!("Category: {:?}", job.request.inference_category),
+        format!("Created: {}", job.created_at),
+        format!("Updated: {}", job.updated_at),
     ];
+    if let Some(extra) = &job.status.maybe_extra_status_description {
+        lines.push(format!("Extra: {}", extra));
+    }
     if let Some(failure) = &job.status.maybe_failure_message {
         lines.push(format!("Failure: {}", failure));
     }
     if let Some(result) = job.maybe_result.as_ref() {
         lines.push(format!("Result token: {}", result.entity_token));
+        if let Some(completed_at) = result.maybe_successfully_completed_at {
+            lines.push(format!("Completed at: {}", completed_at));
+        }
     }
     Ok(JobPoll {
         contents: vec![ToolContent {
