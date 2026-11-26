@@ -1,1 +1,1 @@
-{"name":"artcraft_tts_search_models","description":"Discover available TTS voices and models.","parameters":{"properties":{},"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Discover available TTS voices and models.","name":"artcraft_tts_search_models","parameters":{"properties":{},"type":"object"}}

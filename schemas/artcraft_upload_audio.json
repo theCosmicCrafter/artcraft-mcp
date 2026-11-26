@@ -1,1 +1,1 @@
-{"name":"artcraft_upload_audio","description":"Upload an audio file.","parameters":{"properties":{"file_path":{"type":"string"}},"required":["file_path"],"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Upload an audio file.","name":"artcraft_upload_audio","parameters":{"properties":{"file_path":{"type":"string"}},"required":["file_path"],"type":"object"}}

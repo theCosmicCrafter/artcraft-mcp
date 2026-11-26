@@ -1,1 +1,1 @@
-{"name":"artcraft_list_comments","description":"List comments on a media file.","parameters":{"properties":{"media_token":{"type":"string"}},"required":["media_token"],"type":"object"}}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"List comments on a media file.","name":"artcraft_list_comments","parameters":{"properties":{"media_token":{"type":"string"}},"required":["media_token"],"type":"object"}}

@@ -29,6 +29,25 @@ Instead, act as a helpful guide:
 3. Give them exact, step-by-step instructions: **"To set this up, please open the ArtCraft Desktop App, navigate to Settings > API Keys, and enter your credentials for [Provider Name]."**
 4. Once they confirm it's done, re-run `check_provider_credentials` and resume their generation!
 
+## Progressive Discovery (v2.0+ clients)
+
+On MCP `2026-07-28` clients the server exposes a small hot catalog instead of
+all 61 tools. Reach the rest through the three meta-tools:
+
+1. `artcraft_search_tools(query, category?, detail_level?)` — find tools by
+   keyword or browse a category (`image`, `video`, `3d`, `splat`, `audio`,
+   `voice`, `character`, `lora`, `jobs`, `account`, `community`, `files`).
+2. `artcraft_describe_tool(names[])` — read the full input schema and examples
+   before calling.
+3. `artcraft_call_deferred_tool(name, arguments)` — execute. Stringified
+   numbers/booleans ("5", "true") are coerced automatically.
+
+Legacy clients (Claude Desktop, Windsurf, Cursor on `2025-*` or `2024-11-05`)
+still receive the full 61-tool list exactly as before — no workflow change.
+
+Expensive generations may ask for one confirmation before spending credits
+(MRTR cost gate); declining cancels cleanly with zero credits spent.
+
 ## References
 For detailed lists of available models and settings, please consult the following reference files:
 - [Image Models](references/image-models.md): Complete list of supported image models (Flux, Midjourney, Nano Banana, Seedream, etc.)
