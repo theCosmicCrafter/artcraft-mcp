@@ -101,3 +101,108 @@ fn coercion_meta_tool_rejects_unknown_tool() {
     let out = run_stdio(&input);
     assert!(out.contains("unknown tool") || out.contains("isError") || out.contains("is_error"), "expected error: {}", &out[..out.len().min(400)]);
 }
+
+/// MRTR cost gate: a billable generation from an elicitation-capable modern
+/// client returns input_required with a sealed requestState; declining the
+/// elicitation completes with a cancellation and zero credits spent.
+#[test]
+fn mrtr_cost_confirmation_decline_path() {
+    let meta = modern_meta();
+    let call = serde_json::json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{
+        "name": "artcraft_generate_video",
+        "arguments": {"prompt": "a test frog", "model": "seedance_2_fast"},
+        "_meta": meta
+    }});
+
+    // Probe round 1 alone first to obtain the requestState.
+    let probe = serde_json::json!({"jsonrpc":"2.0","id":9,"method":"ping","params":{}});
+    let input = format!("{}
+{}
+", serde_json::to_string(&call).unwrap(), serde_json::to_string(&probe).unwrap());
+    let out = run_stdio(&input);
+    let msg = out
+        .lines()
+        .filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok())
+        .find(|m| m.get("id") == Some(&serde_json::json!(1)))
+        .expect("first-round response");
+    let result = &msg["result"];
+    assert_eq!(
+        result["resultType"], serde_json::json!("input_required"),
+        "billable generation must gate on confirmation: {}",
+        &out[..out.len().min(400)]
+    );
+    let state = result["requestState"].as_str().expect("sealed requestState").to_string();
+    assert!(!state.is_empty());
+
+    // Round 2 against the same server instance: decline the confirmation.
+    // (requestState is sealed with a per-process key, as rmcp documents, so the
+    // retry must reach the same server instance — exactly what real clients do.)
+    let round1 = serde_json::json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{
+        "name": "artcraft_generate_video",
+        "arguments": {"prompt": "a test frog", "model": "seedance_2_fast"},
+        "_meta": meta
+    }});
+    let (r1, r2) = {
+        // The sealed state differs per process; obtain it from a live same-process round.
+        use std::io::{BufRead, BufReader, Write};
+        let mut child = Command::new(binary())
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("spawn server");
+        let mut stdin = child.stdin.take().unwrap();
+        let stdout = child.stdout.take().unwrap();
+        let mut reader = BufReader::new(stdout);
+        stdin.write_all(format!("{}
+", serde_json::to_string(&round1).unwrap()).as_bytes()).unwrap();
+        stdin.flush().unwrap();
+        let mut line1 = String::new();
+        reader.read_line(&mut line1).unwrap();
+        let r1: serde_json::Value = serde_json::from_str(&line1).unwrap();
+        let live_state = r1["result"]["requestState"].as_str().unwrap().to_string();
+        let retry = serde_json::json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{
+            "name": "artcraft_generate_video",
+            "arguments": {"prompt": "a test frog", "model": "seedance_2_fast"},
+            "requestState": live_state,
+            "inputResponses": {"confirm": {"action": "decline"}},
+            "_meta": meta
+        }});
+        stdin.write_all(format!("{}
+", serde_json::to_string(&retry).unwrap()).as_bytes()).unwrap();
+        stdin.flush().unwrap();
+        let mut line2 = String::new();
+        reader.read_line(&mut line2).unwrap();
+        drop(stdin);
+        let _ = child.kill();
+        (r1, serde_json::from_str::<serde_json::Value>(&line2).unwrap())
+    };
+    assert_eq!(r1["result"]["resultType"], serde_json::json!("input_required"));
+    let text = r2.to_string();
+    assert!(
+        text.contains("cancelled") || text.contains("no credits spent"),
+        "declined confirmation must cancel cleanly: {}",
+        &text[..text.len().min(500)]
+    );
+}
+
+/// MRTR state integrity: a tampered requestState is rejected, never executed.
+#[test]
+fn mrtr_tampered_state_rejected() {
+    let meta = modern_meta();
+    let retry = serde_json::json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{
+        "name": "artcraft_generate_video",
+        "arguments": {"prompt": "x", "model": "seedance_2_fast"},
+        "requestState": "tampered-not-a-real-state",
+        "inputResponses": {"confirm": {"action": "accept", "content": {"confirm": true}}},
+        "_meta": meta
+    }});
+    let input = format!("{}
+", serde_json::to_string(&retry).unwrap());
+    let out = run_stdio(&input);
+    assert!(
+        out.contains("tampered or unknown request state") || out.contains("-32602"),
+        "tampered state must be rejected: {}",
+        &out[..out.len().min(400)]
+    );
+}

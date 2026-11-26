@@ -59,6 +59,8 @@ jobs:
 
       - name: Smoke test (legacy initialize + tools/list regression)
         shell: bash
+        env:
+          PYTHONUTF8: "1"
         run: |
           printf '%s\n' \
             '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
@@ -76,6 +78,8 @@ jobs:
 
       - name: Smoke test (modern 2026-07-28 progressive catalog)
         shell: bash
+        env:
+          PYTHONUTF8: "1"
         run: |
           python3 - <<'EOF'
           import json, subprocess
