@@ -666,22 +666,26 @@ async fn run_and_track_job(
                 Ok(status_contents) => {
                     let status_text: String =
                         status_contents.iter().map(|c| c.text.clone()).collect();
-                    let lower = status_text.to_lowercase();
-                    // Terminal failure first: "complete_failure" contains
-                    // "complete" and must never read as success. Transient
-                    // attempt_failed means the job is retrying, not dead.
-                    let failed = lower.contains("complete_failure")
-                        || (lower.contains("fail") && !lower.contains("attempt_failed"))
-                        || lower.contains("cancel")
-                        || lower.contains("dead");
-                    if failed {
-                        contents.extend(status_contents);
-                        return Ok(contents);
-                    }
-                    let succeeded = lower.contains("complete_success")
-                        || lower.contains("succeeded")
-                        || (lower.contains("complete") && !lower.contains("failure"));
-                    if succeeded {
+                    // Parse the dedicated `Status:` line rather than scanning
+                    // the whole response: the job token itself appears in the
+                    // output and can literally contain substrings like "dead",
+                    // which would fake a terminal state. Upstream JobStatusPlus:
+                    // Pending, Started, CompleteSuccess, CompleteFailure,
+                    // AttemptFailed (transient retry), Dead, CancelledByUser,
+                    // CancelledBySystem.
+                    let status_value = status_text
+                        .lines()
+                        .find_map(|line| {
+                            line.strip_prefix("Status:")
+                                .map(|v| v.trim().to_lowercase())
+                        })
+                        .unwrap_or_default();
+                    let terminal_failure = matches!(
+                        status_value.as_str(),
+                        "complete_failure" | "dead" | "cancelled_by_user" | "cancelled_by_system"
+                    );
+                    let terminal_success = status_value == "complete_success";
+                    if terminal_failure || terminal_success {
                         contents.extend(status_contents);
                         return Ok(contents);
                     }
@@ -693,7 +697,9 @@ async fn run_and_track_job(
         // returning the original queue message here would report a dead or
         // stuck job as a successful generation.
         return Err(anyhow::anyhow!(
-            "job did not reach a terminal state within the polling window; check artcraft_get_job_status with the job token"
+            "job {} did not reach a terminal state within the polling window; check artcraft_get_job_status with job_token=\"{}\"",
+            token,
+            token
         ));
     }
     Ok(contents)
